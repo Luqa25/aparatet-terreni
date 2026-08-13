@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="sq">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E7A88">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Aparatet — Terreni</title>
+<style>
+:root{
+  --bg:#F4F6F7; --surface:#FFFFFF; --elev:#EEF2F3; --line:#E0E6E8;
+  --text:#16242A; --muted:#5C6E75; --accent:#0E7A88; --accent2:#0B6675;
+  --good:#2E8F55; --bad:#C6463C; --warn:#C07A16;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0C1316; --surface:#131E22; --elev:#1B2A30; --line:#26363C;
+  --text:#E6EDEF; --muted:#93A6AD; --accent:#3BB4C4; --accent2:#2C97A6;
+  --good:#46B473; --bad:#E0685C; --warn:#DDA23C;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+header{position:sticky;top:0;background:var(--surface);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px;z-index:5}
+header h1{font-size:17px;margin:0;font-weight:800;flex:1}
+header .sub{font-size:11px;color:var(--muted)}
+.wrap{padding:14px;max-width:720px;margin:0 auto}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+button{font:inherit;border:none;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer}
+.pri{background:var(--accent);color:#fff}.pri:active{background:var(--accent2)}
+.sec{background:var(--elev);color:var(--text);border:1px solid var(--line)}
+.row{display:flex;gap:8px;align-items:center}
+.grow{flex:1}
+input,textarea,select{font:inherit;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:9px}
+.reglist div{display:flex;justify-content:space-between;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line);font-size:13px}
+.reglist button{background:transparent;color:var(--bad);padding:4px 8px;font-size:16px}
+.plan-row{display:grid;grid-template-columns:44px 1fr 74px;gap:6px;align-items:center;margin-bottom:5px}
+.plan-row .ch{text-align:center;color:var(--muted);font-weight:700}
+textarea{width:100%;min-height:120px;font-family:ui-monospace,monospace;font-size:12px}
+.mlist button{width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);color:var(--text);margin-bottom:8px;display:flex;gap:10px;align-items:center}
+.mlist .code{font-weight:800;color:var(--accent)}
+.mlist .pl{color:var(--muted);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:center}
+th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+td.prod{text-align:left;font-weight:600}
+.qty{width:60px;text-align:center;padding:7px 4px}
+.pos{color:var(--good);font-weight:700}.neg{color:var(--bad);font-weight:700}
+.den{display:grid;grid-template-columns:1fr 70px 84px;gap:6px;align-items:center;margin-bottom:5px}
+.den .v{text-align:right;color:var(--muted)}
+.tot{display:flex;justify-content:space-between;font-weight:800;padding-top:8px;border-top:1px solid var(--line);margin-top:6px}
+.big{font-size:15px}
+.recon div{display:flex;justify-content:space-between;padding:4px 0}
+.hidden{display:none}
+.pill{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--elev);color:var(--muted)}
+.sec-t{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:6px 0}
+.foot{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:8px}
+.foot button{flex:1}
+.note{font-size:12px;color:var(--muted);line-height:1.5}
+summary{cursor:pointer;font-weight:700;padding:6px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>🎛️ Aparatet <span class="sub" id="hsub">— terreni</span></h1>
+  <button class="sec" id="btnHelp" style="padding:7px 11px">❓</button>
+  <button class="sec" id="btnHome" style="padding:7px 11px">☰</button>
+</header>
+
+<!-- IMPORT KATALOGU -->
+<div class="wrap screen" id="scrImport">
+  <div class="card">
+    <h3 style="margin-top:0">📥 Ngarko katalogun</h3>
+    <p class="note">Nga programi në PC: <b>📤 Eksporto për tablet</b> → merr <b>catalog.json</b>. Ngjite këtu ose zgjidh skedarin.</p>
+    <input type="file" id="fileCat" accept=".json,application/json" style="margin-bottom:8px">
+    <textarea id="txtCat" placeholder="…ose ngjit përmbajtjen e catalog.json këtu"></textarea>
+    <div class="row" style="margin-top:10px">
+      <button class="pri grow" id="btnLoadCat">Ngarko</button>
+    </div>
+    <p class="note" id="catInfo"></p>
+    <div style="border-top:1px solid var(--line);margin-top:12px;padding-top:12px">
+      <button class="pri" id="btnRegNew" style="width:100%">🗂️ Regjistro nga zeroja (produkte, aparate, stok)</button>
+      <p class="note" style="margin:8px 0 0">…ose vetëm për ta parë:</p>
+      <button class="sec" id="btnDemo" style="width:100%;margin-top:6px">🎲 Provo me demo</button>
+    </div>
+  </div>
+</div>
+
+<!-- LISTA E APARATEVE -->
+<div class="wrap screen hidden" id="scrList">
+  <div class="row" style="margin-bottom:10px">
+    <span class="pill" id="listInfo"></span><span class="grow"></span>
+    <button class="sec" id="btnReimport">📥 Katalog</button>
+  </div>
+  <div class="mlist" id="machineList"></div>
+</div>
+
+<!-- VIZITA -->
+<div class="wrap screen hidden" id="scrVisit">
+  <div class="card">
+    <div class="row"><b id="vTitle" class="grow"></b><span class="pill" id="vHist"></span></div>
+  </div>
+  <div class="card">
+    <div class="sec-t">Kanalet — fut sa gjete TANI</div>
+    <div style="overflow-x:auto"><table id="chTable"></table></div>
+    <div class="row" style="margin-top:10px">
+      <button class="sec grow" id="btnFillMax">🧮 Mbush në maksimum</button>
+    </div>
+  </div>
+
+  <details class="card" id="cashBox">
+    <summary>💶 Numëro cash-in (sipas prerjeve)</summary>
+    <div class="sec-t" style="margin-top:8px">Numëruar në aparat</div>
+    <div id="denCounted"></div>
+    <div class="tot"><span>Numëruar</span><span id="totCounted">0.00 €</span></div>
+    <div class="sec-t" style="margin-top:12px">Kusur i lënë (për kthim)</div>
+    <div id="denFloat"></div>
+    <div class="tot"><span>Kusur</span><span id="totFloat">0.00 €</span></div>
+  </details>
+
+  <div class="card recon">
+    <div><span>Shitur (pako)</span><b id="rSold">0</b></div>
+    <div><span>Cash i pritur</span><b id="rExp">0.00 €</b></div>
+    <div><span>Cash i numëruar</span><b id="rCounted">0.00 €</b></div>
+    <div><span>Kusur i lënë</span><b id="rFloat">0.00 €</b></div>
+    <div><span>Tërhequr</span><b id="rWith">0.00 €</b></div>
+    <div><span>Mospërputhja</span><b id="rDisc">0.00 €</b></div>
+    <input id="vNote" placeholder="shënim (opsional)" style="width:100%;margin-top:8px">
+  </div>
+  <div class="foot">
+    <button class="sec" id="btnBack">← Prapa</button>
+    <button class="pri" id="btnSaveVisit">💾 Ruaj vizitën</button>
+  </div>
+</div>
+
+<!-- STOKU (automjeti) -->
+<div class="wrap screen hidden" id="scrStock">
+  <div class="card">
+    <div class="row"><b class="grow">📦 Stoku i automjetit</b><button class="sec" id="btnStockBack">←</button></div>
+    <p class="note">Sa mbetet në automjet (nga katalogu minus vendosjet e pasinkronizuara). 🟢 ke · 🔴 mbaruar/negativ.</p>
+    <div id="stockList"></div>
+  </div>
+</div>
+
+<!-- UDHËZUESI -->
+<div class="wrap screen hidden" id="scrHelp">
+  <div class="row" style="margin-bottom:8px"><b class="grow">❓ Si përdoret</b><button class="sec" id="helpBack">←</button></div>
+  <div class="card" style="line-height:1.6;font-size:14px">
+    <p><b>Ky aplikacion është për terren:</b> regjistrim, vizita dhe cash — pastaj i hedh te PC.</p>
+    <h3>🔄 Rrjedha</h3>
+    <ol style="padding-left:18px">
+      <li>Merr <b>katalogun</b> nga PC (☰ → Ngarko katalog), ose <b>🗂️ Regjistro nga zeroja</b></li>
+      <li>Zgjidh <b>aparatin</b> (te lista/Rruga)</li>
+      <li>Te <b>“Tani”</b> fut sa pako gjete → <b>Shitur</b> del vetë</li>
+      <li><b>💶 Numëro cash-in</b> sipas prerjeve + <b>kusurin e lënë</b></li>
+      <li><b>🧮 Mbush në maksimum</b> ose fut me dorë te “Pas mbushjes”</li>
+      <li><b>💾 Ruaj vizitën</b></li>
+      <li>Në fund: <b>☰ → 📤 Eksporto</b> → çoje skedarin te PC</li>
+    </ol>
+    <h3>🗂️ Regjistrimi (te ☰)</h3>
+    <ul style="padding-left:18px">
+      <li><b>Produktet:</b> markat + çmimi</li>
+      <li><b>Aparatet:</b> kod, qytet, lokal, kanale, kapacitet → <b>Ndërto</b> → cakto produktin për çdo kanal</li>
+      <li><b>Magazina:</b> pranim duhani në depo</li>
+      <li><b>Kombi:</b> ngarko nga magazina në makinë</li>
+      <li><b>📤 Eksporto GJITHÇKA</b> → në PC importohet vetë</li>
+    </ul>
+    <h3>🧭 Rruga</h3>
+    <p>Aparatet sipas qytetit + <b>🧭 Navigo</b> (Google Maps).</p>
+    <h3>📦 Stoku</h3>
+    <p>Sa mbetet në komb — 🟢 ke · 🔴 mbaruar.</p>
+    <p style="color:var(--muted)"><i>Pasi ta instalosh si ikonë, punon edhe offline.</i></p>
+  </div>
+</div>
+
+<!-- REGJISTRIMI (i plotë, si në PC) -->
+<div class="wrap screen hidden" id="scrReg">
+  <div class="row" style="margin-bottom:8px"><b class="grow">🗂️ Regjistrimi</b><button class="sec" id="regBack">←</button></div>
+
+  <details class="card" open><summary>🚬 Produktet</summary>
+    <div class="row" style="margin-top:8px"><input id="pName" placeholder="Marka (p.sh. Marlboro)" class="grow"><input id="pPrice" type="number" inputmode="decimal" placeholder="çmimi €" style="width:96px"></div>
+    <button class="pri" id="pAdd" style="width:100%;margin-top:8px">＋ Shto produkt</button>
+    <div class="reglist" id="pList"></div>
+  </details>
+
+  <details class="card"><summary>📟 Aparatet</summary>
+    <div class="row" style="margin-top:8px"><input id="mCode" placeholder="Kodi (APR-01)" class="grow"><input id="mVo" type="number" inputmode="numeric" placeholder="rend" style="width:70px"></div>
+    <div class="row" style="margin-top:6px"><input id="mCity" placeholder="Qyteti" class="grow"><input id="mPlace" placeholder="Lokali" class="grow"></div>
+    <div class="row" style="margin-top:6px"><input id="mCh" type="number" inputmode="numeric" placeholder="kanale" class="grow"><input id="mCap" type="number" inputmode="numeric" placeholder="kapacitet/kanal" class="grow"><button class="sec" id="mBuild">Ndërto</button></div>
+    <div id="mPlan" style="margin-top:8px"></div>
+    <button class="pri" id="mAdd" style="width:100%;margin-top:8px">＋ Shto aparatin</button>
+    <div class="reglist" id="mList"></div>
+  </details>
+
+  <details class="card"><summary>🏬 Magazina — pranim</summary>
+    <div class="row" style="margin-top:8px"><select id="whProd" class="grow"></select><input id="whQty" type="number" inputmode="numeric" placeholder="pako" style="width:84px"></div>
+    <button class="pri" id="whAdd" style="width:100%;margin-top:8px">＋ Pranim në magazinë</button>
+    <div class="reglist" id="whList"></div>
+  </details>
+
+  <details class="card"><summary>🚚 Kombi — ngarko nga magazina</summary>
+    <div class="row" style="margin-top:8px"><select id="vnProd" class="grow"></select><input id="vnQty" type="number" inputmode="numeric" placeholder="pako" style="width:84px"></div>
+    <button class="pri" id="vnLoad" style="width:100%;margin-top:8px">🚚 Ngarko në komb</button>
+    <div class="reglist" id="vnList"></div>
+  </details>
+
+  <button class="pri" id="regExport" style="width:100%;margin:6px 0 4px">📤 Eksporto GJITHÇKA për PC</button>
+  <p class="note">Ky skedar përmban produktet, aparatet, magazinën, kombin dhe vizitat. Importoje në PC (📥 Vizita) → llogaritjet e thella.</p>
+</div>
+
+<!-- MENU / EXPORT -->
+<div class="wrap screen hidden" id="scrMenu">
+  <div class="card">
+    <h3 style="margin-top:0">📤 Dërgo vizitat në PC</h3>
+    <p class="note">Vizitat e paruajtura: <b id="pendCount">0</b>. Shkarko <b>visits.json</b> dhe importoje në PC (📥 Importo vizita).</p>
+    <button class="pri" id="btnExport" style="width:100%">📤 Eksporto vizitat (visits.json)</button>
+    <button class="sec" id="btnClearVisits" style="width:100%;margin-top:8px">🧹 Fshi vizitat e dërguara</button>
+  </div>
+  <div class="card">
+    <button class="sec" id="btnGoHelp" style="width:100%">❓ Si përdoret (udhëzues)</button>
+    <button class="pri" id="btnGoReg" style="width:100%;margin-top:8px">🗂️ Regjistrimi (produkte/aparate/stok)</button>
+    <button class="sec" id="btnGoStock" style="width:100%;margin-top:8px">📦 Stoku i automjetit</button>
+    <button class="sec" id="btnGoList" style="width:100%;margin-top:8px">← Kthehu te aparatet</button>
+    <button class="sec" id="btnReimport2" style="width:100%;margin-top:8px">📥 Ngarko katalog të ri</button>
+  </div>
+  <p class="note">Sync bazik me skedar. Serveri cloud (sync automatik me SIM) shtohet më vonë.</p>
+</div>
+
+<script>
+const DENOMS=[[2000,"20 €"],[1000,"10 €"],[500,"5 €"],[200,"2 €"],[100,"1 €"],[50,"50 cent"],[20,"20 cent"],[10,"10 cent"],[5,"5 cent"]];
+const $=s=>document.querySelector(s);
+const K_CAT="apar_catalog", K_VIS="apar_visits";
+let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
+let cur=null, counted={}, flt={};
+
+function load(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
+function save(k,v){localStorage.setItem(k,JSON.stringify(v));}
+function eur(c){return (c/100).toFixed(2)+" €";}
+function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.add("hidden"));$(id).classList.remove("hidden");}
+
+function boot(){
+  const h=location.hash;
+  if(h.indexOf("help")>=0){show("#scrHelp");return;}
+  if(h.indexOf("reg")>=0){
+    if(!CAT){CAT={version:1,products:[{id:-1,name:"Marlboro",price:4.0,photo:""},{id:-2,name:"Winston",price:3.2,photo:""}],machines:[],warehouse:[],van:[]};save(K_CAT,CAT);}
+    ensureReg();renderReg();show("#scrReg");return;
+  }
+  if(h.indexOf("demo")>=0){
+    CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(K_CAT,CAT);VIS=[];save(K_VIS,VIS);
+    if(h.indexOf("visit")>=0){renderList();openVisit(CAT.machines[0]);$("#cashBox").open=true;return;}
+    if(h.indexOf("stock")>=0){renderStock();show("#scrStock");return;}
+    renderList();show("#scrList");return;
+  }
+  if(CAT){renderList();show("#scrList");}else{show("#scrImport");}
+}
+
+// ---- katalogu ----
+$("#fileCat").addEventListener("change",e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$("#txtCat").value=r.result;};r.readAsText(f);});
+$("#btnLoadCat").onclick=()=>{
+  try{const c=JSON.parse($("#txtCat").value);
+    if(!c.machines||!c.products) throw 0;
+    CAT=c; save(K_CAT,CAT); $("#catInfo").textContent="✓ "+c.machines.length+" aparate, "+c.products.length+" produkte.";
+    renderList(); show("#scrList");
+  }catch(e){$("#catInfo").textContent="✗ Skedar i pavlefshëm.";}
+};
+$("#btnReimport").onclick=$("#btnReimport2").onclick=()=>show("#scrImport");
+
+const DEMO_CATALOG={version:1,products:[
+  {id:1,name:"Marlboro Red",price:4.00,photo:""},
+  {id:2,name:"Winston Blue",price:3.20,photo:""},
+  {id:3,name:"Lucky Strike",price:3.50,photo:""}],
+ machines:[
+  {id:1,code:"APR-01",place:"Ferizaj · Bar Ura",city:"Ferizaj",visit_order:1,lat:42.37,lng:21.15,model:"GMV Elitouch",channels:3,capacity:25,
+   planogram:[{channel:1,product_id:1,capacity:25},{channel:2,product_id:2,capacity:25},{channel:3,product_id:3,capacity:20}],
+   baseline:{"1":25,"2":25,"3":20},float:{"100":5,"50":4}},
+  {id:2,code:"APR-02",place:"Prishtinë · Kiosku te Sheshi",city:"Prishtinë",visit_order:1,lat:42.66,lng:21.16,model:"Jofemar Goya",channels:2,capacity:30,
+   planogram:[{channel:1,product_id:1,capacity:30},{channel:2,product_id:3,capacity:30}],
+   baseline:{"1":30,"2":30},float:{}}],
+ van:[{product_id:1,name:"Marlboro Red",qty:120},{product_id:2,name:"Winston Blue",qty:80},{product_id:3,name:"Lucky Strike",qty:40}]};
+$("#btnDemo").onclick=()=>{CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(K_CAT,CAT);VIS=[];save(K_VIS,VIS);renderList();show("#scrList");};
+
+// ---- lista ----
+function renderList(){
+  $("#listInfo").textContent=CAT.machines.length+" aparate";
+  const el=$("#machineList"); el.innerHTML="";
+  const ms=[...CAT.machines].sort((a,b)=>(a.city||"").localeCompare(b.city||"")||((a.visit_order||0)-(b.visit_order||0)));
+  let city=null;
+  ms.forEach(m=>{
+    if((m.city||"—")!==city){city=m.city||"—";const h=document.createElement("div");h.className="sec-t";h.textContent="📍 "+city;el.appendChild(h);}
+    const wrap=document.createElement("div"); wrap.className="row"; wrap.style.marginBottom="8px";
+    const b=document.createElement("button"); b.className="grow";
+    b.innerHTML=`<span class="code">${m.code||('#'+m.id)}</span><span class="grow"><div>${m.place||'—'}</div><div class="pl">rend ${m.visit_order||'—'} · ${m.channels||0} kanale</div></span>`;
+    b.onclick=()=>openVisit(m);
+    const nav=document.createElement("button"); nav.className="sec"; nav.textContent="🧭"; nav.title="Navigo";
+    nav.onclick=(e)=>{e.stopPropagation();navigate(m);};
+    wrap.appendChild(b); wrap.appendChild(nav); el.appendChild(wrap);
+  });
+}
+function navigate(m){
+  let url;
+  if(m.lat!=null&&m.lng!=null){url="https://www.google.com/maps/dir/?api=1&destination="+m.lat+","+m.lng;}
+  else{url="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent((m.place||"")+" "+(m.city||""));}
+  window.open(url,"_blank");
+}
+function vanRemaining(){
+  // stoku i automjetit nga katalogu minus vendosjet e vizitave të pasinkronizuara
+  const rem={}; (CAT.van||[]).forEach(s=>rem[s.product_id]={name:s.name,qty:s.qty});
+  VIS.forEach(v=>v.lines.forEach(ln=>{
+    const added=Math.max(0,(ln.after||0)-(ln.now||0));
+    if(ln.product_id&&added){if(!rem[ln.product_id])rem[ln.product_id]={name:(CAT.products.find(p=>p.id===ln.product_id)||{}).name||('#'+ln.product_id),qty:0};rem[ln.product_id].qty-=added;}
+  }));
+  return rem;
+}
+function renderStock(){
+  const el=$("#stockList"); el.innerHTML="";
+  const rem=vanRemaining();
+  const rows=Object.values(rem).sort((a,b)=>a.name.localeCompare(b.name));
+  if(!rows.length){el.innerHTML='<p class="note">S\'ka stok automjeti në katalog.</p>';return;}
+  rows.forEach(s=>{
+    const d=document.createElement("div"); d.className="row"; d.style.justifyContent="space-between"; d.style.padding="8px 4px"; d.style.borderBottom="1px solid var(--line)";
+    const cls=s.qty>0?"pos":"neg";
+    d.innerHTML=`<span>${s.name}</span><b class="${cls}">${s.qty}</b>`;
+    el.appendChild(d);
+  });
+}
+
+// ---- vizita ----
+function openVisit(m){
+  cur=m; counted={}; flt=Object.assign({}, m.float||{});
+  $("#vTitle").textContent=(m.code||('#'+m.id))+" · "+(m.place||'');
+  const last=(VIS.filter(v=>v.machine_id===m.id).slice(-1)[0]);
+  $("#vHist").textContent=last?("fundit: "+last.counted_cash.toFixed(2)+"€"):"vizita e parë";
+  const t=$("#chTable");
+  t.innerHTML="<tr><th>Kanali</th><th class='prod' style='text-align:left'>Produkti</th><th>Para</th><th>Tani</th><th>Shitur</th><th>Pas</th></tr>";
+  const prods=Object.fromEntries(CAT.products.map(p=>[p.id,p]));
+  (m.planogram||[]).forEach(ln=>{
+    const base=(m.baseline||{})[ln.channel];
+    const p=prods[ln.product_id]||{};
+    const tr=document.createElement("tr"); tr.dataset.ch=ln.channel; tr.dataset.pid=ln.product_id||"";
+    tr.dataset.price=(p.price||0); tr.dataset.base=(base==null?"":base);
+    tr.innerHTML=`<td>${ln.channel}</td><td class="prod">${p.name||'—'}</td>
+      <td>${base==null?'—':base}</td>
+      <td><input class="qty now" type="number" inputmode="numeric" min="0" value="${base==null?0:base}"></td>
+      <td class="sold">0</td>
+      <td><input class="qty aft" type="number" inputmode="numeric" min="0" value="${ln.capacity||m.capacity||0}"></td>`;
+    t.appendChild(tr);
+  });
+  t.querySelectorAll(".now").forEach(i=>i.addEventListener("input",recalc));
+  buildDen("#denCounted",counted,()=>{sumDen();recalc();});
+  buildDen("#denFloat",flt,()=>{sumDen();recalc();});
+  $("#vNote").value="";
+  sumDen(); recalc(); show("#scrVisit");
+}
+$("#btnFillMax").onclick=()=>{document.querySelectorAll("#chTable .aft").forEach((i,idx)=>{const cap=CAT.machines.find(x=>x.id===cur.id).planogram[idx].capacity;i.value=cap;});recalc();};
+$("#btnBack").onclick=()=>{renderList();show("#scrList");};
+
+function buildDen(sel,store,onch){
+  const el=$(sel); el.innerHTML="";
+  DENOMS.forEach(([c,lbl])=>{
+    const d=document.createElement("div"); d.className="den";
+    d.innerHTML=`<span>${lbl}</span><input class="qty" type="number" inputmode="numeric" min="0" value="${store[c]||0}"><span class="v" id="v_${sel==='#denCounted'?'c':'f'}_${c}">0.00 €</span>`;
+    const inp=d.querySelector("input");
+    inp.addEventListener("input",()=>{store[c]=parseInt(inp.value||0);onch();});
+    el.appendChild(d);
+  });
+}
+function sumDen(){
+  let tc=0,tf=0;
+  DENOMS.forEach(([c])=>{
+    const cv=c*(counted[c]||0), fv=c*(flt[c]||0);
+    tc+=cv; tf+=fv;
+    const ec=$("#v_c_"+c), ef=$("#v_f_"+c);
+    if(ec)ec.textContent=eur(cv); if(ef)ef.textContent=eur(fv);
+  });
+  $("#totCounted").textContent=eur(tc); $("#totFloat").textContent=eur(tf);
+  window._tc=tc; window._tf=tf;
+}
+function recalc(){
+  let sold=0, exp=0;
+  document.querySelectorAll("#chTable tr[data-ch]").forEach(tr=>{
+    const base=tr.dataset.base===""?null:parseInt(tr.dataset.base);
+    const now=parseInt(tr.querySelector(".now").value||0);
+    const s=base==null?0:Math.max(0,base-now);
+    tr.querySelector(".sold").textContent=s;
+    sold+=s; exp+=s*parseFloat(tr.dataset.price||0);
+  });
+  const tc=window._tc||0, tf=window._tf||0;
+  const counted_e=tc/100, disc=counted_e-exp, wd=(tc-tf)/100;
+  $("#rSold").textContent=sold;
+  $("#rExp").textContent=exp.toFixed(2)+" €";
+  $("#rCounted").textContent=counted_e.toFixed(2)+" €";
+  $("#rFloat").textContent=(tf/100).toFixed(2)+" €";
+  $("#rWith").textContent=wd.toFixed(2)+" €";
+  const dEl=$("#rDisc"); dEl.textContent=(disc>=0?"+":"")+disc.toFixed(2)+" €";
+  dEl.className=Math.abs(disc)<=0.5?"pos":"neg";
+  window._sold=sold; window._exp=exp; window._disc=disc; window._counted=counted_e;
+}
+$("#btnSaveVisit").onclick=()=>{
+  const lines=[], newbase={};
+  document.querySelectorAll("#chTable tr[data-ch]").forEach(tr=>{
+    const ch=parseInt(tr.dataset.ch), base=tr.dataset.base===""?null:parseInt(tr.dataset.base);
+    const now=parseInt(tr.querySelector(".now").value||0), aft=parseInt(tr.querySelector(".aft").value||0);
+    const sold=base==null?0:Math.max(0,base-now);
+    lines.push({channel:ch,product_id:tr.dataset.pid?parseInt(tr.dataset.pid):null,before:base,now:now,sold:sold,after:aft,price:parseFloat(tr.dataset.price||0)});
+    newbase[ch]=aft;
+  });
+  const cJson={},fJson={};
+  DENOMS.forEach(([c])=>{if(counted[c])cJson[c]=counted[c];if(flt[c])fJson[c]=flt[c];});
+  const v={machine_id:cur.id,date:new Date().toISOString().slice(0,16).replace('T',' '),
+    lines:lines,sold_total:window._sold,expected_cash:+window._exp.toFixed(2),
+    counted_cash:+window._counted.toFixed(2),discrepancy:+window._disc.toFixed(2),
+    counted_json:cJson,float_json:fJson,new_baseline:newbase,notes:$("#vNote").value.trim()};
+  VIS.push(v); save(K_VIS,VIS);
+  // përditëso baseline+float lokalisht për vizitën tjetër
+  const mm=CAT.machines.find(x=>x.id===cur.id); mm.baseline=newbase; mm.float=fJson; save(K_CAT,CAT);
+  alert("✓ Vizita u ruajt.\nShitur: "+window._sold+" pako · Mospërputhje: "+(window._disc>=0?"+":"")+window._disc.toFixed(2)+" €");
+  renderList(); show("#scrList");
+};
+
+// ---- menu / export ----
+$("#btnHome").onclick=()=>{$("#pendCount").textContent=VIS.length;show("#scrMenu");};
+$("#btnGoList").onclick=()=>{renderList();show("#scrList");};
+$("#btnGoStock").onclick=()=>{renderStock();show("#scrStock");};
+$("#btnStockBack").onclick=()=>show("#scrMenu");
+$("#btnHelp").onclick=$("#btnGoHelp").onclick=()=>show("#scrHelp");
+$("#helpBack").onclick=()=>show("#scrMenu");
+$("#btnExport").onclick=()=>{
+  const blob=new Blob([JSON.stringify({version:1,device:"tablet",visits:VIS},null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="visits_"+new Date().toISOString().slice(0,10)+".json"; a.click();
+};
+$("#btnClearVisits").onclick=()=>{if(confirm("Fshi vizitat e dërguara nga tableti?")){VIS=[];save(K_VIS,VIS);$("#pendCount").textContent=0;alert("U fshinë.");}};
+
+/* ---- REGJISTRIMI (i plotë në tablet) ---- */
+function nextId(){let n=parseInt(localStorage.getItem("regseq")||"-1");localStorage.setItem("regseq",n-1);return n;}
+function ensureReg(){if(!CAT)CAT={version:1,products:[],machines:[],warehouse:[],van:[]};
+  CAT.products=CAT.products||[];CAT.machines=CAT.machines||[];CAT.warehouse=CAT.warehouse||[];CAT.van=CAT.van||[];}
+function pName(id){const p=(CAT.products||[]).find(x=>x.id===id);return p?p.name:("#"+id);}
+function fillProdSelects(){
+  const opts='<option value="">— produkt —</option>'+(CAT.products||[]).map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
+  ["#whProd","#vnProd"].forEach(s=>{const el=$(s);const v=el.value;el.innerHTML=opts;el.value=v;});
+}
+function renderReg(){
+  ensureReg(); fillProdSelects();
+  $("#pList").innerHTML=(CAT.products||[]).map(p=>`<div><span>${p.name} — ${(+p.price||0).toFixed(2)} €</span><button data-del="p" data-id="${p.id}">✕</button></div>`).join("");
+  $("#mList").innerHTML=(CAT.machines||[]).map(m=>`<div><span><b>${m.code}</b> · ${m.place||''} (${m.channels} kanale)</span><button data-del="m" data-id="${m.id}">✕</button></div>`).join("");
+  $("#whList").innerHTML=(CAT.warehouse||[]).filter(s=>s.qty).map(s=>`<div><span>${s.name}</span><b>${s.qty}</b></div>`).join("");
+  $("#vnList").innerHTML=(CAT.van||[]).filter(s=>s.qty).map(s=>`<div><span>${s.name}</span><b>${s.qty}</b></div>`).join("");
+  document.querySelectorAll("#scrReg [data-del]").forEach(b=>b.onclick=()=>{
+    const t=b.dataset.del,id=parseInt(b.dataset.id);
+    if(t==="p")CAT.products=CAT.products.filter(x=>x.id!==id);
+    if(t==="m")CAT.machines=CAT.machines.filter(x=>x.id!==id);
+    save(K_CAT,CAT);renderReg();
+  });
+}
+function stockBump(arr,pid,name,delta){let e=arr.find(x=>x.product_id===pid);if(!e){e={product_id:pid,name:name,qty:0};arr.push(e);}e.qty+=delta;}
+$("#btnRegNew").onclick=()=>{CAT={version:1,products:[],machines:[],warehouse:[],van:[]};save(K_CAT,CAT);renderReg();show("#scrReg");};
+$("#btnGoReg").onclick=()=>{ensureReg();renderReg();show("#scrReg");};
+$("#regBack").onclick=()=>show("#scrMenu");
+$("#pAdd").onclick=()=>{const n=$("#pName").value.trim();if(!n)return;ensureReg();
+  CAT.products.push({id:nextId(),name:n,price:parseFloat($("#pPrice").value||0)||0,photo:""});save(K_CAT,CAT);$("#pName").value="";$("#pPrice").value="";renderReg();};
+$("#mBuild").onclick=()=>{const ch=parseInt($("#mCh").value||0),cap=parseInt($("#mCap").value||0);
+  if(!ch){alert("Fut nr. e kanaleve.");return;}
+  if(!(CAT.products||[]).length){alert("Shto produktet së pari.");return;}
+  const opts=(CAT.products||[]).map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
+  let h="";for(let c=1;c<=ch;c++)h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" value="${cap||''}"></div>`;
+  $("#mPlan").innerHTML=h;};
+$("#mAdd").onclick=()=>{ensureReg();const code=$("#mCode").value.trim();if(!code){alert("Fut kodin.");return;}
+  const rows=document.querySelectorAll("#mPlan .plan-row");if(!rows.length){alert("Shtyp 'Ndërto' për kanalet.");return;}
+  const plan=[];rows.forEach((r,i)=>{const pid=parseInt(r.querySelector(".pl-prod").value)||null;const cp=parseInt(r.querySelector(".pl-cap").value||0)||0;if(pid)plan.push({channel:i+1,product_id:pid,capacity:cp});});
+  const city=$("#mCity").value.trim(),loc=$("#mPlace").value.trim();
+  CAT.machines.push({id:nextId(),code:code,city:city,place:(city?city+" · ":"")+loc,visit_order:parseInt($("#mVo").value||0)||0,
+    channels:parseInt($("#mCh").value||plan.length),capacity:parseInt($("#mCap").value||0)||0,planogram:plan,baseline:{},float:{},lat:null,lng:null});
+  save(K_CAT,CAT);["#mCode","#mCity","#mPlace","#mVo","#mCh","#mCap"].forEach(s=>$(s).value="");$("#mPlan").innerHTML="";renderReg();};
+$("#whAdd").onclick=()=>{ensureReg();const pid=parseInt($("#whProd").value)||0,q=parseInt($("#whQty").value||0)||0;
+  if(!pid||!q){alert("Zgjidh produktin dhe sasinë.");return;}stockBump(CAT.warehouse,pid,pName(pid),q);save(K_CAT,CAT);$("#whQty").value="";renderReg();};
+$("#vnLoad").onclick=()=>{ensureReg();const pid=parseInt($("#vnProd").value)||0,q=parseInt($("#vnQty").value||0)||0;
+  if(!pid||!q){alert("Zgjidh produktin dhe sasinë.");return;}
+  const w=(CAT.warehouse||[]).find(x=>x.product_id===pid);if(!w||w.qty<q){alert("S'ke aq në magazinë ("+((w&&w.qty)||0)+").");return;}
+  stockBump(CAT.warehouse,pid,pName(pid),-q);stockBump(CAT.van,pid,pName(pid),q);save(K_CAT,CAT);$("#vnQty").value="";renderReg();};
+$("#regExport").onclick=()=>{ensureReg();
+  const data={version:1,device:"tablet",fulldata:true,products:CAT.products,machines:CAT.machines,warehouse:CAT.warehouse,van:CAT.van,visits:VIS};
+  const b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");
+  a.href=URL.createObjectURL(b);a.download="aparatet_"+new Date().toISOString().slice(0,10)+".json";a.click();};
+
+if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{});}
+boot();
+</script>
+</body>
+</html>

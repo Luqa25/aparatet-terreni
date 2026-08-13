@@ -1,0 +1,14 @@
+{
+  "name": "Aparatet — Terreni",
+  "short_name": "Aparatet",
+  "description": "Vizita, numërim cash-i dhe stok për aparatet e cigareve (offline).",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0C1316",
+  "theme_color": "#0E7A88",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
