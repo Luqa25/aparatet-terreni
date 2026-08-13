@@ -220,6 +220,11 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <button class="sec" id="btnGoList" style="width:100%;margin-top:8px">← Kthehu te aparatet</button>
     <button class="sec" id="btnReimport2" style="width:100%;margin-top:8px">📥 Ngarko katalog të ri</button>
   </div>
+  <div class="card">
+    <div class="row"><b class="grow">Versioni i instaluar</b><span class="pill" id="verBadge">—</span></div>
+    <button class="sec" id="btnUpdate" style="width:100%;margin-top:8px">🔄 Merr versionin e ri (nga interneti)</button>
+    <p class="note" style="margin:8px 0 0">Kërkon internet një herë. Të dhënat e tua (katalog/vizita) NUK fshihen.</p>
+  </div>
   <p class="note">Sync bazik me skedar. Serveri cloud (sync automatik me SIM) shtohet më vonë.</p>
 </div>
 
@@ -227,6 +232,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 const DENOMS=[[2000,"20 €"],[1000,"10 €"],[500,"5 €"],[200,"2 €"],[100,"1 €"],[50,"50 cent"],[20,"20 cent"],[10,"10 cent"],[5,"5 cent"]];
 const $=s=>document.querySelector(s);
 const K_CAT="apar_catalog", K_VIS="apar_visits";
+const APP_VER="v5";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let cur=null, counted={}, flt={};
 
@@ -236,6 +242,8 @@ function eur(c){return (c/100).toFixed(2)+" €";}
 function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.add("hidden"));$(id).classList.remove("hidden");}
 
 function boot(){
+  $("#hsub").textContent="— terreni "+APP_VER;
+  const vb=$("#verBadge"); if(vb)vb.textContent=APP_VER;
   const h=location.hash;
   if(h.indexOf("help")>=0){show("#scrHelp");return;}
   if(h.indexOf("reg")>=0){
@@ -421,6 +429,14 @@ $("#btnGoStock").onclick=()=>{renderStock();show("#scrStock");};
 $("#btnStockBack").onclick=()=>show("#scrMenu");
 $("#btnHelp").onclick=$("#btnGoHelp").onclick=()=>show("#scrHelp");
 $("#helpBack").onclick=()=>show("#scrMenu");
+$("#btnUpdate").onclick=async()=>{
+  if(!confirm("Të merret versioni i ri nga interneti? (të dhënat s'fshihen)"))return;
+  try{
+    if("serviceWorker" in navigator){const rs=await navigator.serviceWorker.getRegistrations();for(const r of rs)await r.unregister();}
+    if("caches" in window){const ks=await caches.keys();for(const k of ks)await caches.delete(k);}
+  }catch(e){}
+  location.reload();
+};
 $("#btnExport").onclick=()=>{
   const blob=new Blob([JSON.stringify({version:1,device:"tablet",visits:VIS},null,2)],{type:"application/json"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
