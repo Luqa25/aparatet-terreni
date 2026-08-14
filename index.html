@@ -157,11 +157,14 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <h3>🗂️ Regjistrimi (te ☰)</h3>
     <ul style="padding-left:18px">
       <li><b>Produktet:</b> markat + çmimi</li>
-      <li><b>Aparatet:</b> kod, qytet, lokal, kanale, kapacitet → <b>Ndërto</b> → cakto produktin për çdo kanal</li>
+      <li><b>Aparatet:</b> kod, qytet, lokal, kanale, kapacitet → <b>Ndërto</b> → cakto produktin për çdo kanal.
+        Te aparati: <b>📍 Merr lokacionin</b> (GPS) dhe <b>📷 Foto</b> (kamerë/galeri).</li>
       <li><b>Magazina:</b> pranim duhani në depo</li>
       <li><b>Kombi:</b> ngarko nga magazina në makinë</li>
       <li><b>📤 Eksporto GJITHÇKA</b> → në PC importohet vetë</li>
     </ul>
+    <h3>☁️ Sinkronizimi</h3>
+    <p>Vizitat dërgohen <b>automatikisht te cloud</b> kur ke internet (ose ☰ → <b>☁️ Sinkronizo</b>). PC-ja i tërheq me <b>☁️ Tërhiq</b>. Punon edhe offline (dërgohen kur lidhesh).</p>
     <h3>🧭 Rruga</h3>
     <p>Aparatet sipas qytetit + <b>🧭 Navigo</b> (Google Maps).</p>
     <h3>📦 Stoku</h3>
@@ -184,6 +187,16 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <div class="row" style="margin-top:8px"><input id="mCode" placeholder="Kodi (APR-01)" class="grow"><input id="mVo" type="number" inputmode="numeric" placeholder="rend" style="width:70px"></div>
     <div class="row" style="margin-top:6px"><input id="mCity" placeholder="Qyteti" class="grow"><input id="mPlace" placeholder="Lokali" class="grow"></div>
     <div class="row" style="margin-top:6px"><input id="mCh" type="number" inputmode="numeric" placeholder="kanale" class="grow"><input id="mCap" type="number" inputmode="numeric" placeholder="kapacitet/kanal" class="grow"><button class="sec" id="mBuild">Ndërto</button></div>
+    <div class="row" style="margin-top:8px">
+      <button class="sec grow" id="mGeo" type="button">📍 Merr lokacionin (GPS)</button>
+      <span class="pill" id="mGeoInfo">pa lokacion</span>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <label class="sec grow" style="text-align:center;cursor:pointer;padding:11px">📷 Foto e aparatit (kamerë/galeri)
+        <input id="mPhotoIn" type="file" accept="image/*" style="display:none">
+      </label>
+      <img id="mPhotoPrev" style="width:56px;height:40px;object-fit:cover;border-radius:6px;display:none;border:1px solid var(--line)">
+    </div>
     <div id="mPlan" style="margin-top:8px"></div>
     <button class="pri" id="mAdd" style="width:100%;margin-top:8px">＋ Shto aparatin</button>
     <div class="reglist" id="mList"></div>
@@ -235,7 +248,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 const DENOMS=[[2000,"20 €"],[1000,"10 €"],[500,"5 €"],[200,"2 €"],[100,"1 €"],[50,"50 cent"],[20,"20 cent"],[10,"10 cent"],[5,"5 cent"]];
 const $=s=>document.querySelector(s);
 const K_CAT="apar_catalog", K_VIS="apar_visits";
-const APP_VER="v6";  // rritet me çdo version të ri
+const APP_VER="v7";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let cur=null, counted={}, flt={};
 
@@ -471,7 +484,7 @@ function fillProdSelects(){
 function renderReg(){
   ensureReg(); fillProdSelects();
   $("#pList").innerHTML=(CAT.products||[]).map(p=>`<div><span>${p.name} — ${(+p.price||0).toFixed(2)} €</span><button data-del="p" data-id="${p.id}">✕</button></div>`).join("");
-  $("#mList").innerHTML=(CAT.machines||[]).map(m=>`<div><span><b>${m.code}</b> · ${m.place||''} (${m.channels} kanale)</span><button data-del="m" data-id="${m.id}">✕</button></div>`).join("");
+  $("#mList").innerHTML=(CAT.machines||[]).map(m=>`<div><span><b>${m.code}</b> · ${m.place||''} (${m.channels} kanale)${m.lat!=null?' 📍':''}${m.photo?' 📷':''}</span><button data-del="m" data-id="${m.id}">✕</button></div>`).join("");
   $("#whList").innerHTML=(CAT.warehouse||[]).filter(s=>s.qty).map(s=>`<div><span>${s.name}</span><b>${s.qty}</b></div>`).join("");
   $("#vnList").innerHTML=(CAT.van||[]).filter(s=>s.qty).map(s=>`<div><span>${s.name}</span><b>${s.qty}</b></div>`).join("");
   document.querySelectorAll("#scrReg [data-del]").forEach(b=>b.onclick=()=>{
@@ -498,8 +511,31 @@ $("#mAdd").onclick=()=>{ensureReg();const code=$("#mCode").value.trim();if(!code
   const plan=[];rows.forEach((r,i)=>{const pid=parseInt(r.querySelector(".pl-prod").value)||null;const cp=parseInt(r.querySelector(".pl-cap").value||0)||0;if(pid)plan.push({channel:i+1,product_id:pid,capacity:cp});});
   const city=$("#mCity").value.trim(),loc=$("#mPlace").value.trim();
   CAT.machines.push({id:nextId(),code:code,city:city,place:(city?city+" · ":"")+loc,visit_order:parseInt($("#mVo").value||0)||0,
-    channels:parseInt($("#mCh").value||plan.length),capacity:parseInt($("#mCap").value||0)||0,planogram:plan,baseline:{},float:{},lat:null,lng:null});
-  save(K_CAT,CAT);["#mCode","#mCity","#mPlace","#mVo","#mCh","#mCap"].forEach(s=>$(s).value="");$("#mPlan").innerHTML="";renderReg();};
+    channels:parseInt($("#mCh").value||plan.length),capacity:parseInt($("#mCap").value||0)||0,planogram:plan,baseline:{},float:{},
+    lat:(window._mLat!=null?window._mLat:null),lng:(window._mLng!=null?window._mLng:null),photo:(window._mPhoto||"")});
+  save(K_CAT,CAT);["#mCode","#mCity","#mPlace","#mVo","#mCh","#mCap"].forEach(s=>$(s).value="");$("#mPlan").innerHTML="";
+  window._mLat=window._mLng=null;window._mPhoto="";$("#mGeoInfo").textContent="pa lokacion";$("#mPhotoPrev").style.display="none";
+  renderReg();};
+
+/* GPS + foto e aparatit (në tablet) */
+$("#mGeo").onclick=()=>{
+  if(!navigator.geolocation){alert("Pajisja s'ka GPS.");return;}
+  $("#mGeoInfo").textContent="duke marrë…";
+  navigator.geolocation.getCurrentPosition(p=>{
+    window._mLat=+p.coords.latitude.toFixed(6);window._mLng=+p.coords.longitude.toFixed(6);
+    $("#mGeoInfo").textContent="📍 "+window._mLat+", "+window._mLng;
+  },e=>{$("#mGeoInfo").textContent="s'u mor (lejo lokacionin)";},{enableHighAccuracy:true,timeout:10000});
+};
+$("#mPhotoIn").onchange=(ev)=>{
+  const f=ev.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{
+    let w=img.width,h=img.height,max=900;
+    if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>max){w=Math.round(w*max/h);h=max;}
+    const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);
+    window._mPhoto=c.toDataURL("image/jpeg",0.6);
+    const pv=$("#mPhotoPrev");pv.src=window._mPhoto;pv.style.display="block";
+  };img.src=r.result;};r.readAsDataURL(f);
+};
 $("#whAdd").onclick=()=>{ensureReg();const pid=parseInt($("#whProd").value)||0,q=parseInt($("#whQty").value||0)||0;
   if(!pid||!q){alert("Zgjidh produktin dhe sasinë.");return;}stockBump(CAT.warehouse,pid,pName(pid),q);save(K_CAT,CAT);$("#whQty").value="";renderReg();};
 $("#vnLoad").onclick=()=>{ensureReg();const pid=parseInt($("#vnProd").value)||0,q=parseInt($("#vnQty").value||0)||0;
