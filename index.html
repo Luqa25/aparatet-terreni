@@ -208,8 +208,11 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 <!-- MENU / EXPORT -->
 <div class="wrap screen hidden" id="scrMenu">
   <div class="card">
-    <h3 style="margin-top:0">📤 Dërgo vizitat në PC</h3>
-    <p class="note">Vizitat e paruajtura: <b id="pendCount">0</b>. Shkarko <b>visits.json</b> dhe importoje në PC (📥 Importo vizita).</p>
+    <h3 style="margin-top:0">☁️ Dërgo vizitat</h3>
+    <div class="row" style="margin-bottom:8px"><span class="grow">Cloud (automatik):</span><span class="pill" id="syncBadge">—</span></div>
+    <button class="pri" id="btnCloudSync" style="width:100%">☁️ Sinkronizo tani me cloud</button>
+    <button class="sec" id="btnCloudCat" style="width:100%;margin-top:8px">☁️ Merr katalogun nga cloud</button>
+    <p class="note" style="margin:10px 0 6px">Ose me skedar (pa internet):</p>
     <button class="pri" id="btnExport" style="width:100%">📤 Eksporto vizitat (visits.json)</button>
     <button class="sec" id="btnClearVisits" style="width:100%;margin-top:8px">🧹 Fshi vizitat e dërguara</button>
   </div>
@@ -232,7 +235,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 const DENOMS=[[2000,"20 €"],[1000,"10 €"],[500,"5 €"],[200,"2 €"],[100,"1 €"],[50,"50 cent"],[20,"20 cent"],[10,"10 cent"],[5,"5 cent"]];
 const $=s=>document.querySelector(s);
 const K_CAT="apar_catalog", K_VIS="apar_visits";
-const APP_VER="v5";  // rritet me çdo version të ri
+const APP_VER="v6";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let cur=null, counted={}, flt={};
 
@@ -411,11 +414,12 @@ $("#btnSaveVisit").onclick=()=>{
   });
   const cJson={},fJson={};
   DENOMS.forEach(([c])=>{if(counted[c])cJson[c]=counted[c];if(flt[c])fJson[c]=flt[c];});
-  const v={machine_id:cur.id,date:new Date().toISOString().slice(0,16).replace('T',' '),
+  const v={machine_id:cur.id,machine_code:cur.code||("#"+cur.id),date:new Date().toISOString(),
     lines:lines,sold_total:window._sold,expected_cash:+window._exp.toFixed(2),
     counted_cash:+window._counted.toFixed(2),discrepancy:+window._disc.toFixed(2),
-    counted_json:cJson,float_json:fJson,new_baseline:newbase,notes:$("#vNote").value.trim()};
+    counted_json:cJson,float_json:fJson,new_baseline:newbase,notes:$("#vNote").value.trim(),_synced:false};
   VIS.push(v); save(K_VIS,VIS);
+  cloudSync().then(updateSyncBadge);   // dërgo te cloud (nëse ka internet)
   // përditëso baseline+float lokalisht për vizitën tjetër
   const mm=CAT.machines.find(x=>x.id===cur.id); mm.baseline=newbase; mm.float=fJson; save(K_CAT,CAT);
   alert("✓ Vizita u ruajt.\nShitur: "+window._sold+" pako · Mospërputhje: "+(window._disc>=0?"+":"")+window._disc.toFixed(2)+" €");
@@ -423,7 +427,18 @@ $("#btnSaveVisit").onclick=()=>{
 };
 
 // ---- menu / export ----
-$("#btnHome").onclick=()=>{$("#pendCount").textContent=VIS.length;show("#scrMenu");};
+$("#btnHome").onclick=()=>{updateSyncBadge();show("#scrMenu");};
+$("#btnCloudSync").onclick=async()=>{
+  const b=$("#syncBadge"); b.textContent="duke dërguar…";
+  const r=await cloudSync(); updateSyncBadge();
+  alert("☁️ U dërguan "+r.sent+" vizita te cloud."+(r.fail?(" "+r.fail+" dështuan (pa internet?)"):""));
+};
+$("#btnCloudCat").onclick=async()=>{
+  if(!confirm("Të marrësh katalogun nga cloud? (zëvendëson atë aktual)"))return;
+  const ok=await cloudPullCatalog();
+  if(ok){renderList();alert("✓ Katalogu u mor nga cloud.");show("#scrList");}
+  else alert("S'u mor (pa internet ose katalog bosh në cloud).");
+};
 $("#btnGoList").onclick=()=>{renderList();show("#scrList");};
 $("#btnGoStock").onclick=()=>{renderStock();show("#scrStock");};
 $("#btnStockBack").onclick=()=>show("#scrMenu");
@@ -496,8 +511,47 @@ $("#regExport").onclick=()=>{ensureReg();
   const b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");
   a.href=URL.createObjectURL(b);a.download="aparatet_"+new Date().toISOString().slice(0,10)+".json";a.click();};
 
+/* ---- SYNC ME CLOUD (Supabase) ---- */
+const SUPA_URL="https://tzjoldrtnnvfwlkjkewg.supabase.co";
+const SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6am9sZHJ0bm52Zndsa2prZXdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MjU1MjEsImV4cCI6MjEwMjMwMTUyMX0.0qBVDYW2Y0OhpyeZSWX-pmWYFKhCitRa_3Zs1RD4uMA";
+function _sh(){return {"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json"};}
+async function cloudPush(v){
+  const body={machine_code:v.machine_code,date:v.date,lines:v.lines,sold_total:v.sold_total,
+    expected_cash:v.expected_cash,counted_cash:v.counted_cash,discrepancy:v.discrepancy,
+    counted_json:v.counted_json,float_json:v.float_json,new_baseline:v.new_baseline,notes:v.notes};
+  const r=await fetch(SUPA_URL+"/rest/v1/visits",{method:"POST",headers:{..._sh(),"Prefer":"return=minimal"},body:JSON.stringify(body)});
+  return r.ok;
+}
+async function cloudSync(){
+  let sent=0,fail=0;
+  for(const v of VIS){
+    if(v._synced)continue;
+    try{ if(await cloudPush(v)){v._synced=true;sent++;}else{fail++;} }catch(e){fail++;}
+  }
+  save(K_VIS,VIS);
+  return {sent,fail};
+}
+function unsynced(){return VIS.filter(v=>!v._synced).length;}
+function updateSyncBadge(res){
+  const b=$("#syncBadge"); if(b){const n=unsynced(); b.textContent=n?(n+" pa dërguar"):"të gjitha të dërguara ✓";}
+}
+async function cloudPullCatalog(){
+  try{
+    const r=await fetch(SUPA_URL+"/rest/v1/catalog?select=data&id=eq.1",{headers:_sh()});
+    if(!r.ok)return false;
+    const j=await r.json();
+    if(j[0]&&j[0].data&&(j[0].data.machines||j[0].data.products)){
+      CAT=j[0].data; ensureReg&&ensureReg(); save(K_CAT,CAT); return true;
+    }
+  }catch(e){}
+  return false;
+}
+
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{});}
 boot();
+// provo sync-un në hapje (nëse ka internet)
+setTimeout(()=>{ if(navigator.onLine){ cloudSync().then(updateSyncBadge); } }, 1500);
+window.addEventListener("online",()=>cloudSync().then(updateSyncBadge));
 </script>
 </body>
 </html>
