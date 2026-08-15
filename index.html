@@ -139,6 +139,26 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   </div>
 </div>
 
+<!-- DEPOZITË NË BANKË -->
+<div class="wrap screen hidden" id="scrDep">
+  <div class="row" style="margin-bottom:8px"><b class="grow">🏦 Depozitë në bankë</b><button class="sec" id="depBack">←</button></div>
+  <div class="card">
+    <div class="sec-t">Banka</div>
+    <select id="depBank" style="width:100%"></select>
+    <div class="row" style="margin-top:8px">
+      <input id="depAmt" type="number" inputmode="decimal" placeholder="shuma €" class="grow">
+      <input id="depRef" placeholder="referenca" class="grow">
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="sec grow" id="depGeo" type="button">📍 Merr lokacionin (bankomati)</button>
+      <span class="pill" id="depGeoInfo">pa lokacion</span>
+    </div>
+    <input id="depGeoManual" placeholder="ose koordinata: 42.66, 21.16" style="margin-top:6px;width:100%">
+    <button class="pri" id="depSave" style="width:100%;margin-top:10px">💾 Ruaj depozitën</button>
+    <p class="note" id="depSync">—</p>
+  </div>
+</div>
+
 <!-- UDHËZUESI -->
 <div class="wrap screen hidden" id="scrHelp">
   <div class="row" style="margin-bottom:8px"><b class="grow">❓ Si përdoret</b><button class="sec" id="helpBack">←</button></div>
@@ -165,6 +185,8 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     </ul>
     <h3>☁️ Sinkronizimi</h3>
     <p>Vizitat dërgohen <b>automatikisht te cloud</b> kur ke internet (ose ☰ → <b>☁️ Sinkronizo</b>). PC-ja i tërheq me <b>☁️ Tërhiq</b>. Punon edhe offline (dërgohen kur lidhesh).</p>
+    <h3>🏦 Depozitë në bankë</h3>
+    <p>☰ → <b>🏦 Depozitë</b>: zgjidh bankën, fut shumën, shtyp <b>📍 Merr lokacionin</b> — GPS-i gjen vetë bankomatin/bankën më të afërt (nga interneti). <b>Ruaj</b> → shkon te cloud → në PC te <b>🏦 Banka</b> (☁️ Tërhiq).</p>
     <h3>🧭 Rruga</h3>
     <p>Aparatet sipas qytetit + <b>🧭 Navigo</b> (Google Maps).</p>
     <h3>📦 Stoku</h3>
@@ -234,6 +256,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   <div class="card">
     <button class="sec" id="btnGoHelp" style="width:100%">❓ Si përdoret (udhëzues)</button>
     <button class="pri" id="btnGoReg" style="width:100%;margin-top:8px">🗂️ Regjistrimi (produkte/aparate/stok)</button>
+    <button class="pri" id="btnGoDep" style="width:100%;margin-top:8px">🏦 Depozitë në bankë</button>
     <button class="sec" id="btnGoStock" style="width:100%;margin-top:8px">📦 Stoku i automjetit</button>
     <button class="sec" id="btnGoList" style="width:100%;margin-top:8px">← Kthehu te aparatet</button>
     <button class="sec" id="btnReimport2" style="width:100%;margin-top:8px">📥 Ngarko katalog të ri</button>
@@ -250,7 +273,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 const DENOMS=[[2000,"20 €"],[1000,"10 €"],[500,"5 €"],[200,"2 €"],[100,"1 €"],[50,"50 cent"],[20,"20 cent"],[10,"10 cent"],[5,"5 cent"]];
 const $=s=>document.querySelector(s);
 const K_CAT="apar_catalog", K_VIS="apar_visits";
-const APP_VER="v9";  // rritet me çdo version të ri
+const APP_VER="v10";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let cur=null, counted={}, flt={};
 
@@ -459,6 +482,56 @@ $("#btnGoStock").onclick=()=>{renderStock();show("#scrStock");};
 $("#btnStockBack").onclick=()=>show("#scrMenu");
 $("#btnHelp").onclick=$("#btnGoHelp").onclick=()=>show("#scrHelp");
 $("#helpBack").onclick=()=>show("#scrMenu");
+
+/* ---- DEPOZITË NË BANKË (iPhone) ---- */
+const BANKS=["BKT","ProCredit Bank","Raiffeisen Bank","NLB Banka","TEB","Banka për Biznes (BpB)","Banka Ekonomike","Ziraat Bank","Tjetër"];
+const K_DEP="apar_deposits"; let DEPQ=load(K_DEP)||[];
+let _depLat=null,_depLng=null;
+$("#btnGoDep").onclick=()=>{
+  const sel=$("#depBank");if(!sel.options.length)sel.innerHTML=BANKS.map(b=>`<option>${b}</option>`).join("");
+  _depLat=_depLng=null;$("#depGeoInfo").textContent="pa lokacion";$("#depGeoManual").value="";$("#depAmt").value="";$("#depRef").value="";
+  depSyncBadge();show("#scrDep");
+};
+$("#depBack").onclick=()=>show("#scrMenu");
+async function osmNearestBank(lat,lng){
+  try{
+    const q=`[out:json][timeout:8];(node(around:200,${lat},${lng})["amenity"~"atm|bank"];);out;`;
+    const r=await fetch("https://overpass-api.de/api/interpreter",{method:"POST",body:"data="+encodeURIComponent(q)});
+    if(!r.ok)return null;const j=await r.json();if(!j.elements||!j.elements.length)return null;
+    let best=null,bd=1e18;for(const e of j.elements){const d=(e.lat-lat)**2+(e.lon-lng)**2;if(d<bd){bd=d;best=e;}}
+    const nm=(best.tags&&(best.tags.operator||best.tags.brand||best.tags.name))||"";
+    return {lat:best.lat,lng:best.lon,name:nm};
+  }catch(e){return null;}
+}
+$("#depGeo").onclick=()=>{
+  if(!navigator.geolocation){$("#depGeoInfo").textContent="pa GPS — shkruaj manual";return;}
+  $("#depGeoInfo").textContent="duke marrë…";
+  navigator.geolocation.getCurrentPosition(async p=>{
+    _depLat=+p.coords.latitude.toFixed(6);_depLng=+p.coords.longitude.toFixed(6);
+    $("#depGeoInfo").textContent="📍 "+_depLat+", "+_depLng;
+    const o=await osmNearestBank(_depLat,_depLng);
+    if(o){_depLat=+o.lat.toFixed(6);_depLng=+o.lng.toFixed(6);$("#depGeoInfo").textContent="📍 "+_depLat+", "+_depLng+(o.name?(" · "+o.name):"");
+      if(o.name){const sel=$("#depBank");for(const op of sel.options){if(o.name.toLowerCase().includes(op.value.split(" ")[0].toLowerCase())){sel.value=op.value;break;}}}}
+  },e=>{$("#depGeoInfo").textContent=(e.code===1?"leje e bllokuar":"s'u mor")+" — shkruaj manual";},{enableHighAccuracy:true,timeout:12000,maximumAge:0});
+};
+async function depPush(d){
+  const body={date:d.date,bank:d.bank,amount:d.amount,reference:d.reference,lat:d.lat,lng:d.lng,notes:d.notes};
+  const r=await fetch(SUPA_URL+"/rest/v1/deposits",{method:"POST",headers:{..._sh(),"Prefer":"return=minimal"},body:JSON.stringify(body)});
+  return r.ok;
+}
+async function depSync(){let s=0;for(const d of DEPQ){if(d._synced)continue;try{if(await depPush(d)){d._synced=true;s++;}}catch(e){}}save(K_DEP,DEPQ);return s;}
+function depSyncBadge(){const n=DEPQ.filter(d=>!d._synced).length;$("#depSync").textContent=n?(n+" depozita pa dërguar"):"të gjitha të dërguara ✓";}
+$("#depSave").onclick=async()=>{
+  const amt=parseFloat($("#depAmt").value||0)||0;if(amt<=0){alert("Fut shumën.");return;}
+  let la=_depLat,ln=_depLng;
+  if(la==null){const t=($("#depGeoManual").value||"").trim();const mm=t.match(/(-?\d{1,3}\.\d+)[,\s]+(-?\d{1,3}\.\d+)/);if(mm){la=+mm[1];ln=+mm[2];}}
+  const d={date:new Date().toISOString(),bank:$("#depBank").value,amount:amt,reference:$("#depRef").value.trim(),lat:la,lng:ln,notes:"",_synced:false};
+  DEPQ.push(d);save(K_DEP,DEPQ);
+  let ok=false;try{ok=await depPush(d);if(ok)d._synced=true;save(K_DEP,DEPQ);}catch(e){}
+  depSyncBadge();
+  alert("💾 Depozita u ruajt"+(ok?" dhe u dërgua te cloud ✓":" (do dërgohet kur ke internet)"));
+  show("#scrMenu");
+};
 $("#btnUpdate").onclick=async()=>{
   if(!confirm("Të merret versioni i ri nga interneti? (të dhënat s'fshihen)"))return;
   try{
@@ -601,8 +674,8 @@ async function cloudPullCatalog(){
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{});}
 boot();
 // provo sync-un në hapje (nëse ka internet)
-setTimeout(()=>{ if(navigator.onLine){ cloudSync().then(updateSyncBadge); } }, 1500);
-window.addEventListener("online",()=>cloudSync().then(updateSyncBadge));
+setTimeout(()=>{ if(navigator.onLine){ cloudSync().then(updateSyncBadge); if(typeof depSync==="function")depSync(); } }, 1500);
+window.addEventListener("online",()=>{ cloudSync().then(updateSyncBadge); if(typeof depSync==="function")depSync(); });
 </script>
 </body>
 </html>
