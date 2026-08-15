@@ -1,0 +1,155 @@
+<title>Udhëzuesi Aparatet</title>
+<style>
+:root{
+  --bg:#EEF2F3; --surface:#FFFFFF; --elev:#F4F8F9; --line:#DCE4E6;
+  --ink:#16242A; --muted:#5C6E75; --accent:#0E7A88; --accent2:#0B6675;
+  --good:#2E8F55; --warn:#C07A16; --bad:#C6463C;
+  --good-bg:#E4F1E9; --warn-bg:#F6ECD8;
+  --shadow:0 1px 2px rgba(22,36,42,.05),0 6px 20px rgba(22,36,42,.05);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0C1316; --surface:#131E22; --elev:#182529; --line:#26363C;
+  --ink:#E6EDEF; --muted:#93A6AD; --accent:#3BB4C4; --accent2:#2C97A6;
+  --good:#46B473; --warn:#DDA23C; --bad:#E0685C;
+  --good-bg:#132A1E; --warn-bg:#2B2413;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --bg:#0C1316; --surface:#131E22; --elev:#182529; --line:#26363C;
+  --ink:#E6EDEF; --muted:#93A6AD; --accent:#3BB4C4; --accent2:#2C97A6;
+  --good:#46B473; --warn:#DDA23C; --bad:#E0685C;
+  --good-bg:#132A1E; --warn-bg:#2B2413;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.65}
+.wrap{max-width:660px;margin:0 auto;padding:36px 18px 90px}
+.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:800;margin:0 0 8px}
+h1{font-size:clamp(26px,6vw,34px);margin:0 0 8px;font-weight:800;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);font-size:17px;margin:0 0 26px}
+
+nav{position:sticky;top:0;background:var(--bg);padding:10px 0;margin-bottom:8px;z-index:5;
+  display:flex;gap:7px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+nav a{font-size:13px;font-weight:700;text-decoration:none;color:var(--accent);
+  background:var(--elev);border:1px solid var(--line);padding:6px 11px;border-radius:999px}
+
+section{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+  padding:22px 22px;margin:0 0 16px;scroll-margin-top:64px}
+section h2{font-size:20px;margin:0 0 4px;font-weight:800;display:flex;align-items:center;gap:9px}
+section .lead{color:var(--muted);margin:2px 0 16px;font-size:15px}
+ol,ul{margin:0;padding-left:22px}
+li{margin-bottom:9px}
+li b{font-weight:700}
+.step-n{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;
+  background:var(--accent);color:#fff;border-radius:50%;font-size:13px;font-weight:800;margin-right:2px}
+.tag{display:inline-block;font-size:12.5px;font-weight:700;padding:2px 9px;border-radius:7px;
+  background:var(--elev);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.callout{background:var(--warn-bg);border:1px solid var(--warn);border-radius:11px;padding:13px 15px;margin:14px 0 0;font-size:14.5px}
+.callout b{color:var(--warn)}
+.eq{background:var(--elev);border:1px solid var(--line);border-radius:10px;padding:12px 15px;margin:12px 0;
+  font-family:ui-monospace,Consolas,monospace;font-size:14px;overflow-x:auto}
+.pillrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pill{font-size:13px;font-weight:700;padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:var(--elev)}
+.dev{font-size:12px;font-weight:800;letter-spacing:.05em;padding:2px 8px;border-radius:6px;text-transform:uppercase}
+.dev.pc{background:#E0EEF0;color:#0B6675}.dev.ph{background:var(--good-bg);color:var(--good)}
+@media (prefers-color-scheme:dark){.dev.pc{background:#16323A;color:#3BB4C4}}
+.foot{color:var(--muted);font-size:13px;text-align:center;margin-top:28px}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Aparatet</p>
+  <h1>Udhëzuesi i plotë</h1>
+  <p class="sub">Gjithçka që të duhet — nga regjistrimi fillestar te vizitat, cash-i, banka dhe barazimi me pronarin. Për PC dhe iPhone.</p>
+
+  <nav>
+    <a href="#nis">Nisja</a>
+    <a href="#inv">Inventari</a>
+    <a href="#viz">Vizita</a>
+    <a href="#cash">Cash</a>
+    <a href="#bank">Banka</a>
+    <a href="#baraz">Barazimi</a>
+    <a href="#sync">Sync</a>
+  </nav>
+
+  <section id="nis">
+    <h2>🚀 Nisja</h2>
+    <p class="lead">Një herë, në fillim.</p>
+    <ol>
+      <li><span class="dev pc">PC</span> <b>Regjistro produktet</b> — markat + çmimi (te Regjistri → Produktet). 15 marka vijnë gati.</li>
+      <li><span class="dev pc">PC</span> <span class="dev ph">iPhone</span> <b>Regjistro aparatet</b> — kod, qytet, lokal, kanale, kapacitet; te secili cakto produktin për çdo kanal (planogram). Në terren: <b>📍 GPS</b> + <b>📷 Foto</b>.</li>
+      <li><span class="dev pc">PC</span> <b>Fut furnitorët</b> — Buçaj, Tobacco Holding Group, JTI (te 🧾 Pranim me faturë → ⚙️). Shëno produktet e secilit.</li>
+    </ol>
+  </section>
+
+  <section id="inv">
+    <h2>🎯 Inventari fillestar</h2>
+    <p class="lead">Vendos gjendjen e vërtetë të mallit. Rendi ka rëndësi.</p>
+    <div class="eq">Blerë në magazinë = Në komb + Në aparate + Shitur</div>
+    <ol>
+      <li><span class="step-n">1</span> <b>Numëro aparatet, qytet-pas-qyteti</b> (Prizren i pari, pastaj radhë). Sa pako ka realisht çdo kanal → aparati bëhet 🟢.</li>
+      <li><span class="step-n">2</span> <b>Numëro magazinën</b> në fund — fizikisht, sa mbetën.</li>
+      <li><span class="step-n">3</span> Shtyp <b>Llogarit kombin & barazo</b>. Kombi del vetë = <b>Blerë − Aparate − Depo</b>.</li>
+    </ol>
+    <div class="pillrow">
+      <span class="pill">🟢 regjistruar</span><span class="pill">🟡 pret</span><span class="pill">🔴 mospërputhje</span>
+    </div>
+    <div class="callout"><b>Pse kombi s'numërohet:</b> kutitë gjysmë-të-hapura në makinë numërohen gabim. Duke e llogaritur, çdo pako që s'del në aparat a depo i atribuohet kombit — pa gabim.</div>
+    <p style="margin:14px 0 0;font-size:14px"><span class="dev pc">PC</span> <span class="dev ph">iPhone</span> — të dyja e kanë. Llogaria e plotë me historikun e blerjeve bëhet në PC pas sinkronizimit.</p>
+  </section>
+
+  <section id="viz">
+    <h2>🛒 Vizita e aparatit</h2>
+    <p class="lead">Çdo herë që shkon te një aparat.</p>
+    <ol>
+      <li>Zgjidh aparatin (te lista ose Rruga → <b>🧭 Navigo</b> të nis nga ku je te pika tjetër).</li>
+      <li>Te <b>"Tani"</b> fut sa pako gjete → <b>Shitur = baseline − tani</b> del vetë.</li>
+      <li><b>🧮 Mbush në maksimum</b> ose fut me dorë sa mbushe.</li>
+      <li><b>💾 Ruaj vizitën.</b> Baseline-i i ri ruhet për herën tjetër; kombi zbritet sa vendose.</li>
+    </ol>
+  </section>
+
+  <section id="cash">
+    <h2>💶 Numërimi i cash-it</h2>
+    <p class="lead">Saktësi absolute, sipas prerjeve.</p>
+    <ul>
+      <li>Te vizita, hap <b>💶 Numëro cash-in</b> → fut sa <b>20€, 10€, 5€, 2€, 1€, 50c…</b> ke numëruar në aparat.</li>
+      <li>Fut edhe <b>kusurin e lënë</b> (për kthim). <b>Tërhequr = numëruar − kusur.</b></li>
+      <li><b>Cash i pritur = Shitur × çmim.</b> Nëse s'përputhet me numëruarin → flamur mospërputhje.</li>
+    </ul>
+  </section>
+
+  <section id="bank">
+    <h2>🏦 Dorëzimi në bankë</h2>
+    <p class="lead">Kur çon cash-in në bankë/bankomat.</p>
+    <ul>
+      <li><span class="dev ph">iPhone</span> ☰ → <b>🏦 Depozitë</b>: bankë + shumë + <b>📍 Merr lokacionin</b> (GPS gjen bankomatin më të afërt nga interneti) → Ruaj.</li>
+      <li><span class="dev pc">PC</span> <b>☁️ Tërhiq</b> → depozitat dalin te <b>🏦 Banka</b>. Tregon <b>Mbledhur − Depozituar = Në dorë</b>.</li>
+    </ul>
+  </section>
+
+  <section id="baraz">
+    <h2>⚖️ Barazimi me pronarin</h2>
+    <p class="lead">Kur uleni të mbyllni llogaritë.</p>
+    <div class="eq">Paraja:  Qarkullim − Depozituar = Kesh në dorë
+Malli:   Blerë − (Depo+Komb+Aparate) − Shitur = 0
+Ndarja:  sipas modelit (komision % / blerje / qira)</div>
+    <ul>
+      <li><span class="dev pc">PC</span> te <b>🏦 Banka → ⚖️ Barazimi</b>. Cakto modelin te <b>⚙️ Cakto marrëveshjen</b>.</li>
+      <li><span class="dev ph">iPhone</span> kartela <b>💼 Sa i kam borxh pronarit</b> te menyja — vlerësim i shpejtë.</li>
+      <li>Nëse linja e <b>Mallit</b> s'del zero → mospërputhje fizike (mungesë/gabim). Sistemi e tregon.</li>
+    </ul>
+  </section>
+
+  <section id="sync">
+    <h2>☁️ Sinkronizimi</h2>
+    <p class="lead">iPhone dhe PC gjithmonë të njëjtë.</p>
+    <ul>
+      <li><span class="dev ph">iPhone</span> vizitat + depozitat dërgohen <b>vetvetiu te cloud</b> kur ke internet (ose ☰ → ☁️ Sinkronizo). Punon edhe offline.</li>
+      <li><span class="dev pc">PC</span> <b>☁️ Tërhiq</b> merr çdo gjë nga iPhone. <b>☁️ Katalog</b> dërgon katalogun te iPhone.</li>
+      <li><span class="dev ph">iPhone</span> nëse s'sheh të re: ☰ → <b>🔄 Merr versionin e ri</b>.</li>
+    </ul>
+  </section>
+
+  <p class="foot">Aparatet · sistem menaxhimi për aparatet e duhanit · Kosovë</p>
+</div>
