@@ -1,0 +1,161 @@
+<title>Marrëveshja me pronarin</title>
+<style>
+:root{
+  --bg:#F5F2EC; --surface:#FFFFFF; --ink:#1C2228; --muted:#6B6257; --line:#E3DCD0;
+  --accent:#B0762F; --accent-soft:#F0E4D2; --good:#2E7D52; --bad:#B34430;
+  --shadow:0 1px 2px rgba(28,34,40,.06),0 8px 30px rgba(28,34,40,.05);
+}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141A20; --surface:#1B232B; --ink:#EAE4D9; --muted:#9A9283; --line:#2C3742;
+  --accent:#D19A55; --accent-soft:#2A2418; --good:#5FB585; --bad:#E0806B;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --bg:#141A20; --surface:#1B232B; --ink:#EAE4D9; --muted:#9A9283; --line:#2C3742;
+  --accent:#D19A55; --accent-soft:#2A2418; --good:#5FB585; --bad:#E0806B;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  line-height:1.6;font-size:17px;
+}
+.wrap{max-width:720px;margin:0 auto;padding:56px 22px 96px}
+.serif{font-family:Georgia,"Times New Roman",serif}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+
+.eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:0 0 14px}
+h1{font-family:Georgia,serif;font-weight:600;font-size:clamp(30px,6vw,44px);line-height:1.08;margin:0 0 16px;text-wrap:balance;letter-spacing:-.01em}
+.lede{font-size:19px;color:var(--muted);margin:0 0 8px;max-width:60ch}
+h2{font-family:Georgia,serif;font-weight:600;font-size:25px;margin:56px 0 12px;letter-spacing:-.01em;scroll-margin-top:24px}
+h3{font-size:15px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:28px 0 8px;font-weight:700}
+p{margin:0 0 16px}
+strong{font-weight:650}
+.hr{height:1px;background:var(--line);border:0;margin:0}
+
+.callout{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 24px;box-shadow:var(--shadow);margin:24px 0}
+.callout.accent{border-left:4px solid var(--accent)}
+.callout .k{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px}
+
+.eq{font-family:ui-monospace,Consolas,monospace;background:var(--accent-soft);border-radius:12px;padding:18px 20px;margin:20px 0;font-size:15px;line-height:2;overflow-x:auto}
+.eq b{color:var(--accent)}
+
+.grid{display:grid;gap:16px;margin:24px 0}
+@media(min-width:560px){.grid.three{grid-template-columns:1fr 1fr 1fr}}
+.model{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px}
+.model .tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--accent)}
+.model h4{font-family:Georgia,serif;font-size:19px;margin:0;font-weight:600}
+.model p{font-size:14px;color:var(--muted);margin:0}
+.model .who{font-size:13px;margin-top:auto;padding-top:10px;border-top:1px solid var(--line);color:var(--ink)}
+
+.tblwrap{overflow-x:auto;margin:20px 0;border:1px solid var(--line);border-radius:14px}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:460px}
+th,td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--accent-soft)}
+tr:last-child td{border-bottom:0}
+td.mono,th.mono{font-variant-numeric:tabular-nums}
+
+ol.steps{counter-reset:s;list-style:none;padding:0;margin:20px 0;display:flex;flex-direction:column;gap:14px}
+ol.steps li{position:relative;padding-left:46px;min-height:32px}
+ol.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:-2px;width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;font-family:Georgia,serif;font-weight:600;display:flex;align-items:center;justify-content:center;font-size:16px}
+
+.lever{display:flex;gap:14px;align-items:flex-start;padding:16px 0;border-bottom:1px solid var(--line)}
+.lever:last-child{border-bottom:0}
+.lever .n{flex:none;font-family:Georgia,serif;font-size:22px;color:var(--accent);line-height:1.2;width:26px}
+.lever div p{margin:0}
+.lever .t{font-weight:650;margin-bottom:2px}
+
+.foot{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+@media print{body{background:#fff}.callout,.model,.tblwrap{box-shadow:none}}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Aparatet · strategji</p>
+  <h1 class="serif">Si ta mbyllësh marrëveshjen me pronarin</h1>
+  <p class="lede">Ke një sistem që të jep saktësi deri te pakoja dhe centi. Pronari s'e di këtë. Ky është avantazhi yt — dhe ky dokument tregon si ta përkthesh në një kontratë të drejtë e të qëndrueshme.</p>
+
+  <div class="callout accent">
+    <div class="k">Parimi</div>
+    <p style="margin:0">Mos hy në bisedë me një përqindje në kokë. Hy me <strong>numra realë</strong>: sa është qarkullimi mujor, sa mall lëviz, sa aparate mbahen. Kush i sjell numrat, e udhëheq bisedën.</p>
+  </div>
+
+  <h2 class="serif">Tre mënyra si ndahet paraja</h2>
+  <p>Çdo marrëveshje bie në një nga këto tre modele. Programi i mbulon të tria — te <strong>🏦 Banka → ⚙️ Cakto marrëveshjen</strong> zgjedh modelin dhe barazimi llogaritet vetë.</p>
+
+  <div class="grid three">
+    <div class="model">
+      <span class="tag">Modeli 1</span>
+      <h4 class="serif">Komision %</h4>
+      <p>Pronarit i jep një përqindje të qarkullimit (p.sh. 12%). Sa më shumë shitet, aq më shumë merr ai.</p>
+      <div class="who"><strong>Risku:</strong> te ti (ti mban mallin, mirëmbajtjen). I thjeshtë, transparent.</div>
+    </div>
+    <div class="model">
+      <span class="tag">Modeli 2</span>
+      <h4 class="serif">Blerje malli</h4>
+      <p>Ti e blen duhanin nga pronari me çmim fiks/pako, e shet, diferenca është jotja.</p>
+      <div class="who"><strong>Risku:</strong> te ti plotësisht. Ti fiton më shumë, por paguan mallin që në fillim.</div>
+    </div>
+    <div class="model">
+      <span class="tag">Modeli 3</span>
+      <h4 class="serif">Qira fikse</h4>
+      <p>Pronarit i jep një shumë fikse/aparat në muaj. Çdo gjë mbi të është jotja.</p>
+      <div class="who"><strong>Risku:</strong> te ti kur shitja bie; fitim i madh kur shitja rritet.</div>
+    </div>
+  </div>
+
+  <h2 class="serif">Cili model të leverdis</h2>
+  <div class="tblwrap">
+    <table>
+      <thead><tr><th>Situata jote</th><th>Modeli i preferuar</th><th>Pse</th></tr></thead>
+      <tbody>
+        <tr><td>Sapo po fillon, s'do risk parash</td><td><strong>Komision %</strong></td><td>Paguan vetëm kur shet; s'ngec kesh në mall.</td></tr>
+        <tr><td>Shitja është e fortë e e qëndrueshme</td><td><strong>Qira fikse</strong></td><td>Fitimi shtesë mbetet i yti, jo i pronarit.</td></tr>
+        <tr><td>Ke kapital dhe kontroll të plotë të mallit</td><td><strong>Blerje malli</strong></td><td>Marzhi më i lartë; pronari s'sheh qarkullimin tënd.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <div class="k">Këshillë praktike</div>
+    <p style="margin:0">Fillo me <strong>komision %</strong> për 2–3 muaj. Le të mbledhë sistemi të dhëna reale. Pastaj, kur di saktë sa jep çdo aparat, ke bazë të fortë të kalosh në qira fikse ose blerje — aty ku fiton më shumë.</p>
+  </div>
+
+  <h2 class="serif">Barazimi: ekuacioni që s'gënjen</h2>
+  <p>Kur uleni me pronarin pas disa muajsh, gjithçka duhet të mbyllet baraz në tri linja. Programi i nxjerr të tria automatikisht.</p>
+  <div class="eq">
+<b>PARAJA</b>&nbsp;&nbsp; Qarkullimi − Depozituar në bankë = <b>Kesh në dorë</b><br>
+<b>MALLI</b>&nbsp;&nbsp;&nbsp; Hyrë në magazinë − (Magazinë + Komb + Aparate) − Shitur = <b>0</b><br>
+<b>NDARJA</b>&nbsp; Qarkullimi × marzhi → <b>Pjesa jote</b> · <b>Pjesa e pronarit</b>
+  </div>
+  <p>Nëse linja e <strong>Mallit</strong> nuk del zero, ke një mospërputhje fizike — mungesë, dëmtim ose gabim numërimi. Kjo është mbrojtja jote: askush s'mund të thotë "mungon mall" pa e provuar sistemi.</p>
+
+  <h2 class="serif">Levat e tua në bisedë</h2>
+  <p>Katër gjëra që të japin pozitë të fortë — sepse pronari s'i ka:</p>
+  <div>
+    <div class="lever"><span class="n serif">1</span><div><p class="t">Të dhëna të pakontestueshme</p><p>Çdo shitje, çdo cent, çdo pako e regjistruar me datë. Askush s'mund t'i vërë në dyshim.</p></div></div>
+    <div class="lever"><span class="n serif">2</span><div><p class="t">Dorëzim i gjurmueshëm i keshit</p><p>Çdo depozitë bankare me referencë e GPS. Paraja s'zhduket kurrë "në rrugë".</p></div></div>
+    <div class="lever"><span class="n serif">3</span><div><p class="t">Barazim i mallit deri te pakoja</p><p>Ti provon se s'ka humbje. Pronari fiton besim — dhe besimi ul përqindjen që kërkon.</p></div></div>
+    <div class="lever"><span class="n serif">4</span><div><p class="t">Raporte të gatshme</p><p>I ulesh me një raport të printuar, jo me fjalë. Kjo të bën partner serioz, jo shitës rruge.</p></div></div>
+  </div>
+
+  <h2 class="serif">Çka të fusësh në kontratë</h2>
+  <ol class="steps">
+    <li><strong>Modeli i ndarjes</strong> — përqindja/qiraja/çmimi i mallit, i shkruar qartë me shifra.</li>
+    <li><strong>Kush e mban mallin dhe riskun</strong> — kush paguan duhanin që humbet a skadon.</li>
+    <li><strong>Ritmi i barazimit</strong> — çdo muaj, me raportin e sistemit si dokument zyrtar.</li>
+    <li><strong>Kush i mban aparatet</strong> — pronësia, mirëmbajtja, kush paguan riparimet.</li>
+    <li><strong>Dalja</strong> — çfarë ndodh nëse ndaheni: kush merr aparatet, kush mbetet me mallin.</li>
+  </ol>
+
+  <div class="callout accent">
+    <div class="k">Rregulli i artë</div>
+    <p style="margin:0">Mos e fsheh sistemin, por mos i jep pronarit qasje të plotë në të. Trego <strong>raportet</strong> — jo bazën e të dhënave. Ti mban kontrollin e informacionit; ai merr transparencën që i duhet për të besuar. Kjo ekuilibër është vlera reale e programit tënd.</p>
+  </div>
+
+  <div class="foot">
+    <p style="margin:0">Aparatet — sistem menaxhimi për aparatet e duhanit · Ky dokument është udhëzues i brendshëm, jo këshillë ligjore. Për kontratën përfundimtare konsulto një jurist.</p>
+  </div>
+</div>

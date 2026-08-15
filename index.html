@@ -139,6 +139,46 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   </div>
 </div>
 
+<!-- INVENTARI FILLESTAR -->
+<div class="wrap screen hidden" id="scrOpening">
+  <div class="row" style="margin-bottom:8px"><b class="grow">🎯 Inventari fillestar</b><button class="sec" id="openBack">←</button></div>
+  <div class="card">
+    <p class="note" style="margin-top:0">Vendos gjendjen e vërtetë: numëro çdo aparat (qytet pas qyteti), pastaj depon.
+    Kombi llogaritet vetë = <b>Blerë − Aparate − Depo</b>.</p>
+    <div class="row"><span class="grow"><b id="openProg">—</b></span></div>
+  </div>
+  <div class="card">
+    <div class="sec-t">1) Aparatet</div>
+    <div class="mlist" id="openList"></div>
+  </div>
+  <div class="card">
+    <div class="sec-t">2) Magazina → 3) Barazo</div>
+    <button class="sec" id="btnOpenDepo" style="width:100%">🏬 Numëro magazinën</button>
+    <button class="pri" id="btnOpenCalc" style="width:100%;margin-top:8px">🧮 Llogarit kombin & barazo</button>
+    <p class="note" id="openResult" style="margin:8px 0 0"></p>
+  </div>
+</div>
+
+<!-- NUMËRO NJË APARAT (inventar) -->
+<div class="wrap screen hidden" id="scrOpenCount">
+  <div class="row" style="margin-bottom:8px"><b class="grow" id="ocTitle">Numëro</b><button class="sec" id="ocBack">←</button></div>
+  <div class="card">
+    <p class="note" style="margin-top:0">Fut sa pako ka <b>realisht</b> çdo kanal tani.</p>
+    <div id="ocChannels"></div>
+    <button class="pri" id="ocSave" style="width:100%;margin-top:10px">💾 Ruaj gjendjen</button>
+  </div>
+</div>
+
+<!-- NUMËRO MAGAZINËN (inventar) -->
+<div class="wrap screen hidden" id="scrOpenDepo">
+  <div class="row" style="margin-bottom:8px"><b class="grow">🏬 Numëro magazinën</b><button class="sec" id="odBack">←</button></div>
+  <div class="card">
+    <p class="note" style="margin-top:0">Sa pako mbetën <b>realisht</b> nga çdo produkt.</p>
+    <div id="odProducts"></div>
+    <button class="pri" id="odSave" style="width:100%;margin-top:10px">💾 Ruaj</button>
+  </div>
+</div>
+
 <!-- DEPOZITË NË BANKË -->
 <div class="wrap screen hidden" id="scrDep">
   <div class="row" style="margin-bottom:8px"><b class="grow">🏦 Depozitë në bankë</b><button class="sec" id="depBack">←</button></div>
@@ -183,6 +223,8 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li><b>Kombi:</b> ngarko nga magazina në makinë</li>
       <li><b>📤 Eksporto GJITHÇKA</b> → në PC importohet vetë</li>
     </ul>
+    <h3>🎯 Inventari fillestar</h3>
+    <p>☰ → <b>🎯 Inventari fillestar</b>. Rendi i saktë: <b>(1)</b> numëro çdo aparat qytet-pas-qyteti (p.sh. Prizren i pari) — sa pako ka realisht çdo kanal → aparati bëhet 🟢. <b>(2)</b> në fund numëro <b>magazinën</b> fizikisht. <b>(3)</b> <b>Llogarit</b> — kombi del vetë = Blerë − Aparate − Depo. Kështu gjendja mbetet e barazuar në vlerë e mall.</p>
     <h3>☁️ Sinkronizimi</h3>
     <p>Vizitat dërgohen <b>automatikisht te cloud</b> kur ke internet (ose ☰ → <b>☁️ Sinkronizo</b>). PC-ja i tërheq me <b>☁️ Tërhiq</b>. Punon edhe offline (dërgohen kur lidhesh).</p>
     <h3>🏦 Depozitë në bankë</h3>
@@ -267,6 +309,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   <div class="card">
     <button class="sec" id="btnGoHelp" style="width:100%">❓ Si përdoret (udhëzues)</button>
     <button class="pri" id="btnGoReg" style="width:100%;margin-top:8px">🗂️ Regjistrimi (produkte/aparate/stok)</button>
+    <button class="pri" id="btnGoOpen" style="width:100%;margin-top:8px">🎯 Inventari fillestar</button>
     <button class="pri" id="btnGoDep" style="width:100%;margin-top:8px">🏦 Depozitë në bankë</button>
     <button class="sec" id="btnGoStock" style="width:100%;margin-top:8px">📦 Stoku i automjetit</button>
     <button class="sec" id="btnGoList" style="width:100%;margin-top:8px">← Kthehu te aparatet</button>
@@ -284,7 +327,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 const DENOMS=[[2000,"20 €"],[1000,"10 €"],[500,"5 €"],[200,"2 €"],[100,"1 €"],[50,"50 cent"],[20,"20 cent"],[10,"10 cent"],[5,"5 cent"]];
 const $=s=>document.querySelector(s);
 const K_CAT="apar_catalog", K_VIS="apar_visits";
-const APP_VER="v11";  // rritet me çdo version të ri
+const APP_VER="v12";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let cur=null, counted={}, flt={};
 
@@ -495,6 +538,70 @@ $("#btnHelp").onclick=$("#btnGoHelp").onclick=()=>show("#scrHelp");
 $("#helpBack").onclick=()=>show("#scrMenu");
 
 /* ---- DEPOZITË NË BANKË (iPhone) ---- */
+/* ── INVENTARI FILLESTAR ── */
+let _ocMachine=null;
+$("#btnGoOpen").onclick=()=>{ if(!CAT||!CAT.machines.length){alert("S'ka aparate. Bëj së pari regjistrimin.");return;} renderOpening(); show("#scrOpening"); };
+$("#openBack").onclick=()=>show("#scrMenu");
+$("#ocBack").onclick=()=>{renderOpening();show("#scrOpening");};
+$("#odBack").onclick=()=>{renderOpening();show("#scrOpening");};
+
+function renderOpening(){
+  const ms=[...CAT.machines].sort((a,b)=>(a.city||"").localeCompare(b.city||"")||((a.visit_order||0)-(b.visit_order||0)));
+  const done=ms.filter(m=>m._opened).length;
+  $("#openProg").textContent="Regjistruar: "+done+"/"+ms.length+" aparate";
+  const el=$("#openList"); el.innerHTML=""; let city=null;
+  ms.forEach(m=>{
+    if((m.city||"—")!==city){city=m.city||"—";const h=document.createElement("div");h.className="sec-t";h.textContent="📍 "+city;el.appendChild(h);}
+    const b=document.createElement("button");
+    b.innerHTML=`<span class="code">${m.code}</span><span class="pl grow">${m.place||""}</span><span class="pill">${m._opened?"🟢":"🟡"}</span>`;
+    b.onclick=()=>openCount(m); el.appendChild(b);
+  });
+}
+function openCount(m){
+  _ocMachine=m; $("#ocTitle").textContent="Numëro: "+m.code;
+  const plan=m.planogram&&m.planogram.length?m.planogram:Object.keys(m.baseline||{}).map(c=>({channel:+c}));
+  const pn={}; (CAT.products||[]).forEach(p=>pn[p.id]=p.name);
+  $("#ocChannels").innerHTML=plan.map(r=>{
+    const ch=r.channel, val=(m.baseline&&m.baseline[ch])||0;
+    return `<div class="den"><span>Kanali ${ch} · ${pn[r.product_id]||"—"}</span>
+      <input class="qty oc-in" data-ch="${ch}" type="number" inputmode="numeric" value="${val}"><span></span></div>`;
+  }).join("");
+  show("#scrOpenCount");
+}
+$("#ocSave").onclick=()=>{
+  const bl={}; document.querySelectorAll(".oc-in").forEach(i=>bl[i.dataset.ch]=+i.value||0);
+  _ocMachine.baseline=bl; _ocMachine._opened=true; save(K_CAT,CAT);
+  renderOpening(); show("#scrOpening");
+};
+$("#btnOpenDepo").onclick=()=>{
+  const wh={}; (CAT.warehouse||[]).forEach(w=>wh[w.product_id]=w.qty);
+  $("#odProducts").innerHTML=(CAT.products||[]).map(p=>
+    `<div class="den"><span>${p.name}</span><input class="qty od-in" data-pid="${p.id}" type="number" inputmode="numeric" value="${wh[p.id]||0}"><span></span></div>`).join("");
+  show("#scrOpenDepo");
+};
+$("#odSave").onclick=()=>{
+  const wh=[]; document.querySelectorAll(".od-in").forEach(i=>wh.push({product_id:+i.dataset.pid,qty:+i.value||0}));
+  CAT.warehouse=wh; save(K_CAT,CAT); renderOpening(); show("#scrOpening");
+};
+$("#btnOpenCalc").onclick=()=>{
+  // Blerë: nga warehouse s'e dimë historikun në PWA → përdorim (depo + aparate + komb ekzistues) si referencë
+  // Kombi llogaritet: Blerë − Aparate − Depo. Në PWA "Blerë" = intake nuk mbahet, prandaj
+  // barazojmë duke i lënë magazinën+aparatet të fiksuara dhe kombi mbetet i pandryshuar këtu;
+  // llogaritja e plotë (me intake) bëhet në PC. Këtu vetëm përmbledhim gjendjen.
+  const pn={}; (CAT.products||[]).forEach(p=>pn[p.id]=p.name);
+  let inMach={}; CAT.machines.forEach(m=>{
+    const plan={}; (m.planogram||[]).forEach(r=>plan[r.channel]=r.product_id);
+    Object.entries(m.baseline||{}).forEach(([ch,q])=>{const pid=plan[ch]; if(pid)inMach[pid]=(inMach[pid]||0)+(+q||0);});
+  });
+  let depo={}; (CAT.warehouse||[]).forEach(w=>depo[w.product_id]=w.qty);
+  const rows=(CAT.products||[]).map(p=>{
+    const a=inMach[p.id]||0, d=depo[p.id]||0;
+    return `${p.name}: aparate ${a} · depo ${d}`;
+  });
+  $("#openResult").innerHTML="<b>✅ Gjendja u ruajt.</b><br>"+rows.join("<br>")+
+    "<br><br><span style='color:var(--muted)'>Kombi i saktë (Blerë − Aparate − Depo) llogaritet në PC pas sinkronizimit, se aty mbahet historiku i blerjeve.</span>";
+};
+
 const BANKS=["BKT","ProCredit Bank","Raiffeisen Bank","NLB Banka","TEB","Banka për Biznes (BpB)","Banka Ekonomike","Ziraat Bank","Tjetër"];
 const K_DEP="apar_deposits"; let DEPQ=load(K_DEP)||[];
 let _depLat=null,_depLng=null;
