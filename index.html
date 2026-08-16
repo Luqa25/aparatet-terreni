@@ -106,6 +106,12 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     </div>
   </div>
 
+  <div class="card" id="pickCard">
+    <div class="row"><b class="grow">📥 Merr nga kombi (me një kuti)</b></div>
+    <p class="note" style="margin:4px 0 8px">Kur je te aparati: kjo tregon sa pako të marrësh nga automjeti për ta mbushur. 🔴 = mungon në komb.</p>
+    <div id="pickList"></div>
+  </div>
+
   <details class="card" id="cashBox">
     <summary>💶 Numëro cash-in (sipas prerjeve)</summary>
     <div class="sec-t" style="margin-top:8px">Numëruar në aparat</div>
@@ -212,6 +218,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li>Te <b>“Tani”</b> fut sa pako gjete → <b>Shitur</b> del vetë</li>
       <li><b>💶 Numëro cash-in</b> sipas prerjeve + <b>kusurin e lënë</b></li>
       <li><b>🧮 Mbush në maksimum</b> ose fut me dorë te “Pas mbushjes”</li>
+      <li><b>📥 Merr nga kombi:</b> të thotë sa pako të marrësh me një kuti nga automjeti për secilin produkt; 🔴 = mungon në komb</li>
       <li><b>💾 Ruaj vizitën</b></li>
       <li>Në fund: <b>☰ → 📤 Eksporto</b> → çoje skedarin te PC</li>
     </ol>
@@ -339,7 +346,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 const DENOMS=[[2000,"20 €"],[1000,"10 €"],[500,"5 €"],[200,"2 €"],[100,"1 €"],[50,"50 cent"],[20,"20 cent"],[10,"10 cent"],[5,"5 cent"]];
 const $=s=>document.querySelector(s);
 const K_CAT="apar_catalog", K_VIS="apar_visits";
-const APP_VER="v17";  // rritet me çdo version të ri
+const APP_VER="v18";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let cur=null, counted={}, flt={};
 
@@ -521,7 +528,7 @@ function openVisit(m){
       <td><input class="qty aft" type="number" inputmode="numeric" min="0" value="${ln.capacity||m.capacity||0}"></td>`;
     t.appendChild(tr);
   });
-  t.querySelectorAll(".now").forEach(i=>i.addEventListener("input",recalc));
+  t.querySelectorAll(".now,.aft").forEach(i=>i.addEventListener("input",recalc));
   buildDen("#denCounted",counted,()=>{sumDen();recalc();});
   buildDen("#denFloat",flt,()=>{sumDen();recalc();});
   $("#vNote").value="";
@@ -570,6 +577,34 @@ function recalc(){
   const dEl=$("#rDisc"); dEl.textContent=(disc>=0?"+":"")+disc.toFixed(2)+" €";
   dEl.className=Math.abs(disc)<=0.5?"pos":"neg";
   window._sold=sold; window._exp=exp; window._disc=disc; window._counted=counted_e;
+  renderPickList();
+}
+function renderPickList(){
+  const el=$("#pickList"); if(!el)return;
+  // nevoja për produkt = Σ(Pas − Tani) mbi kanalet e atij produkti
+  const need={};
+  document.querySelectorAll("#chTable tr[data-ch]").forEach(tr=>{
+    const pid=tr.dataset.pid?parseInt(tr.dataset.pid):null; if(!pid)return;
+    const now=parseInt(tr.querySelector(".now").value||0);
+    const aft=parseInt(tr.querySelector(".aft").value||0);
+    const add=Math.max(0,aft-now);
+    if(add)need[pid]=(need[pid]||0)+add;
+  });
+  const van=vanRemaining();  // stoku aktual i kombit për produkt
+  const prods=Object.fromEntries(CAT.products.map(p=>[p.id,p]));
+  const ids=Object.keys(need).map(Number);
+  if(!ids.length){el.innerHTML='<p class="note" style="margin:0">S\'ka nevojë për mbushje (ose fut “Tani”/“Pas”).</p>';return;}
+  el.innerHTML=ids.map(pid=>{
+    const nm=(prods[pid]||{}).name||('#'+pid);
+    const take=need[pid];
+    const have=(van[pid]||{}).qty||0;
+    const short=take-have;
+    const ok=short<=0;
+    const badge=ok?`<b class="pos">merr ${take}</b>`
+                  :`<b class="neg">merr ${take}</b> <span class="pill" style="background:var(--bad);color:#fff">mungon ${short}</span>`;
+    return `<div class="row" style="justify-content:space-between;padding:8px 4px;border-bottom:1px solid var(--line)">
+      <span>${ok?'🟢':'🔴'} ${nm} <span class="pl">(komb: ${have})</span></span>${badge}</div>`;
+  }).join("");
 }
 $("#btnSaveVisit").onclick=()=>{
   const lines=[], newbase={};
