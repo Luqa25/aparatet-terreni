@@ -87,6 +87,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 <div class="wrap screen hidden" id="scrList">
   <div class="row" style="margin-bottom:10px">
     <span class="pill" id="listInfo"></span><span class="grow"></span>
+    <button class="sec" id="btnOptRoute">🧭 Optimizo rrugën</button>
     <button class="sec" id="btnReimport">📥 Katalog</button>
   </div>
   <div class="mlist" id="machineList"></div>
@@ -338,7 +339,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 const DENOMS=[[2000,"20 €"],[1000,"10 €"],[500,"5 €"],[200,"2 €"],[100,"1 €"],[50,"50 cent"],[20,"20 cent"],[10,"10 cent"],[5,"5 cent"]];
 const $=s=>document.querySelector(s);
 const K_CAT="apar_catalog", K_VIS="apar_visits";
-const APP_VER="v15";  // rritet me çdo version të ri
+const APP_VER="v16";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let cur=null, counted={}, flt={};
 
@@ -391,6 +392,56 @@ const DEMO_CATALOG={version:1,products:[
 $("#btnDemo").onclick=()=>{CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(K_CAT,CAT);VIS=[];save(K_VIS,VIS);renderList();show("#scrList");};
 
 // ---- lista ----
+/* ── Optimizimi i rrugës (nearest-neighbor nga pozita aktuale) ── */
+function _dist(aLat,aLng,bLat,bLng){ // km, haversine
+  const R=6371,rad=x=>x*Math.PI/180;
+  const dLat=rad(bLat-aLat),dLng=rad(bLng-aLng);
+  const s=Math.sin(dLat/2)**2+Math.cos(rad(aLat))*Math.cos(rad(bLat))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(s));
+}
+function optimizeRoute(startLat,startLng){
+  // grupo sipas qytetit; brenda qytetit rendit me nearest-neighbor
+  const byCity={};
+  (CAT.machines||[]).forEach(m=>{const c=m.city||"—";(byCity[c]=byCity[c]||[]).push(m);});
+  // rendit qytetet sipas afërsisë së aparatit të parë me pozitën e nisjes
+  const cities=Object.keys(byCity).sort((a,b)=>{
+    const ma=byCity[a].find(x=>x.lat!=null),mb=byCity[b].find(x=>x.lat!=null);
+    if(!ma)return 1; if(!mb)return -1;
+    return _dist(startLat,startLng,ma.lat,ma.lng)-_dist(startLat,startLng,mb.lat,mb.lng);
+  });
+  let order=1, curLat=startLat, curLng=startLng, count=0;
+  cities.forEach(c=>{
+    let rem=byCity[c].filter(m=>m.lat!=null);
+    while(rem.length){
+      let bi=0,bd=Infinity;
+      rem.forEach((m,i)=>{const d=_dist(curLat,curLng,m.lat,m.lng);if(d<bd){bd=d;bi=i;}});
+      const nx=rem.splice(bi,1)[0];
+      nx.visit_order=order++; curLat=nx.lat; curLng=nx.lng; count++;
+    }
+    // aparatet pa GPS të këtij qyteti → në fund të qytetit
+    byCity[c].filter(m=>m.lat==null).forEach(m=>{m.visit_order=order++;});
+  });
+  save(K_CAT,CAT);
+  return count;
+}
+$("#btnOptRoute").onclick=()=>{
+  if(!CAT||!CAT.machines.length){alert("S'ka aparate.");return;}
+  const withGps=CAT.machines.filter(m=>m.lat!=null).length;
+  if(!withGps){alert("Asnjë aparat s'ka GPS. Regjistro lokacionet e aparateve së pari.");return;}
+  const run=(sLat,sLng,fromMe)=>{
+    const n=optimizeRoute(sLat,sLng);
+    renderList();
+    alert("✅ Rruga u optimizua nga "+(fromMe?"pozita jote":"aparati i parë")+".\n"+
+          n+" aparate u renditën sipas rrugës më të shkurtër.\nShtyp 🧭 te secili sipas rendit.");
+  };
+  if(!navigator.geolocation){const m0=CAT.machines.find(x=>x.lat!=null);run(m0.lat,m0.lng,false);return;}
+  const info=$("#listInfo"); info.textContent="duke marrë GPS…";
+  navigator.geolocation.getCurrentPosition(
+    p=>run(p.coords.latitude,p.coords.longitude,true),
+    e=>{const m0=CAT.machines.find(x=>x.lat!=null);
+        if(confirm("S'u mor GPS-i yt. Të optimizohet nga aparati i parë?"))run(m0.lat,m0.lng,false);else renderList();},
+    {enableHighAccuracy:true,timeout:12000,maximumAge:0});
+};
 function renderList(){
   $("#listInfo").textContent=CAT.machines.length+" aparate";
   const el=$("#machineList"); el.innerHTML="";
