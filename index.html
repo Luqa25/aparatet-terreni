@@ -256,7 +256,12 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   <details class="card" open><summary>🚬 Produktet</summary>
     <div class="row" style="margin-top:8px"><input id="pName" placeholder="Marka (p.sh. Marlboro)" class="grow"><input id="pPrice" type="number" inputmode="decimal" placeholder="çmimi €" style="width:96px"></div>
     <button class="pri" id="pAdd" style="width:100%;margin-top:8px">＋ Shto produkt</button>
-    <div class="reglist" id="pList"></div>
+    <details style="margin-top:10px"><summary style="font-size:14px">📋 Zgjidh nga lista e Kosovës</summary>
+      <p class="note" style="margin:6px 0">Shtyp markën për ta shtuar. Çmimi vjen si <b style="color:var(--warn)">demo (portokalli)</b> — ndryshoje te lista dhe bëhet <b style="color:var(--good)">i freskët (jeshil)</b>.</p>
+      <div class="row" style="margin-bottom:6px"><button class="sec grow" id="pAddAll">＋ Shto të gjitha</button></div>
+      <div id="pCatalog" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
+    </details>
+    <div class="reglist" id="pList" style="margin-top:10px"></div>
   </details>
 
   <details class="card"><summary>📟 Aparatet</summary>
@@ -353,7 +358,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 const DENOMS=[[2000,"20 €"],[1000,"10 €"],[500,"5 €"],[200,"2 €"],[100,"1 €"],[50,"50 cent"],[20,"20 cent"],[10,"10 cent"],[5,"5 cent"]];
 const $=s=>document.querySelector(s);
 const K_CAT="apar_catalog", K_VIS="apar_visits";
-const APP_VER="v22";  // rritet me çdo version të ri
+const APP_VER="v23";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -428,6 +433,18 @@ $("#btnLoadCat").onclick=()=>{
 };
 $("#btnReimport").onclick=$("#btnReimport2").onclick=()=>show("#scrImport");
 
+/* Markat reale të duhanit që qarkullojnë në Kosovë — çmimet janë DEMO (provizore), vendosi ti */
+const KS_BRANDS=[
+  ["Marlboro Red",4.00],["Marlboro Gold",4.00],["Marlboro Touch",4.00],["Marlboro Fine Touch",4.00],
+  ["Chesterfield Red",3.00],["Chesterfield Blue",3.00],["L&M Red",3.00],["L&M Blue",3.00],
+  ["Philip Morris",3.20],["Parliament",4.00],["Bond Street",2.80],
+  ["Winston Red",3.20],["Winston Blue",3.20],["Winston XS",3.20],["Camel",3.50],["LD",2.60],
+  ["Dunhill",4.00],["Kent",3.50],["Pall Mall Red",3.00],["Pall Mall Blue",3.00],["Rothmans",2.80],["Vogue",3.80],
+  ["Lucky Strike",3.50],["Davidoff Gold",4.20],["Davidoff Classic",4.20],["West",3.00],
+  ["Ronhill",3.00],["Walter Wolf",2.80],["Karelia Slims",3.20],["Gauloises",3.00],
+  ["Next",2.50],["Monus",2.50],["Merilis",2.50],["Partner",2.40],
+  ["IQOS Terea",4.50],["Heets",4.50],
+];
 const DEMO_CATALOG={version:1,products:[
   {id:1,name:"Marlboro Red",price:4.00,photo:""},
   {id:2,name:"Winston Blue",price:3.20,photo:""},
@@ -846,8 +863,13 @@ function captureParking(mid){
 }
 function renderReg(){
   ensureReg(); fillProdSelects();
-  $("#pList").innerHTML=(CAT.products||[]).map(p=>`<div><span data-edit="${p.id}" style="flex:1;cursor:pointer">${p.id===_pEdit?'✏️ ':''}${p.name} — ${(+p.price||0).toFixed(2)} €</span><button data-del="p" data-id="${p.id}">✕</button></div>`).join("");
+  $("#pList").innerHTML=(CAT.products||[]).map(p=>{
+    const prov=p.provisional; const col=prov?"var(--warn)":"var(--good)";
+    const tag=prov?" <span class='pill' style='background:var(--warn);color:#fff'>demo</span>":" <span class='pill' style='background:var(--good);color:#fff'>i freskët</span>";
+    return `<div><span data-edit="${p.id}" style="flex:1;cursor:pointer">${p.id===_pEdit?'✏️ ':''}${p.name} — <b style="color:${col}">${(+p.price||0).toFixed(2)} €</b>${tag}</span><button data-del="p" data-id="${p.id}">✕</button></div>`;
+  }).join("");
   document.querySelectorAll('#pList [data-edit]').forEach(s=>s.onclick=()=>editProduct(parseInt(s.dataset.edit)));
+  renderCatalogPicker();
   $("#mList").innerHTML=(CAT.machines||[]).map(m=>`<div><span data-medit="${m.id}" style="flex:1;cursor:pointer">${m.id===_mEdit?'✏️ ':''}<b>${m.code}</b> · ${m.place||''} (${m.channels} kanale)${m.lat!=null?' 📍':''}${m.park_lat!=null?' 🅿️':''}${m.photo?' 📷':''}</span><span style="display:flex;gap:4px"><button data-park="${m.id}" title="Shto/ndrysho parkingun" style="color:var(--accent)">🅿️</button><button data-del="m" data-id="${m.id}">✕</button></span></div>`).join("");
   document.querySelectorAll("#mList [data-park]").forEach(b=>b.onclick=()=>captureParking(parseInt(b.dataset.park)));
   document.querySelectorAll("#mList [data-medit]").forEach(s=>s.onclick=()=>editMachine(parseInt(s.dataset.medit)));
@@ -878,9 +900,38 @@ function pResetEdit(){_pEdit=null;$("#pName").value="";$("#pPrice").value="";$("
 $("#pAdd").onclick=()=>{const n=$("#pName").value.trim();if(!n)return;ensureReg();
   const price=parseFloat($("#pPrice").value||0)||0;
   regSnapshot();
-  if(_pEdit!=null){const p=CAT.products.find(x=>x.id===_pEdit);if(p){p.name=n;p.price=price;}}
-  else{CAT.products.push({id:nextId(),name:n,price:price,photo:""});}
+  // çmim i futur/ndryshuar me dorë = i freskët (jo provizor)
+  if(_pEdit!=null){const p=CAT.products.find(x=>x.id===_pEdit);if(p){p.name=n;p.price=price;p.provisional=false;}}
+  else{CAT.products.push({id:nextId(),name:n,price:price,photo:"",provisional:false});}
   save(K_CAT,CAT);pResetEdit();renderReg();};
+/* ── Lista e Kosovës (zgjidh markat, çmim demo) ── */
+function renderCatalogPicker(){
+  const el=$("#pCatalog"); if(!el)return;
+  const have=new Set((CAT.products||[]).map(p=>p.name.toLowerCase()));
+  el.innerHTML=KS_BRANDS.map(([nm,pr])=>{
+    const added=have.has(nm.toLowerCase());
+    return `<button class="sec" data-brand="${nm}" data-price="${pr}" ${added?'disabled':''}
+      style="text-align:left;font-size:13px;padding:8px 10px;${added?'opacity:.4':''}">${added?'✓ ':'＋ '}${nm}</button>`;
+  }).join("");
+  el.querySelectorAll("[data-brand]").forEach(b=>b.onclick=()=>addBrand(b.dataset.brand,parseFloat(b.dataset.price)));
+}
+function addBrand(name,price){
+  ensureReg();
+  if((CAT.products||[]).some(p=>p.name.toLowerCase()===name.toLowerCase()))return;
+  regSnapshot();
+  CAT.products.push({id:nextId(),name:name,price:price,photo:"",provisional:true}); // çmim demo
+  save(K_CAT,CAT); renderReg();
+}
+$("#pAddAll").onclick=()=>{
+  ensureReg();
+  const have=new Set((CAT.products||[]).map(p=>p.name.toLowerCase()));
+  const toAdd=KS_BRANDS.filter(([nm])=>!have.has(nm.toLowerCase()));
+  if(!toAdd.length){alert("Të gjitha markat janë shtuar.");return;}
+  regSnapshot();
+  toAdd.forEach(([nm,pr])=>CAT.products.push({id:nextId(),name:nm,price:pr,photo:"",provisional:true}));
+  save(K_CAT,CAT); renderReg();
+  alert("U shtuan "+toAdd.length+" marka me çmim demo (portokalli). Ndryshoji çmimet për t'i bërë të freskëta.");
+};
 $("#mBuild").onclick=()=>{const ch=parseInt($("#mCh").value||0),cap=parseInt($("#mCap").value||0);
   if(!ch){alert("Fut nr. e kanaleve.");return;}
   if(!(CAT.products||[]).length){alert("Shto produktet së pari.");return;}
