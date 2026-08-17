@@ -1,0 +1,226 @@
+<title>Dita e Parë</title>
+<style>
+:root{
+  --bg:#EFF3F4; --paper:#FFFFFF; --elev:#F4F8F9; --line:#DBE3E6; --hair:#EAEEF0;
+  --ink:#17242A; --muted:#586870; --faint:#8B959B;
+  --accent:#0C6675; --accent2:#094E5A; --gold:#9A6B1F; --gold-bg:#F4ECDB;
+  --good:#2C7A4E; --good-bg:#E5F1EA; --warn:#B0761C; --warn-bg:#F6EDD9;
+  --shadow:0 1px 2px rgba(23,36,42,.05),0 6px 20px rgba(23,36,42,.05);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1215; --paper:#131E22; --elev:#182429; --line:#26353B; --hair:#1D282D;
+  --ink:#E6EDEF; --muted:#94A6AD; --faint:#77848B;
+  --accent:#39B0C0; --accent2:#2A8C9A; --gold:#D0A257; --gold-bg:#2A2416;
+  --good:#4DB679; --good-bg:#142A1D; --warn:#D6A03E; --warn-bg:#2A2313;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.4);
+}}
+:root[data-theme="dark"]{
+  --bg:#0B1215; --paper:#131E22; --elev:#182429; --line:#26353B; --hair:#1D282D;
+  --ink:#E6EDEF; --muted:#94A6AD; --faint:#77848B;
+  --accent:#39B0C0; --accent2:#2A8C9A; --gold:#D0A257; --gold-bg:#2A2416;
+  --good:#4DB679; --good-bg:#142A1D; --warn:#D6A03E; --warn-bg:#2A2313;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,sans-serif;line-height:1.65;font-size:16px}
+.serif{font-family:Georgia,"Times New Roman",serif}
+.mono{font-family:ui-monospace,Consolas,monospace}
+.wrap{max-width:680px;margin:0 auto;padding:44px 20px 90px}
+
+.head{border-bottom:3px solid var(--accent);padding-bottom:20px;margin-bottom:14px}
+.head .kick{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:800}
+.head h1{font-family:Georgia,serif;font-size:34px;font-weight:600;margin:8px 0 6px;line-height:1.08;letter-spacing:-.01em}
+.head p{margin:0;color:var(--muted);font-size:16px}
+
+.tocline{font-size:13px;color:var(--muted);margin:16px 0 30px;background:var(--elev);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.tocline b{color:var(--ink)}
+
+.stage{margin:0 0 14px}
+.stage-h{display:flex;align-items:center;gap:12px;margin:34px 0 4px}
+.stage-h .n{flex:none;width:34px;height:34px;border-radius:9px;background:var(--accent);color:#fff;
+  font-weight:800;display:flex;align-items:center;justify-content:center;font-size:16px}
+.stage-h h2{font-family:Georgia,serif;font-size:23px;font-weight:600;margin:0;letter-spacing:-.01em}
+.stage .when{margin:0 0 14px 46px;font-size:13px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  padding:20px 22px;margin:0 0 14px}
+
+ol.steps{counter-reset:s;list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:14px}
+ol.steps>li{counter-increment:s;position:relative;padding-left:38px;font-size:15.5px}
+ol.steps>li::before{content:counter(s);position:absolute;left:0;top:-1px;width:26px;height:26px;border-radius:50%;
+  background:var(--elev);border:1.5px solid var(--accent);color:var(--accent);font-weight:800;font-size:14px;
+  display:flex;align-items:center;justify-content:center}
+ol.steps>li b{font-weight:700}
+.tap{display:inline-block;background:var(--elev);border:1px solid var(--line);border-radius:7px;padding:1px 8px;
+  font-weight:700;font-size:14px;white-space:nowrap}
+
+.tip{background:var(--good-bg);border-left:4px solid var(--good);border-radius:0 9px 9px 0;padding:12px 16px;margin:12px 0;font-size:14.5px}
+.tip b{color:var(--good)}
+.warn{background:var(--warn-bg);border-left:4px solid var(--warn);border-radius:0 9px 9px 0;padding:12px 16px;margin:12px 0;font-size:14.5px}
+.warn b{color:var(--warn)}
+.why{background:var(--gold-bg);border-left:4px solid var(--gold);border-radius:0 9px 9px 0;padding:12px 16px;margin:12px 0;font-size:14.5px}
+.why b{color:var(--gold)}
+
+.eq{background:var(--elev);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0;
+  font-family:ui-monospace,Consolas,monospace;font-size:14px;text-align:center;font-variant-numeric:tabular-nums}
+.eq b{color:var(--accent)}
+
+.check{background:var(--paper);border:2px solid var(--good);border-radius:14px;padding:20px 22px;margin:30px 0 10px}
+.check h3{margin:0 0 12px;font-size:17px;color:var(--good);display:flex;align-items:center;gap:8px}
+.check ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
+.check li{display:grid;grid-template-columns:22px 1fr;gap:9px;font-size:15px}
+.check .mk{color:var(--good);font-weight:800}
+
+p{margin:0 0 14px}
+.foot{margin-top:40px;text-align:center;font-size:12px;color:var(--faint)}
+b{font-weight:700}
+
+@media print{
+  :root{--bg:#fff;--paper:#fff;--elev:#f5f5f5;--ink:#111;--muted:#444;--line:#ccc;
+    --accent:#0C6675;--gold:#8A5E17;--good:#256b44;--warn:#8a5e14;}
+  body{font-size:11.5pt}.wrap{max-width:none;padding:0}
+  .stage,.card,.check{page-break-inside:avoid}.stage-h h2{page-break-after:avoid}
+}
+</style>
+
+<div class="wrap">
+  <div class="head">
+    <div class="kick">Aparatet · udhëzues</div>
+    <h1 class="serif">Dita e parë me programin</h1>
+    <p>Hap pas hapi, nga fillimi i ditës deri te aparati i fundit, magazina dhe kombi.</p>
+  </div>
+
+  <div class="tocline">
+    Rendi i ditës: <b>1)</b> Produktet → <b>2)</b> Furnitorët → <b>3)</b> Aparatet (me GPS) → <b>4)</b> Inventari i aparateve në terren → <b>5)</b> Magazina → <b>6)</b> Kombi del vetë. Ndiqi me radhë.
+  </div>
+
+  <!-- FAZA 0 -->
+  <div class="stage">
+    <div class="stage-h"><span class="n">0</span><h2 class="serif">Para se të nisesh</h2></div>
+    <p class="when">Në shtëpi ose zyrë · para rrugës</p>
+    <div class="card">
+      <ol class="steps">
+        <li>Hap programin — në telefon shtyp ikonën <b>Aparatet</b> (ose linkun në Safari/Chrome). Në PC hape nga <b>Projects Hub</b>.</li>
+        <li>Shtyp <span class="tap">☰</span> lart djathtas për të hapur menunë kryesore.</li>
+        <li>Nëse është hera e parë fare, do të fillojmë nga zeroja. Nëse ke provuar me <b>🎲 demo</b>, shtyp <span class="tap">🧹 Pastro</span> në PC që të nisesh me tabelë të pastër.</li>
+      </ol>
+      <div class="tip"><b>Këshillë:</b> ditën e parë bëj gjithçka me qetësi. Regjistrimi bëhet një herë; pastaj çdo ditë tjetër është vetëm vizita.</div>
+    </div>
+  </div>
+
+  <!-- FAZA 1 -->
+  <div class="stage">
+    <div class="stage-h"><span class="n">1</span><h2 class="serif">Fut produktet</h2></div>
+    <p class="when">Në zyrë · njëherë</p>
+    <div class="card">
+      <ol class="steps">
+        <li>Nga menyja ☰ shtyp <span class="tap">🗂️ Regjistrimi</span>.</li>
+        <li>Hap seksionin <b>🚬 Produktet</b>.</li>
+        <li>Shkruaj emrin e markës (p.sh. <b>Marlboro Red</b>) dhe <b>çmimin e shitjes</b> (sa e shet pakon).</li>
+        <li>Shtyp <span class="tap">＋ Shto produkt</span>. Përsërit për çdo markë që shet.</li>
+      </ol>
+      <div class="tip"><b>15 marka</b> vijnë tashmë të futura (Marlboro, Winston, Chesterfield…). Kontrollo çmimet dhe ndrysho sipas tregut tënd.</div>
+    </div>
+  </div>
+
+  <!-- FAZA 2 -->
+  <div class="stage">
+    <div class="stage-h"><span class="n">2</span><h2 class="serif">Fut furnitorët</h2></div>
+    <p class="when">Në zyrë · njëherë · vetëm PC</p>
+    <div class="card">
+      <ol class="steps">
+        <li>Në PC hap skedën <b>📦 Stoku</b>.</li>
+        <li>Shtyp <span class="tap">🧾 Pranim me faturë</span>, pastaj butonin <span class="tap">⚙️</span> pranë furnitorit.</li>
+        <li>Furnitorët kryesorë janë gati: <b>Buçaj</b>, <b>Tobacco Holding Group</b>, <b>JTI</b>. Shto NUIS-in (nr. fiskal) kur ta kesh nga fatura.</li>
+        <li>Për çdo furnitor, shëno <b>produktet që shet</b> (kutizat) → Ruaj.</li>
+      </ol>
+      <div class="why"><b>Pse:</b> kur bën një pranim, programi tregon vetëm produktet e atij furnitori — më shpejt, pa gabime.</div>
+    </div>
+  </div>
+
+  <!-- FAZA 3 -->
+  <div class="stage">
+    <div class="stage-h"><span class="n">3</span><h2 class="serif">Regjistro aparatet</h2></div>
+    <p class="when">Në terren · te çdo aparat</p>
+    <div class="card">
+      <ol class="steps">
+        <li>Menyja ☰ → <span class="tap">🗂️ Regjistrimi</span> → hap <b>📟 Aparatet</b>.</li>
+        <li>Fut <b>Kodin</b> (p.sh. APR-01), <b>Qytetin</b>, <b>Lokalin</b>, sa <b>kanale</b> dhe <b>kapacitetin</b> për kanal. Shtyp <span class="tap">Ndërto</span>.</li>
+        <li>Cakto <b>produktin për çdo kanal</b> (cila markë është ku).</li>
+        <li>Qëndro <b>te aparati</b> dhe shtyp <span class="tap">📍 Lokacioni i aparatit</span> — merr GPS-in.</li>
+        <li>Ec te vendi ku <b>parkon automjetin</b> dhe shtyp <span class="tap">🅿️ Vendi i parkingut</span>.</li>
+        <li>Bëj një <span class="tap">📷 Foto</span> të aparatit (kamerë ose galeri).</li>
+        <li>Shtyp <span class="tap">＋ Shto aparatin</span>. Kalo te aparati tjetër dhe përsërit.</li>
+      </ol>
+      <div class="tip"><b>Dy GPS për një aparat:</b> një për vetë aparatin, një për parkingun ku ndalon me makinë. Të dyja të ndihmojnë të navigosh më vonë.</div>
+      <div class="warn"><b>Nëse GPS nuk merret:</b> shkruaj koordinatat me dorë te fusha poshtë (i merr nga Google Maps). Në iPhone GPS-i punon; në tabletin e vjetër jo.</div>
+    </div>
+  </div>
+
+  <!-- FAZA 4 -->
+  <div class="stage">
+    <div class="stage-h"><span class="n">4</span><h2 class="serif">Numëro aparatet — qytet pas qyteti</h2></div>
+    <p class="when">Në terren · gjithë ditën · deri te aparati i fundit</p>
+    <div class="card">
+      <p style="margin-top:0">Tani vendos gjendjen e vërtetë të mallit në secilin aparat. Fillo nga një qytet (p.sh. <b>Prizreni</b>) dhe mbaroje atë para se të kalosh te tjetri.</p>
+      <ol class="steps">
+        <li>Menyja ☰ → <span class="tap">🎯 Inventari fillestar</span>.</li>
+        <li>Zgjidh <b>qytetin</b> lart. Aparatet dalin të renditur.</li>
+        <li>Shtyp te aparati i parë → hap <b>numërimin</b>.</li>
+        <li>Për çdo kanal fut <b>sa pako ka realisht tani</b> në aparat. Shtyp <span class="tap">💾 Ruaj gjendjen</span>.</li>
+        <li>Aparati bëhet <b style="color:var(--good)">🟢 i regjistruar</b>. Kalo te tjetri.</li>
+        <li>Vazhdo derisa të gjithë aparatet e atij qyteti të jenë 🟢, pastaj kalo në qytetin tjetër.</li>
+      </ol>
+      <div class="tip"><b>Statusi:</b> 🟢 = e numërove · 🟡 = ende pret. Kështu sheh me një sy çka mbeti.</div>
+      <div class="why"><b>Pse qytet-pas-qyteti:</b> ndjek rrugën reale pa u kthyer prapa, dhe s'harron asnjë aparat.</div>
+    </div>
+  </div>
+
+  <!-- FAZA 5 -->
+  <div class="stage">
+    <div class="stage-h"><span class="n">5</span><h2 class="serif">Numëro magazinën</h2></div>
+    <p class="when">Në fund të ditës · te depoja</p>
+    <div class="card">
+      <p style="margin-top:0">Kur të gjithë aparatet janë 🟢, kthehu te depoja dhe numëro fizikisht sa mall mbeti.</p>
+      <ol class="steps">
+        <li>Te ekrani <span class="tap">🎯 Inventari fillestar</span>, poshtë, shtyp <span class="tap">🏬 Numëro magazinën</span>.</li>
+        <li>Për çdo produkt fut <b>sa pako mbetën realisht</b> në depo. Shtyp <span class="tap">💾 Ruaj</span>.</li>
+      </ol>
+      <div class="warn"><b>Numëro me kujdes:</b> kjo është gjendja e vërtetë e depos. Sa më saktë, aq më saktë del kombi.</div>
+    </div>
+  </div>
+
+  <!-- FAZA 6 -->
+  <div class="stage">
+    <div class="stage-h"><span class="n">6</span><h2 class="serif">Kombi del vetë</h2></div>
+    <p class="when">Në fund · një shtypje</p>
+    <div class="card">
+      <ol class="steps">
+        <li>Te <span class="tap">🎯 Inventari fillestar</span> shtyp <span class="tap">🧮 Llogarit kombin & barazo</span>.</li>
+        <li>Programi llogarit vetë sa mall është në komb.</li>
+      </ol>
+      <div class="eq"><b>Kombi</b> = Blerë − Aparate − Depo</div>
+      <p>Nuk e numëron kombin me dorë — programi e nxjerr. Çdo pako që s'është në aparat a në depo, është në makinë.</p>
+      <div class="warn"><b>Nëse del ndonjë numër negativ:</b> ke një mospërputhje — je numëruar diçka gabim, ose mungon mall. Kontrollo numërimet.</div>
+      <div class="tip"><b>Në iPhone:</b> ruan gjendjen; llogaria e plotë me faturat e blerjes bëhet në <b>PC</b> pasi sinkronizon (☁️ Tërhiq). Aty mbahet historiku i blerjeve.</div>
+    </div>
+  </div>
+
+  <!-- CHECKLIST -->
+  <div class="check">
+    <h3>✓ Kur ke mbaruar ditën e parë</h3>
+    <ul>
+      <li><span class="mk">✓</span><div>Të gjithë produktet dhe furnitorët janë futur</div></li>
+      <li><span class="mk">✓</span><div>Çdo aparat ka kod, kanale, GPS, parking dhe foto</div></li>
+      <li><span class="mk">✓</span><div>Të gjithë aparatet janë 🟢 (të numëruar)</div></li>
+      <li><span class="mk">✓</span><div>Magazina është numëruar fizikisht</div></li>
+      <li><span class="mk">✓</span><div>Kombi është llogaritur dhe s'ka numra negativë</div></li>
+      <li><span class="mk">✓</span><div>Në iPhone: ke sinkronizuar me cloud (☰ → ☁️ Sinkronizo)</div></li>
+    </ul>
+  </div>
+
+  <p style="margin-top:24px;color:var(--muted);font-size:15px">Nga dita e dytë e tutje, s'ka më regjistrim. Thjesht viziton aparatet: fut sa gjete → shitja del vetë → merr nga kombi → mbush → numëro cash-in → dorëzo në bankë. Programi mban gjithçka baraz.</p>
+
+  <p class="foot">Sistemi Aparatet · udhëzues i ditës së parë · gusht 2026</p>
+</div>

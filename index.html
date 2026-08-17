@@ -331,6 +331,9 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <a href="udhezuesi.html" target="_blank" rel="noopener" style="text-decoration:none">
       <button class="sec" style="width:100%;margin-top:8px">📖 Udhëzuesi i plotë</button>
     </a>
+    <a href="dita_e_pare.html" target="_blank" rel="noopener" style="text-decoration:none">
+      <button class="sec" style="width:100%;margin-top:8px">📋 Dita e parë (hap-pas-hapi)</button>
+    </a>
     <button class="pri" id="btnGoReg" style="width:100%;margin-top:8px">🗂️ Regjistrimi (produkte/aparate/stok)</button>
     <button class="pri" id="btnGoOpen" style="width:100%;margin-top:8px">🎯 Inventari fillestar</button>
     <button class="pri" id="btnGoDep" style="width:100%;margin-top:8px">🏦 Depozitë në bankë</button>
@@ -350,7 +353,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 const DENOMS=[[2000,"20 €"],[1000,"10 €"],[500,"5 €"],[200,"2 €"],[100,"1 €"],[50,"50 cent"],[20,"20 cent"],[10,"10 cent"],[5,"5 cent"]];
 const $=s=>document.querySelector(s);
 const K_CAT="apar_catalog", K_VIS="apar_visits";
-const APP_VER="v21";  // rritet me çdo version të ri
+const APP_VER="v22";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
