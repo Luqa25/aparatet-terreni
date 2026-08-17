@@ -257,7 +257,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <div class="row" style="margin-top:8px"><input id="pName" placeholder="Marka (p.sh. Marlboro)" class="grow"><input id="pPrice" type="number" inputmode="decimal" placeholder="çmimi €" style="width:96px"></div>
     <button class="pri" id="pAdd" style="width:100%;margin-top:8px">＋ Shto produkt</button>
     <details style="margin-top:10px"><summary style="font-size:14px">📋 Zgjidh nga lista e Kosovës</summary>
-      <p class="note" style="margin:6px 0">Shtyp markën për ta shtuar. Çmimi vjen si <b style="color:var(--warn)">demo (portokalli)</b> — ndryshoje te lista dhe bëhet <b style="color:var(--good)">i freskët (jeshil)</b>.</p>
+      <p class="note" style="margin:6px 0">Shtyp markën për ta shtuar. Çmimi vjen si <b style="color:var(--bad)">çmim fillestar (i kuq)</b> — përditësoje te lista me çmimin tënd dhe bëhet <b style="color:var(--good)">i vendosur (jeshil)</b>.</p>
       <div class="row" style="margin-bottom:6px"><button class="sec grow" id="pAddAll">＋ Shto të gjitha</button></div>
       <div id="pCatalog" style="display:grid;grid-template-columns:1fr 1fr;gap:6px"></div>
     </details>
@@ -358,7 +358,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 const DENOMS=[[2000,"20 €"],[1000,"10 €"],[500,"5 €"],[200,"2 €"],[100,"1 €"],[50,"50 cent"],[20,"20 cent"],[10,"10 cent"],[5,"5 cent"]];
 const $=s=>document.querySelector(s);
 const K_CAT="apar_catalog", K_VIS="apar_visits";
-const APP_VER="v23";  // rritet me çdo version të ri
+const APP_VER="v24";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -864,8 +864,8 @@ function captureParking(mid){
 function renderReg(){
   ensureReg(); fillProdSelects();
   $("#pList").innerHTML=(CAT.products||[]).map(p=>{
-    const prov=p.provisional; const col=prov?"var(--warn)":"var(--good)";
-    const tag=prov?" <span class='pill' style='background:var(--warn);color:#fff'>demo</span>":" <span class='pill' style='background:var(--good);color:#fff'>i freskët</span>";
+    const prov=p.provisional; const col=prov?"var(--bad)":"var(--good)";
+    const tag=prov?" <span class='pill' style='background:var(--bad);color:#fff'>çmim fillestar — vendose</span>":" <span class='pill' style='background:var(--good);color:#fff'>çmim i vendosur ✓</span>";
     return `<div><span data-edit="${p.id}" style="flex:1;cursor:pointer">${p.id===_pEdit?'✏️ ':''}${p.name} — <b style="color:${col}">${(+p.price||0).toFixed(2)} €</b>${tag}</span><button data-del="p" data-id="${p.id}">✕</button></div>`;
   }).join("");
   document.querySelectorAll('#pList [data-edit]').forEach(s=>s.onclick=()=>editProduct(parseInt(s.dataset.edit)));
