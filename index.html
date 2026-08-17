@@ -346,9 +346,9 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 const DENOMS=[[2000,"20 €"],[1000,"10 €"],[500,"5 €"],[200,"2 €"],[100,"1 €"],[50,"50 cent"],[20,"20 cent"],[10,"10 cent"],[5,"5 cent"]];
 const $=s=>document.querySelector(s);
 const K_CAT="apar_catalog", K_VIS="apar_visits";
-const APP_VER="v19";  // rritet me çdo version të ri
+const APP_VER="v20";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
-let _pEdit=null;
+let _pEdit=null, _mEdit=null;
 let cur=null, counted={}, flt={};
 
 function load(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
@@ -805,14 +805,15 @@ function renderReg(){
   ensureReg(); fillProdSelects();
   $("#pList").innerHTML=(CAT.products||[]).map(p=>`<div><span data-edit="${p.id}" style="flex:1;cursor:pointer">${p.id===_pEdit?'✏️ ':''}${p.name} — ${(+p.price||0).toFixed(2)} €</span><button data-del="p" data-id="${p.id}">✕</button></div>`).join("");
   document.querySelectorAll('#pList [data-edit]').forEach(s=>s.onclick=()=>editProduct(parseInt(s.dataset.edit)));
-  $("#mList").innerHTML=(CAT.machines||[]).map(m=>`<div><span><b>${m.code}</b> · ${m.place||''} (${m.channels} kanale)${m.lat!=null?' 📍':''}${m.park_lat!=null?' 🅿️':''}${m.photo?' 📷':''}</span><span style="display:flex;gap:4px"><button data-park="${m.id}" title="Shto/ndrysho parkingun" style="color:var(--accent)">🅿️</button><button data-del="m" data-id="${m.id}">✕</button></span></div>`).join("");
+  $("#mList").innerHTML=(CAT.machines||[]).map(m=>`<div><span data-medit="${m.id}" style="flex:1;cursor:pointer">${m.id===_mEdit?'✏️ ':''}<b>${m.code}</b> · ${m.place||''} (${m.channels} kanale)${m.lat!=null?' 📍':''}${m.park_lat!=null?' 🅿️':''}${m.photo?' 📷':''}</span><span style="display:flex;gap:4px"><button data-park="${m.id}" title="Shto/ndrysho parkingun" style="color:var(--accent)">🅿️</button><button data-del="m" data-id="${m.id}">✕</button></span></div>`).join("");
   document.querySelectorAll("#mList [data-park]").forEach(b=>b.onclick=()=>captureParking(parseInt(b.dataset.park)));
+  document.querySelectorAll("#mList [data-medit]").forEach(s=>s.onclick=()=>editMachine(parseInt(s.dataset.medit)));
   $("#whList").innerHTML=(CAT.warehouse||[]).filter(s=>s.qty).map(s=>`<div><span>${s.name}</span><b>${s.qty}</b></div>`).join("");
   $("#vnList").innerHTML=(CAT.van||[]).filter(s=>s.qty).map(s=>`<div><span>${s.name}</span><b>${s.qty}</b></div>`).join("");
   document.querySelectorAll("#scrReg [data-del]").forEach(b=>b.onclick=()=>{
     const t=b.dataset.del,id=parseInt(b.dataset.id);
     if(t==="p"){CAT.products=CAT.products.filter(x=>x.id!==id);if(_pEdit===id)pResetEdit();}
-    if(t==="m")CAT.machines=CAT.machines.filter(x=>x.id!==id);
+    if(t==="m"){CAT.machines=CAT.machines.filter(x=>x.id!==id);if(_mEdit===id)mResetEdit();}
     save(K_CAT,CAT);renderReg();
   });
 }
@@ -837,6 +838,41 @@ $("#mBuild").onclick=()=>{const ch=parseInt($("#mCh").value||0),cap=parseInt($("
   const opts=(CAT.products||[]).map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
   let h="";for(let c=1;c<=ch;c++)h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" value="${cap||''}"></div>`;
   $("#mPlan").innerHTML=h;};
+function editMachine(id){
+  const m=(CAT.machines||[]).find(x=>x.id===id); if(!m)return;
+  _mEdit=id;
+  $("#mCode").value=m.code||""; $("#mCity").value=m.city||"";
+  // "place" ruhet si "Qytet · Lokal" → nxjerr vetëm lokalin
+  const loc=(m.place||"").indexOf(" · ")>=0?(m.place||"").split(" · ").slice(1).join(" · "):(m.place||"");
+  $("#mPlace").value=loc;
+  $("#mVo").value=m.visit_order||""; $("#mCh").value=m.channels||(m.planogram||[]).length; $("#mCap").value=m.capacity||"";
+  // rindërto planogramin me produktet+kapacitetet e ruajtura
+  const ch=(m.planogram||[]).length||m.channels||0;
+  if(ch&&(CAT.products||[]).length){
+    let h="";for(let c=1;c<=ch;c++){
+      const pl=(m.planogram||[]).find(x=>x.channel===c)||{};
+      const opts=(CAT.products||[]).map(p=>`<option value="${p.id}"${p.id===pl.product_id?' selected':''}>${p.name}</option>`).join("");
+      h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" value="${pl.capacity||m.capacity||''}"></div>`;
+    }
+    $("#mPlan").innerHTML=h;
+  }
+  // lokacionet ekzistuese
+  window._mLat=(m.lat!=null?m.lat:null); window._mLng=(m.lng!=null?m.lng:null);
+  window._mParkLat=(m.park_lat!=null?m.park_lat:null); window._mParkLng=(m.park_lng!=null?m.park_lng:null);
+  window._mPhoto=m.photo||"";
+  $("#mGeoInfo").textContent=m.lat!=null?("📍 "+m.lat+", "+m.lng):"pa lokacion";
+  $("#mParkInfo").textContent=m.park_lat!=null?("🅿️ "+m.park_lat+", "+m.park_lng):"pa lokacion";
+  $("#mAdd").textContent="💾 Ruaj ndryshimin";
+  $("#mCode").scrollIntoView({behavior:"smooth",block:"center"}); renderReg();
+}
+function mResetEdit(){
+  _mEdit=null;
+  ["#mCode","#mCity","#mPlace","#mVo","#mCh","#mCap","#mGeoManual","#mParkManual"].forEach(s=>$(s).value="");
+  $("#mPlan").innerHTML="";
+  window._mLat=window._mLng=null;window._mParkLat=window._mParkLng=null;window._mPhoto="";
+  $("#mGeoInfo").textContent="pa lokacion";$("#mParkInfo").textContent="pa lokacion";$("#mPhotoPrev").style.display="none";
+  $("#mAdd").textContent="＋ Shto aparatin";
+}
 $("#mAdd").onclick=()=>{ensureReg();const code=$("#mCode").value.trim();if(!code){alert("Fut kodin.");return;}
   const rows=document.querySelectorAll("#mPlan .plan-row");if(!rows.length){alert("Shtyp 'Ndërto' për kanalet.");return;}
   const plan=[];rows.forEach((r,i)=>{const pid=parseInt(r.querySelector(".pl-prod").value)||null;const cp=parseInt(r.querySelector(".pl-cap").value||0)||0;if(pid)plan.push({channel:i+1,product_id:pid,capacity:cp});});
@@ -846,13 +882,17 @@ $("#mAdd").onclick=()=>{ensureReg();const code=$("#mCode").value.trim();if(!code
   let pLat=(window._mParkLat!=null?window._mParkLat:null), pLng=(window._mParkLng!=null?window._mParkLng:null);
   if(pLat==null){const t=($("#mParkManual").value||"").trim();const mm=t.match(/(-?\d{1,3}\.\d+)[,\s]+(-?\d{1,3}\.\d+)/);if(mm){pLat=+mm[1];pLng=+mm[2];}}
   const city=$("#mCity").value.trim(),loc=$("#mPlace").value.trim();
-  CAT.machines.push({id:nextId(),code:code,city:city,place:(city?city+" · ":"")+loc,visit_order:parseInt($("#mVo").value||0)||0,
-    channels:parseInt($("#mCh").value||plan.length),capacity:parseInt($("#mCap").value||0)||0,planogram:plan,baseline:{},float:{},
-    lat:gLat,lng:gLng,park_lat:pLat,park_lng:pLng,photo:(window._mPhoto||"")});
-  save(K_CAT,CAT);["#mCode","#mCity","#mPlace","#mVo","#mCh","#mCap","#mGeoManual","#mParkManual"].forEach(s=>$(s).value="");$("#mPlan").innerHTML="";
-  window._mLat=window._mLng=null;window._mParkLat=window._mParkLng=null;window._mPhoto="";
-  $("#mGeoInfo").textContent="pa lokacion";$("#mParkInfo").textContent="pa lokacion";$("#mPhotoPrev").style.display="none";
-  renderReg();};
+  if(_mEdit!=null){
+    const m=CAT.machines.find(x=>x.id===_mEdit);
+    if(m){m.code=code;m.city=city;m.place=(city?city+" · ":"")+loc;m.visit_order=parseInt($("#mVo").value||0)||0;
+      m.channels=parseInt($("#mCh").value||plan.length);m.capacity=parseInt($("#mCap").value||0)||0;m.planogram=plan;
+      m.lat=gLat;m.lng=gLng;m.park_lat=pLat;m.park_lng=pLng;if(window._mPhoto)m.photo=window._mPhoto;}
+  } else {
+    CAT.machines.push({id:nextId(),code:code,city:city,place:(city?city+" · ":"")+loc,visit_order:parseInt($("#mVo").value||0)||0,
+      channels:parseInt($("#mCh").value||plan.length),capacity:parseInt($("#mCap").value||0)||0,planogram:plan,baseline:{},float:{},
+      lat:gLat,lng:gLng,park_lat:pLat,park_lng:pLng,photo:(window._mPhoto||"")});
+  }
+  save(K_CAT,CAT);mResetEdit();renderReg();};
 
 /* GPS + foto e aparatit (në tablet) */
 $("#mGeo").onclick=()=>{
