@@ -1,0 +1,173 @@
+<title>Vlera dhe Paga</title>
+<style>
+:root{
+  --bg:#EEF2F3; --surface:#FFFFFF; --elev:#F4F8F9; --line:#DCE4E6;
+  --ink:#16242A; --muted:#5C6E75; --accent:#0E7A88; --accent2:#0B6675;
+  --good:#2E8F55; --gold:#B0762F; --good-bg:#E4F1E9; --gold-bg:#F3E9D6;
+  --shadow:0 1px 2px rgba(22,36,42,.05),0 8px 26px rgba(22,36,42,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0C1316; --surface:#131E22; --elev:#182529; --line:#26363C;
+  --ink:#E6EDEF; --muted:#93A6AD; --accent:#3BB4C4; --accent2:#2C97A6;
+  --good:#46B473; --gold:#D19A55; --good-bg:#132A1E; --gold-bg:#2A2418;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.4);
+}}
+:root[data-theme="dark"]{
+  --bg:#0C1316; --surface:#131E22; --elev:#182529; --line:#26363C;
+  --ink:#E6EDEF; --muted:#93A6AD; --accent:#3BB4C4; --accent2:#2C97A6;
+  --good:#46B473; --gold:#D19A55; --good-bg:#132A1E; --gold-bg:#2A2418;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:720px;margin:0 auto;padding:44px 20px 90px}
+.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:800;margin:0 0 10px}
+h1{font-size:clamp(28px,6vw,40px);margin:0 0 12px;font-weight:800;letter-spacing:-.02em;line-height:1.08;text-wrap:balance}
+.lede{font-size:18px;color:var(--muted);margin:0 0 34px;max-width:56ch}
+h2{font-size:22px;margin:0 0 6px;font-weight:800;letter-spacing:-.01em}
+.sec-lead{color:var(--muted);margin:0 0 16px;font-size:15px}
+section{margin:0 0 40px}
+
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);
+  padding:26px;margin:0 0 34px;display:flex;flex-wrap:wrap;gap:22px;align-items:center}
+.hero .big{flex:1;min-width:200px}
+.hero .num{font-size:clamp(30px,7vw,46px);font-weight:800;color:var(--accent);letter-spacing:-.02em;line-height:1}
+.hero .cap{font-size:14px;color:var(--muted);margin-top:6px}
+.hero .split{border-left:3px solid var(--line);padding-left:20px}
+.hero .split div{margin-bottom:8px;font-size:14px}
+.hero .split b{color:var(--ink)}
+
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:440px}
+th,td{padding:12px 15px;text-align:left;border-bottom:1px solid var(--line)}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:800;background:var(--elev)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+tfoot td{font-weight:800;background:var(--elev)}
+tfoot td.n{color:var(--accent)}
+
+.cards{display:grid;gap:16px;margin:18px 0}
+@media(min-width:600px){.cards{grid-template-columns:1fr 1fr 1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+  padding:20px;display:flex;flex-direction:column;gap:8px}
+.card.pick{border-color:var(--accent);border-width:2px}
+.card .tag{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.card h3{margin:0;font-size:19px;font-weight:800}
+.card .amt{font-size:26px;font-weight:800;color:var(--good);letter-spacing:-.01em}
+.card p{margin:0;font-size:14px;color:var(--muted)}
+.card .best{margin-top:auto;padding-top:10px;border-top:1px solid var(--line);font-size:13px;color:var(--ink)}
+.badge{display:inline-block;font-size:11px;font-weight:800;padding:2px 9px;border-radius:999px;background:var(--accent);color:#fff;margin-left:8px;letter-spacing:.03em}
+
+.script{background:var(--gold-bg);border:1px solid var(--gold);border-radius:16px;padding:22px 24px}
+.script h2{color:var(--gold)}
+.script .q{font-size:16px;line-height:1.7;margin:0 0 14px;padding-left:16px;border-left:3px solid var(--gold)}
+.script ol{margin:0;padding-left:20px}.script li{margin-bottom:10px;font-size:15px}
+.chip{display:inline-block;background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:1px 8px;font-weight:700;font-size:13px}
+
+ul.plain{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+ul.plain li{display:grid;grid-template-columns:24px 1fr;gap:10px;font-size:15px}
+ul.plain .mk{color:var(--good);font-weight:800}
+.note{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;margin-top:8px}
+b{font-weight:700}
+.foot{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">Aparatet · v18</p>
+  <h1>Sa vlen programi, dhe si të caktohet paga jote</h1>
+  <p class="lede">Një sistem i plotë menaxhimi për 1000+ aparate duhani — PC + iPhone, në terren dhe në zyrë. Ja vlera reale dhe si ta shndërrosh në pagë mujore.</p>
+
+  <div class="hero">
+    <div class="big">
+      <div class="num">14,000 – 22,000 €</div>
+      <div class="cap">Vlera e zhvillimit nëse porositej te një kompani softueri (çmimi i tregut për këtë vëllim e kompleksitet).</div>
+    </div>
+    <div class="split">
+      <div><b>~5,500</b> rreshta kod</div>
+      <div><b>18</b> module PC + PWA</div>
+      <div><b>13</b> tabela të dhënash</div>
+      <div><b>2</b> pajisje (PC + iPhone) të sinkronizuara</div>
+    </div>
+  </div>
+
+  <section>
+    <h2>Çfarë bën realisht</h2>
+    <p class="sec-lead">Jo një listë e thjeshtë — një sistem operativ për biznesin.</p>
+    <ul class="plain">
+      <li><span class="mk">✓</span><div><b>Regjistër i plotë:</b> aparate, produkte, furnitorë, planogram, foto, GPS (aparat + parking).</div></li>
+      <li><span class="mk">✓</span><div><b>Stok me tri nivele:</b> magazinë → komb → aparat, me barazim fizik të mallit.</div></li>
+      <li><span class="mk">✓</span><div><b>Vizita + cash:</b> numërim sipas prerjeve (saktësi në cent), mospërputhje me flamur, lista e marrjes nga kombi.</div></li>
+      <li><span class="mk">✓</span><div><b>Inventari fillestar</b> i drejtuar dhe <b>optimizim rruge</b> (GPS, rruga më e shkurtër).</div></li>
+      <li><span class="mk">✓</span><div><b>Banka + barazim me pronarin:</b> dorëzime keshi me GPS, ekuacioni para/mall/ndarje.</div></li>
+      <li><span class="mk">✓</span><div><b>Fatura → Accounting automatik</b> me TVSH 18%, dhe <b>panel AI</b> (Groq/Ollama) me grafikë.</div></li>
+      <li><span class="mk">✓</span><div><b>Sync cloud</b> iPhone↔PC, punon offline, i instalueshëm si ikonë në telefon.</div></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Nga vjen vlera</h2>
+    <p class="sec-lead">Zbërthimi i punës së zhvillimit sipas moduleve.</p>
+    <div class="tblwrap">
+      <table>
+        <thead><tr><th>Pjesa</th><th class="n">Orë pune</th><th class="n">Vlera (€)</th></tr></thead>
+        <tbody>
+          <tr><td>Regjistri + stoku + pasaporta e aparatit</td><td class="n">55</td><td class="n">2,750</td></tr>
+          <tr><td>Vizita, cash sipas prerjeve, barazimi</td><td class="n">45</td><td class="n">2,250</td></tr>
+          <tr><td>Inventari fillestar + optimizim rruge (GPS)</td><td class="n">30</td><td class="n">1,500</td></tr>
+          <tr><td>Banka + barazim me pronarin</td><td class="n">25</td><td class="n">1,250</td></tr>
+          <tr><td>Fatura → Accounting + furnitorët + TVSH</td><td class="n">28</td><td class="n">1,400</td></tr>
+          <tr><td>Panel AI + grafikë</td><td class="n">30</td><td class="n">1,500</td></tr>
+          <tr><td>PWA iPhone + sync cloud + offline</td><td class="n">50</td><td class="n">2,500</td></tr>
+          <tr><td>Dizajn, testim, udhëzues, mirëmbajtje</td><td class="n">37</td><td class="n">1,850</td></tr>
+        </tbody>
+        <tfoot><tr><td>Gjithsej</td><td class="n">300</td><td class="n">15,000</td></tr></tfoot>
+      </table>
+    </div>
+    <p class="note">Vlerësim konservativ me ~50 €/orë (normë e ulët për Kosovë; kompanitë e tregut faturojnë 60–90 €/orë). Për sistem <b>me porosi, ekskluziv për ju</b>, çmimi real i tregut shkon 14–22 mijë €.</p>
+  </section>
+
+  <section>
+    <h2>Si të caktohet paga jote</h2>
+    <p class="sec-lead">Ti nuk je vetëm operator — je operator <b>që solli një mjet 15,000 €</b>. Tri mënyra si ta çmosh këtë.</p>
+    <div class="cards">
+      <div class="card">
+        <span class="tag">Modeli 1</span>
+        <h3>Pagë + bonus mjeti</h3>
+        <div class="amt">+150–250 €</div>
+        <p>Mbi pagën bazë të operatorit, shtesë mujore sepse programi kursen kohë e humbje.</p>
+        <div class="best">Më e lehtë për ta pranuar pronari.</div>
+      </div>
+      <div class="card pick">
+        <span class="tag">Modeli 2 <span class="badge">i mençur</span></span>
+        <h3>% e kursimeve</h3>
+        <div class="amt">2–4 %</div>
+        <p>Programi zbulon mungesat/vjedhjet dhe optimizon rrugët. Merr një pjesë të asaj që kursen biznesi.</p>
+        <div class="best">Rritet me vlerën që sjell — e drejtë për të dy.</div>
+      </div>
+      <div class="card">
+        <span class="tag">Modeli 3</span>
+        <h3>Licencë mujore</h3>
+        <div class="amt">200–400 €</div>
+        <p>Programi mbetet yti; pronari paguan licencë mujore për ta përdorur (si çdo software SaaS).</p>
+        <div class="best">Ti mban pronësinë — mund t'ua shesësh edhe të tjerëve.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="script">
+    <h2>Çfarë t'i thuash punëdhënësit</h2>
+    <p class="sec-lead" style="color:var(--gold)">Fjalë për fjalë — hyr me numra, jo me kërkesa.</p>
+    <p class="q">"Kam ndërtuar një sistem që menaxhon të gjitha aparatet, mallin, cash-in dhe dorëzimet në bankë — me saktësi deri te pakoja dhe centi. Një program i tillë kushton 15–20 mijë € nëse blihet gati. Unë e solla pa kosto."</p>
+    <ol>
+      <li>Trego <b>një raport real</b> nga programi — barazimin e mallit, mospërputhjet e zbuluara. <span class="chip">fakte, jo fjalë</span></li>
+      <li>Thuaj sa <b>kohë kursen</b>: rruga e optimizuar, lista e marrjes, pa ecur dy herë.</li>
+      <li>Thuaj sa <b>humbje parandalon</b>: çdo pako që mungon del menjëherë; cash-i gjurmohet me GPS deri në bankë.</li>
+      <li>Propozo <b>Modelin 2</b> (% e kursimeve) ose një <b>shtesë fikse</b> mbi pagën — zgjidh sipas pronarit.</li>
+      <li><b>Mbaje pronësinë e kodit.</b> Trego raportet, jo bazën e të dhënave. Kjo është leva jote e vërtetë.</li>
+    </ol>
+  </section>
+
+  <p class="foot">Vlerësim orientues, gusht 2026 · Aparatet v18 · për negociatë të brendshme, jo çmim zyrtar</p>
+</div>

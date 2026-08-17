@@ -346,8 +346,9 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 const DENOMS=[[2000,"20 €"],[1000,"10 €"],[500,"5 €"],[200,"2 €"],[100,"1 €"],[50,"50 cent"],[20,"20 cent"],[10,"10 cent"],[5,"5 cent"]];
 const $=s=>document.querySelector(s);
 const K_CAT="apar_catalog", K_VIS="apar_visits";
-const APP_VER="v18";  // rritet me çdo version të ri
+const APP_VER="v19";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
+let _pEdit=null;
 let cur=null, counted={}, flt={};
 
 function load(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
@@ -802,14 +803,15 @@ function captureParking(mid){
 }
 function renderReg(){
   ensureReg(); fillProdSelects();
-  $("#pList").innerHTML=(CAT.products||[]).map(p=>`<div><span>${p.name} — ${(+p.price||0).toFixed(2)} €</span><button data-del="p" data-id="${p.id}">✕</button></div>`).join("");
+  $("#pList").innerHTML=(CAT.products||[]).map(p=>`<div><span data-edit="${p.id}" style="flex:1;cursor:pointer">${p.id===_pEdit?'✏️ ':''}${p.name} — ${(+p.price||0).toFixed(2)} €</span><button data-del="p" data-id="${p.id}">✕</button></div>`).join("");
+  document.querySelectorAll('#pList [data-edit]').forEach(s=>s.onclick=()=>editProduct(parseInt(s.dataset.edit)));
   $("#mList").innerHTML=(CAT.machines||[]).map(m=>`<div><span><b>${m.code}</b> · ${m.place||''} (${m.channels} kanale)${m.lat!=null?' 📍':''}${m.park_lat!=null?' 🅿️':''}${m.photo?' 📷':''}</span><span style="display:flex;gap:4px"><button data-park="${m.id}" title="Shto/ndrysho parkingun" style="color:var(--accent)">🅿️</button><button data-del="m" data-id="${m.id}">✕</button></span></div>`).join("");
   document.querySelectorAll("#mList [data-park]").forEach(b=>b.onclick=()=>captureParking(parseInt(b.dataset.park)));
   $("#whList").innerHTML=(CAT.warehouse||[]).filter(s=>s.qty).map(s=>`<div><span>${s.name}</span><b>${s.qty}</b></div>`).join("");
   $("#vnList").innerHTML=(CAT.van||[]).filter(s=>s.qty).map(s=>`<div><span>${s.name}</span><b>${s.qty}</b></div>`).join("");
   document.querySelectorAll("#scrReg [data-del]").forEach(b=>b.onclick=()=>{
     const t=b.dataset.del,id=parseInt(b.dataset.id);
-    if(t==="p")CAT.products=CAT.products.filter(x=>x.id!==id);
+    if(t==="p"){CAT.products=CAT.products.filter(x=>x.id!==id);if(_pEdit===id)pResetEdit();}
     if(t==="m")CAT.machines=CAT.machines.filter(x=>x.id!==id);
     save(K_CAT,CAT);renderReg();
   });
@@ -818,8 +820,17 @@ function stockBump(arr,pid,name,delta){let e=arr.find(x=>x.product_id===pid);if(
 $("#btnRegNew").onclick=()=>{CAT={version:1,products:[],machines:[],warehouse:[],van:[]};save(K_CAT,CAT);renderReg();show("#scrReg");};
 $("#btnGoReg").onclick=()=>{ensureReg();renderReg();show("#scrReg");};
 $("#regBack").onclick=()=>show("#scrMenu");
+function editProduct(id){
+  const p=(CAT.products||[]).find(x=>x.id===id); if(!p)return;
+  _pEdit=id; $("#pName").value=p.name; $("#pPrice").value=(+p.price||0);
+  $("#pAdd").textContent="💾 Ruaj ndryshimin"; $("#pName").focus(); renderReg();
+}
+function pResetEdit(){_pEdit=null;$("#pName").value="";$("#pPrice").value="";$("#pAdd").textContent="＋ Shto produkt";}
 $("#pAdd").onclick=()=>{const n=$("#pName").value.trim();if(!n)return;ensureReg();
-  CAT.products.push({id:nextId(),name:n,price:parseFloat($("#pPrice").value||0)||0,photo:""});save(K_CAT,CAT);$("#pName").value="";$("#pPrice").value="";renderReg();};
+  const price=parseFloat($("#pPrice").value||0)||0;
+  if(_pEdit!=null){const p=CAT.products.find(x=>x.id===_pEdit);if(p){p.name=n;p.price=price;}}
+  else{CAT.products.push({id:nextId(),name:n,price:price,photo:""});}
+  save(K_CAT,CAT);pResetEdit();renderReg();};
 $("#mBuild").onclick=()=>{const ch=parseInt($("#mCh").value||0),cap=parseInt($("#mCap").value||0);
   if(!ch){alert("Fut nr. e kanaleve.");return;}
   if(!(CAT.products||[]).length){alert("Shto produktet së pari.");return;}
