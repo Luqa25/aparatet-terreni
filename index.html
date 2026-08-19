@@ -58,6 +58,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 </style>
 </head>
 <body>
+<div id="modeBar" style="display:none;text-align:center;font-weight:800;font-size:12px;padding:5px;color:#fff"></div>
 <header>
   <h1>🎛️ Aparatet <span class="sub" id="hsub">— terreni</span></h1>
   <button class="sec" id="btnHelp" style="padding:7px 11px">❓</button>
@@ -67,6 +68,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 <!-- IMPORT KATALOGU -->
 <div class="wrap screen" id="scrImport">
   <div class="card">
+    <button id="btnMode" style="width:100%;margin-bottom:10px;font-weight:800;font-size:15px;padding:10px;border:none;border-radius:8px;color:#fff"></button>
     <h3 style="margin-top:0">📥 Ngarko katalogun</h3>
     <p class="note">Nga programi në PC: <b>📤 Eksporto për tablet</b> → merr <b>catalog.json</b>. Ngjite këtu ose zgjidh skedarin.</p>
     <input type="file" id="fileCat" accept=".json,application/json" style="margin-bottom:8px">
@@ -368,8 +370,12 @@ function parseCoords(t){
   if(isNaN(la)||isNaN(ln))return null;
   return {lat:la,lng:ln};
 }
-const K_CAT="apar_catalog", K_VIS="apar_visits";
-const APP_VER="v26";  // rritet me çdo version të ri
+/* ── MODË DEMO vs LIVE — të dhënat KREJT të ndara (prefiks) ── */
+let MODE=localStorage.getItem("apar_mode")||"live";
+const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
+function isDemo(){return MODE==="demo";}
+function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
+const APP_VER="v27";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -410,12 +416,33 @@ function updateUndoBadges(){
 }
 let cur=null, counted={}, flt={};
 
-function load(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
-function save(k,v){localStorage.setItem(k,JSON.stringify(v));}
+function load(k){try{return JSON.parse(localStorage.getItem(typeof k==='function'?k():k));}catch(e){return null;}}
+function save(k,v){localStorage.setItem(typeof k==='function'?k():k,JSON.stringify(v));}
 function eur(c){return (c/100).toFixed(2)+" €";}
 function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.add("hidden"));$(id).classList.remove("hidden");}
 
+function renderMode(){
+  const bar=$("#modeBar"), btn=$("#btnMode");
+  if(isDemo()){
+    if(bar){bar.style.display="block"; bar.style.background="#C1392B";
+      bar.textContent="🎓 MODË PRAKTIKE (DEMO) — të dhënat s'janë reale";}
+    if(btn){btn.textContent="🎓 DEMO — praktikë (shtyp për LIVE)"; btn.style.background="#C1392B";}
+  }else{
+    if(bar)bar.style.display="none";
+    if(btn){btn.textContent="🟢 LIVE — reale (shtyp për DEMO)"; btn.style.background="#1E8449";}
+  }
+}
 function boot(){
+  renderMode();
+  const bm=$("#btnMode"); if(bm)bm.onclick=()=>{
+    const dest=isDemo()?"LIVE (reale)":"DEMO (praktikë)";
+    if(confirm("Të kalohet në "+dest+"?\nTë dhënat e dy modave janë krejt të ndara.")){
+      if(!isDemo()){CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(()=>"apar_demo_catalog",CAT);}
+      setMode(isDemo()?"live":"demo");
+    }
+  };
+  // në DEMO: nëse s'ka katalog, mbushe
+  if(isDemo() && !load(K_CAT)){CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(K_CAT,CAT);VIS=[];save(K_VIS,VIS);}
   $("#hsub").textContent="— terreni "+APP_VER;
   const vb=$("#verBadge"); if(vb)vb.textContent=APP_VER;
   const h=location.hash;
@@ -457,17 +484,25 @@ const KS_BRANDS=[
   ["IQOS Terea",4.50],["Heets",4.50],
 ];
 const DEMO_CATALOG={version:1,products:[
-  {id:1,name:"Marlboro Red",price:4.00,photo:""},
-  {id:2,name:"Winston Blue",price:3.20,photo:""},
-  {id:3,name:"Lucky Strike",price:3.50,photo:""}],
+  {id:1,name:"Marlboro Red",price:4.00,photo:""},{id:2,name:"Marlboro Gold",price:4.00,photo:""},
+  {id:3,name:"Winston Blue",price:3.20,photo:""},{id:4,name:"Lucky Strike",price:3.50,photo:""},
+  {id:5,name:"Chesterfield",price:3.00,photo:""},{id:6,name:"L&M",price:3.00,photo:""},
+  {id:7,name:"Camel",price:3.50,photo:""},{id:8,name:"Parliament",price:4.00,photo:""}],
  machines:[
-  {id:1,code:"APR-01",place:"Ferizaj · Bar Ura",city:"Ferizaj",visit_order:1,lat:42.37,lng:21.15,model:"GMV Elitouch",channels:3,capacity:25,
-   planogram:[{channel:1,product_id:1,capacity:25},{channel:2,product_id:2,capacity:25},{channel:3,product_id:3,capacity:20}],
-   baseline:{"1":25,"2":25,"3":20},float:{"100":5,"50":4}},
-  {id:2,code:"APR-02",place:"Prishtinë · Kiosku te Sheshi",city:"Prishtinë",visit_order:1,lat:42.66,lng:21.16,model:"Jofemar Goya",channels:2,capacity:30,
-   planogram:[{channel:1,product_id:1,capacity:30},{channel:2,product_id:3,capacity:30}],
-   baseline:{"1":30,"2":30},float:{}}],
- van:[{product_id:1,name:"Marlboro Red",qty:120},{product_id:2,name:"Winston Blue",qty:80},{product_id:3,name:"Lucky Strike",qty:40}]};
+  {id:1,code:"APR-01",place:"Prizren · Bar Ura",city:"Prizren",visit_order:1,lat:42.21,lng:20.74,park_lat:42.211,park_lng:20.741,model:"GMV Elitouch",channels:3,capacity:25,
+   planogram:[{channel:1,product_id:1,capacity:25},{channel:2,product_id:3,capacity:25},{channel:3,product_id:5,capacity:20}],baseline:{"1":18,"2":12,"3":15},float:{"100":5,"50":4}},
+  {id:2,code:"APR-02",place:"Prizren · Kiosku te Sheshi",city:"Prizren",visit_order:2,lat:42.215,lng:20.745,model:"Jofemar Goya",channels:2,capacity:30,
+   planogram:[{channel:1,product_id:1,capacity:30},{channel:2,product_id:4,capacity:30}],baseline:{"1":22,"2":20},float:{}},
+  {id:3,code:"APR-03",place:"Ferizaj · Restorant Era",city:"Ferizaj",visit_order:1,lat:42.37,lng:21.15,park_lat:42.371,park_lng:21.151,model:"GMV Elitouch",channels:3,capacity:25,
+   planogram:[{channel:1,product_id:2,capacity:25},{channel:2,product_id:7,capacity:25},{channel:3,product_id:6,capacity:25}],baseline:{"1":10,"2":8,"3":20},float:{"100":3}},
+  {id:4,code:"APR-04",place:"Prishtinë · Sheshi Nëna Terezë",city:"Prishtinë",visit_order:1,lat:42.66,lng:21.16,model:"Jofemar Goya",channels:4,capacity:30,
+   planogram:[{channel:1,product_id:1,capacity:30},{channel:2,product_id:3,capacity:30},{channel:3,product_id:8,capacity:25},{channel:4,product_id:4,capacity:25}],baseline:{"1":25,"2":18,"3":22,"4":15},float:{"200":2,"100":6}},
+  {id:5,code:"APR-05",place:"Prishtinë · Stacioni i Autobusëve",city:"Prishtinë",visit_order:2,lat:42.665,lng:21.165,model:"GMV Elitouch",channels:3,capacity:25,
+   planogram:[{channel:1,product_id:1,capacity:25},{channel:2,product_id:7,capacity:25},{channel:3,product_id:5,capacity:25}],baseline:{"1":12,"2":14,"3":19},float:{}},
+  {id:6,code:"APR-06",place:"Gjakovë · Çarshia e Vjetër",city:"Gjakovë",visit_order:1,lat:42.38,lng:20.43,park_lat:42.381,park_lng:20.431,model:"Jofemar Goya",channels:2,capacity:30,
+   planogram:[{channel:1,product_id:2,capacity:30},{channel:2,product_id:8,capacity:30}],baseline:{"1":20,"2":24},float:{"100":4}}],
+ van:[{product_id:1,name:"Marlboro Red",qty:180},{product_id:2,name:"Marlboro Gold",qty:140},{product_id:3,name:"Winston Blue",qty:120},{product_id:4,name:"Lucky Strike",qty:90},{product_id:5,name:"Chesterfield",qty:100},{product_id:6,name:"L&M",qty:80},{product_id:7,name:"Camel",qty:70},{product_id:8,name:"Parliament",qty:60}],
+ warehouse:[{product_id:1,name:"Marlboro Red",qty:400},{product_id:2,name:"Marlboro Gold",qty:300},{product_id:3,name:"Winston Blue",qty:250}]};
 $("#btnDemo").onclick=()=>{CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(K_CAT,CAT);VIS=[];save(K_VIS,VIS);renderList();show("#scrList");};
 
 // ---- lista ----
@@ -1082,6 +1117,7 @@ async function cloudPush(v){
   return r.ok;
 }
 async function cloudSync(){
+  if(isDemo())return;   // në DEMO sync-u është i çaktivizuar (të dhënat s'janë reale)
   let sent=0,fail=0;
   for(const v of VIS){
     if(v._synced)continue;
