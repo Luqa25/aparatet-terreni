@@ -87,10 +87,15 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 
 <!-- LISTA E APARATEVE -->
 <div class="wrap screen hidden" id="scrList">
+  <div class="row" style="margin-bottom:8px">
+    <select id="cityFilter" class="grow" style="font-weight:700"></select>
+    <button class="sec" id="btnOptRoute" title="Optimizo rrugën">🧭</button>
+    <button class="sec" id="btnReimport" title="Katalog">📥</button>
+  </div>
   <div class="row" style="margin-bottom:10px">
-    <span class="pill" id="listInfo"></span><span class="grow"></span>
-    <button class="sec" id="btnOptRoute">🧭 Optimizo rrugën</button>
-    <button class="sec" id="btnReimport">📥 Katalog</button>
+    <span class="pill" id="listInfo"></span>
+    <span class="grow"></span>
+    <span class="pill" id="progBadge"></span>
   </div>
   <div class="mlist" id="machineList"></div>
 </div>
@@ -382,7 +387,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v30";  // rritet me çdo version të ri
+const APP_VER="v31";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -571,16 +576,48 @@ $("#btnOptRoute").onclick=()=>{
     e=>{if(confirm("S'u mor GPS-i yt. Të optimizohet nga pika e parë?")){const p=first();run(p.lat,p.lng,false);}else renderList();},
     {enableHighAccuracy:true,timeout:12000,maximumAge:0});
 };
+function _visitedToday(mid){
+  const t=new Date().toISOString().slice(0,10);
+  return VIS.some(v=>v.machine_id===mid && (v.date||"").slice(0,10)===t);
+}
+function _cityFilterValue(){ const s=$("#cityFilter"); return s&&s.value?s.value:"__all__"; }
+function fillCityFilter(){
+  const s=$("#cityFilter"); if(!s)return;
+  const cur=s.value;
+  const cities=[...new Set((CAT.machines||[]).map(m=>m.city||"—"))].sort((a,b)=>a.localeCompare(b));
+  s.innerHTML=`<option value="__all__">📍 Të gjitha qytetet (${(CAT.machines||[]).length})</option>`+
+    cities.map(c=>{const n=(CAT.machines||[]).filter(m=>(m.city||"—")===c).length;return `<option value="${c}">📍 ${c} (${n})</option>`;}).join("");
+  if(cur&&[...s.options].some(o=>o.value===cur))s.value=cur;
+  s.onchange=renderList;
+}
 function renderList(){
-  $("#listInfo").textContent=CAT.machines.length+" aparate";
+  fillCityFilter();
   const el=$("#machineList"); el.innerHTML="";
-  const ms=[...CAT.machines].sort((a,b)=>(a.city||"").localeCompare(b.city||"")||((a.visit_order||0)-(b.visit_order||0)));
+  const fc=_cityFilterValue();
+  let ms=[...CAT.machines].sort((a,b)=>(a.city||"").localeCompare(b.city||"")||((a.visit_order||0)-(b.visit_order||0)));
+  if(fc!=="__all__")ms=ms.filter(m=>(m.city||"—")===fc);
+  $("#listInfo").textContent=ms.length+" aparate";
+  // progresi i ditës për këtë pamje
+  const done=ms.filter(m=>_visitedToday(m.id)).length;
+  const pb=$("#progBadge");
+  if(pb){pb.textContent="🟢 "+done+" / "+ms.length+" sot";
+    pb.style.background=(done>=ms.length&&ms.length)?"#2E8F55":"var(--elev)";
+    pb.style.color=(done>=ms.length&&ms.length)?"#fff":"var(--muted)";}
   let city=null;
   ms.forEach(m=>{
     if((m.city||"—")!==city){city=m.city||"—";const h=document.createElement("div");h.className="sec-t";h.textContent="📍 "+city;el.appendChild(h);}
+    const visited=_visitedToday(m.id);
     const wrap=document.createElement("div"); wrap.className="row"; wrap.style.marginBottom="8px";
     const b=document.createElement("button"); b.className="grow";
-    b.innerHTML=`<span class="code">${m.code||('#'+m.id)}</span><span class="grow"><div>${m.place||'—'}</div><div class="pl">rend ${m.visit_order||'—'} · ${m.channels||0} kanale</div></span>`;
+    // NGJYRIMI: 🟢 e vizituar sot (e kryer) · 🟡 pret vizitë
+    if(visited){
+      b.style.borderLeft="5px solid #2E8F55"; b.style.boxShadow="inset 0 0 0 1px #2E8F5566";
+    }else{
+      b.style.borderLeft="5px solid #C07A16";
+    }
+    const tag=visited?'<span style="color:#2E8F55;font-weight:800">✓ kryer sot</span>'
+                     :'<span style="color:#C07A16;font-weight:700">⏳ pret vizitë</span>';
+    b.innerHTML=`<span class="code">${m.code||('#'+m.id)}</span><span class="grow"><div>${m.place||'—'}</div><div class="pl">rend ${m.visit_order||'—'} · ${m.channels||0} kanale · ${tag}</div></span>`;
     b.onclick=()=>openVisit(m);
     wrap.appendChild(b);
     if(m.park_lat!=null&&m.park_lng!=null){
