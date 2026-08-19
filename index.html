@@ -217,38 +217,43 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 <div class="wrap screen hidden" id="scrHelp">
   <div class="row" style="margin-bottom:8px"><b class="grow">❓ Si përdoret</b><button class="sec" id="helpBack">←</button></div>
   <div class="card" style="line-height:1.6;font-size:14px">
-    <p><b>Ky aplikacion është për terren:</b> regjistrim, vizita dhe cash — pastaj i hedh te PC.</p>
-    <h3>🔄 Rrjedha</h3>
+    <p><b>Aplikacion terreni</b> për menaxhimin e aparateve të cigareve — vizita, cash, stok.</p>
+
+    <h3>🟢 LIVE vs 🎓 DEMO</h3>
+    <p>Lart ke <b>shiritin</b>: 🟢 jeshil = <b>LIVE</b> (të dhëna reale), 🎓 i kuq = <b>DEMO</b> (praktikë). Prek shiritin për të kaluar. Të dhënat e dy modave janë <b>krejt të ndara</b>; në DEMO sync-u është i fikur.</p>
+
+    <h3>🔄 Rrjedha e vizitës</h3>
     <ol style="padding-left:18px">
-      <li>Merr <b>katalogun</b> nga PC (☰ → Ngarko katalog), ose <b>🗂️ Regjistro nga zeroja</b></li>
-      <li>Zgjidh <b>aparatin</b> (te lista/Rruga)</li>
-      <li>Te <b>“Tani”</b> fut sa pako gjete → <b>Shitur</b> del vetë</li>
-      <li><b>💶 Numëro cash-in</b> sipas prerjeve + <b>kusurin e lënë</b></li>
-      <li><b>🧮 Mbush në maksimum</b> ose fut me dorë te “Pas mbushjes”</li>
-      <li><b>📥 Merr nga kombi:</b> të thotë sa pako të marrësh me një kuti nga automjeti për secilin produkt; 🔴 = mungon në komb</li>
-      <li><b>💾 Ruaj vizitën</b></li>
-      <li>Në fund: <b>☰ → 📤 Eksporto</b> → çoje skedarin te PC</li>
+      <li>Te lista, <b>filtro qytetin</b> (dropdown) — sheh vetëm aparatet e tij.</li>
+      <li>Ngjyrat: <b>🟢 kryer sot</b> · <b>🟡 pret vizitë</b>. Lart: progresi <b>X/Y sot</b>.</li>
+      <li>Zgjidh aparatin → te <b>“Tani”</b> fut sa pako gjete → <b>Shitur</b> del vetë.</li>
+      <li><b>💶 Numëro cash-in</b> sipas prerjeve + <b>kusurin e lënë</b>.</li>
+      <li><b>📥 Merr nga kombi:</b> sa pako të marrësh me një kuti; 🔴 = mungon në komb.</li>
+      <li><b>💾 Ruaj</b> → del karta <b>➡️ Aparati tjetër</b> (të nis te i radhësi) + 🧭 navigim.</li>
     </ol>
+
     <h3>🗂️ Regjistrimi (te ☰)</h3>
     <ul style="padding-left:18px">
-      <li><b>Produktet:</b> markat + çmimi</li>
-      <li><b>Aparatet:</b> kod, qytet, lokal, kanale, kapacitet → <b>Ndërto</b> → cakto produktin për çdo kanal.
-        Te aparati: <b>📍 GPS i aparatit</b> + <b>🅿️ GPS i parkingut</b> (ku parkon automjetin) + <b>📷 Foto</b>. Te lista: 🧭 navigo te aparati, 🅿️ navigo te parkingu.</li>
-      <li><b>Magazina:</b> pranim duhani në depo</li>
-      <li><b>Kombi:</b> ngarko nga magazina në makinë</li>
-      <li><b>📤 Eksporto GJITHÇKA</b> → në PC importohet vetë</li>
+      <li><b>Produktet:</b> markat + çmimi. Klik mbi një produkt për ta <b>ndryshuar</b>. Çmim fillestar 🔴 → i vendosur 🟢.</li>
+      <li><b>Aparatet:</b> kod, qytet, lokal → dy kutitë e qarta: <b>🔢 Sa rende</b> + <b>📦 Sa pako zë çdo rend</b> → <b>Ndërto</b> → cakto produktin e çdo rendi.</li>
+      <li>Te aparati: <b>📍 GPS i aparatit</b> + <b>🅿️ GPS i parkingut</b> + <b>📷 Foto</b> (prek parapamjen për ta parë të plotë).</li>
+      <li>Te lista: <b>✏️</b> redakton · <b>📦</b> puno me stokun · <b>🔄 Zëvendëso</b> (kur ndërrohet aparati fizik: i vjetri arkivohet, ruhet historiku) · <b>📜 Historiku</b>.</li>
+      <li><b>Magazina/Kombi:</b> pranim → ngarko. Klik për ndryshim. <b>↶ Undo / ↷ Redo</b> (Redo i kuq = kthim përpara).</li>
     </ul>
+
     <h3>🎯 Inventari fillestar</h3>
-    <p>☰ → <b>🎯 Inventari fillestar</b>. Rendi i saktë: <b>(1)</b> numëro çdo aparat qytet-pas-qyteti (p.sh. Prizren i pari) — sa pako ka realisht çdo kanal → aparati bëhet 🟢. <b>(2)</b> në fund numëro <b>magazinën</b> fizikisht. <b>(3)</b> <b>Llogarit</b> — kombi del vetë = Blerë − Aparate − Depo. Kështu gjendja mbetet e barazuar në vlerë e mall.</p>
-    <h3>☁️ Sinkronizimi</h3>
-    <p>Vizitat dërgohen <b>automatikisht te cloud</b> kur ke internet (ose ☰ → <b>☁️ Sinkronizo</b>). PC-ja i tërheq me <b>☁️ Tërhiq</b>. Punon edhe offline (dërgohen kur lidhesh).</p>
-    <h3>🏦 Depozitë në bankë</h3>
-    <p>☰ → <b>🏦 Depozitë</b>: zgjidh bankën, fut shumën, shtyp <b>📍 Merr lokacionin</b> — GPS-i gjen vetë bankomatin/bankën më të afërt (nga interneti). <b>Ruaj</b> → shkon te cloud → në PC te <b>🏦 Banka</b> (☁️ Tërhiq).</p>
-    <h3>🧭 Rruga</h3>
-    <p>Aparatet sipas qytetit + <b>🧭 Navigo</b> (Google Maps).</p>
-    <h3>📦 Stoku</h3>
-    <p>Sa mbetet në komb — 🟢 ke · 🔴 mbaruar.</p>
-    <p style="color:var(--muted)"><i>Pasi ta instalosh si ikonë, punon edhe offline.</i></p>
+    <p>☰ → <b>🎯 Inventari fillestar</b>: <b>(1)</b> numëro aparatet qytet-pas-qyteti (Prizren i pari) → 🟢. <b>(2)</b> numëro magazinën. <b>(3)</b> <b>Llogarit</b> → kombi = Blerë − Aparate − Depo.</p>
+
+    <h3>🏦 Depozitë · 💸 Tërheqje</h3>
+    <p>☰ → <b>🏦 Depozitë</b>: bankë + shumë + <b>📍 lokacioni</b> (GPS gjen bankomatin nga interneti). Në PC te 🏦 Banka ka edhe <b>💸 Tërheqje nga arka</b> (të hua për emergjencë — transparente, e kthyeshme).</p>
+
+    <h3>🧭 Rruga · ☁️ Sync</h3>
+    <p><b>🧭 Optimizo rrugën</b> (mbi parkingun) → renditje sipas rrugës më të shkurtër. Vizitat/depozitat dërgohen <b>vetë te cloud</b> me internet (ose ☰ → ☁️ Sinkronizo); PC i tërheq me <b>☁️ Tërhiq</b>. Punon offline.</p>
+
+    <h3>🤖 Paneli AI (te ☰ → Udhëzuesi i plotë / PC)</h3>
+    <p>Përdor Groq (falas). S'ke çelës? Shtyp <b>❓ Si ta marr çelësin</b> te paneli AI (console.groq.com). Ose Ollama pa çelës.</p>
+
+    <p style="color:var(--muted)"><i>Pasi ta instalosh si ikonë, punon edhe offline. Kur s'e sheh të re, ☰ → 🔄 Merr versionin e ri.</i></p>
   </div>
 </div>
 
@@ -398,7 +403,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v37";  // rritet me çdo version të ri
+const APP_VER="v38";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
