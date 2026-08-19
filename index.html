@@ -387,7 +387,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v31";  // rritet me çdo version të ri
+const APP_VER="v32";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -454,7 +454,7 @@ function boot(){
     }
   };
   // në DEMO: nëse s'ka katalog, mbushe
-  if(isDemo() && !load(K_CAT)){CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(K_CAT,CAT);VIS=[];save(K_VIS,VIS);}
+  if(isDemo() && !load(K_CAT)){CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(K_CAT,CAT);VIS=demoVisitsToday();save(K_VIS,VIS);}
   $("#hsub").textContent="— terreni "+APP_VER;
   const vb=$("#verBadge"); if(vb)vb.textContent=APP_VER;
   const h=location.hash;
@@ -515,7 +515,23 @@ const DEMO_CATALOG={version:1,products:[
    planogram:[{channel:1,product_id:2,capacity:30},{channel:2,product_id:8,capacity:30}],baseline:{"1":20,"2":24},float:{"100":4}}],
  van:[{product_id:1,name:"Marlboro Red",qty:180},{product_id:2,name:"Marlboro Gold",qty:140},{product_id:3,name:"Winston Blue",qty:120},{product_id:4,name:"Lucky Strike",qty:90},{product_id:5,name:"Chesterfield",qty:100},{product_id:6,name:"L&M",qty:80},{product_id:7,name:"Camel",qty:70},{product_id:8,name:"Parliament",qty:60}],
  warehouse:[{product_id:1,name:"Marlboro Red",qty:400},{product_id:2,name:"Marlboro Gold",qty:300},{product_id:3,name:"Winston Blue",qty:250}]};
-$("#btnDemo").onclick=()=>{CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(K_CAT,CAT);VIS=[];save(K_VIS,VIS);renderList();show("#scrList");};
+function demoVisitsToday(){
+  // simulon "rrugë në progres": disa aparate të vizituar SOT, të tjerët presin
+  const now=new Date().toISOString();
+  // APR-01 dhe APR-04 janë vizituar sot (bëhen 🟢); APR-02,03,05,06 presin (🟡)
+  return [
+    {machine_id:1,date:now,sold_total:18,expected_cash:66.0,counted_cash:66.0,discrepancy:0,
+     lines:[{channel:1,product_id:1,before:18,now:0,sold:18,after:25,price:4.0}],_synced:false},
+    {machine_id:4,date:now,sold_total:22,expected_cash:82.0,counted_cash:80.0,discrepancy:-2.0,
+     lines:[{channel:1,product_id:1,before:25,now:3,sold:22,after:30,price:4.0}],_synced:false},
+  ];
+}
+$("#btnDemo").onclick=()=>{
+  if(!isDemo()){ if(confirm("Demo punon në modën DEMO. Të kalohet aty?")){CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(()=>"apar_demo_catalog",CAT);save(()=>"apar_demo_visits",demoVisitsToday());setMode("demo");} return; }
+  CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(K_CAT,CAT);
+  VIS=demoVisitsToday();save(K_VIS,VIS);
+  renderList();show("#scrList");
+};
 
 // ---- lista ----
 /* ── Optimizimi i rrugës (nearest-neighbor nga pozita aktuale) ── */
