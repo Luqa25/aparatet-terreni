@@ -398,7 +398,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v36";  // rritet me çdo version të ri
+const APP_VER="v37";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -459,7 +459,9 @@ function renderMode(){
       bar.onclick=switchMode;}
     if(btn){btn.textContent="🎓 DEMO — praktikë (shtyp për LIVE)"; btn.style.background="#C1392B";}
   }else{
-    if(bar)bar.style.display="none";
+    if(bar){bar.style.display="block"; bar.style.background="#1E8449"; bar.style.cursor="pointer";
+      bar.textContent="🟢 LIVE — të dhëna reale";
+      bar.onclick=switchMode;}
     if(btn){btn.textContent="🟢 LIVE — reale (shtyp për DEMO)"; btn.style.background="#1E8449";}
   }
 }
