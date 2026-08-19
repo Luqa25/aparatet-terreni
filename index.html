@@ -387,7 +387,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v32";  // rritet me çdo version të ri
+const APP_VER="v33";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -798,9 +798,44 @@ $("#btnSaveVisit").onclick=()=>{
   cloudSync().then(updateSyncBadge);   // dërgo te cloud (nëse ka internet)
   // përditëso baseline+float lokalisht për vizitën tjetër
   const mm=CAT.machines.find(x=>x.id===cur.id); mm.baseline=newbase; mm.float=fJson; save(K_CAT,CAT);
-  alert("✓ Vizita u ruajt.\nShitur: "+window._sold+" pako · Mospërputhje: "+(window._disc>=0?"+":"")+window._disc.toFixed(2)+" €");
-  renderList(); show("#scrList");
+  showNextMachine(cur);   // ✓ ruajtur → propozon aparatin tjetër (rrugë pa mendim)
 };
+function nextUnvisited(afterM){
+  // aparati tjetër i PAVIZITUAR në të njëjtin qytet, sipas rendit; ndryshe kudo
+  const city=afterM.city||"—";
+  const rank=m=>(m.visit_order||999);
+  const pool=CAT.machines.filter(m=>!_visitedToday(m.id) && m.id!==afterM.id);
+  const sameCity=pool.filter(m=>(m.city||"—")===city).sort((a,b)=>rank(a)-rank(b));
+  if(sameCity.length)return sameCity[0];
+  return pool.sort((a,b)=>(a.city||"").localeCompare(b.city||"")||rank(a)-rank(b))[0]||null;
+}
+function showNextMachine(justDone){
+  const nx=nextUnvisited(justDone);
+  const done=CAT.machines.filter(m=>_visitedToday(m.id)).length, tot=CAT.machines.length;
+  let html='<div class="card"><div style="text-align:center;font-size:40px">✓</div>'+
+    '<h3 style="text-align:center;margin:4px 0">Vizita u ruajt</h3>'+
+    '<div class="recon"><div><span>Shitur</span><b>'+window._sold+' pako</b></div>'+
+    '<div><span>Cash i numëruar</span><b>'+window._counted.toFixed(2)+' €</b></div>'+
+    '<div><span>Mospërputhja</span><b style="color:'+(Math.abs(window._disc)<=0.5?'var(--good)':'var(--bad)')+'">'+
+      (window._disc>=0?'+':'')+window._disc.toFixed(2)+' €</b></div></div>'+
+    '<p class="note" style="text-align:center">Progresi sot: <b>'+done+' / '+tot+'</b></p>';
+  if(nx){
+    html+='<button class="pri" id="nxGo" style="width:100%;margin-top:8px">➡️ Aparati tjetër: '+
+      (nx.code||('#'+nx.id))+' · '+(nx.city||'')+'</button>'+
+      '<button class="sec" id="nxNav" style="width:100%;margin-top:6px">🧭 Navigo te '+(nx.code||('#'+nx.id))+'</button>';
+  }else{
+    html+='<p style="text-align:center;color:var(--good);font-weight:800;margin-top:10px">🎉 Të gjithë aparatet u vizituan sot!</p>';
+  }
+  html+='<button class="sec" id="nxList" style="width:100%;margin-top:6px">📋 Kthehu te lista</button></div>';
+  const el=$("#machineList"); el.innerHTML=html;
+  $("#listInfo").textContent=""; $("#progBadge") && ($("#progBadge").textContent="");
+  show("#scrList");
+  if(nx){
+    $("#nxGo").onclick=()=>{openVisit(nx);};
+    $("#nxNav").onclick=()=>{navigate(nx);};
+  }
+  $("#nxList").onclick=()=>{renderList();};
+}
 
 // ---- menu / export ----
 $("#btnHome").onclick=()=>{updateSyncBadge();show("#scrMenu");};
