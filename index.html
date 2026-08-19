@@ -398,7 +398,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v34";  // rritet me çdo version të ri
+const APP_VER="v35";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -610,18 +610,19 @@ function _visitedToday(mid){
 function _cityFilterValue(){ const s=$("#cityFilter"); return s&&s.value?s.value:"__all__"; }
 function fillCityFilter(){
   const s=$("#cityFilter"); if(!s)return;
-  const cur=s.value;
-  const cities=[...new Set((CAT.machines||[]).map(m=>m.city||"—"))].sort((a,b)=>a.localeCompare(b));
-  s.innerHTML=`<option value="__all__">📍 Të gjitha qytetet (${(CAT.machines||[]).length})</option>`+
-    cities.map(c=>{const n=(CAT.machines||[]).filter(m=>(m.city||"—")===c).length;return `<option value="${c}">📍 ${c} (${n})</option>`;}).join("");
+  const cur=s.value; const act=(CAT.machines||[]).filter(m=>!m.archived);
+  const cities=[...new Set(act.map(m=>m.city||"—"))].sort((a,b)=>a.localeCompare(b));
+  s.innerHTML=`<option value="__all__">📍 Të gjitha qytetet (${act.length})</option>`+
+    cities.map(c=>{const n=act.filter(m=>(m.city||"—")===c).length;return `<option value="${c}">📍 ${c} (${n})</option>`;}).join("");
   if(cur&&[...s.options].some(o=>o.value===cur))s.value=cur;
   s.onchange=renderList;
 }
+function activeMachines(){return (CAT.machines||[]).filter(m=>!m.archived);}
 function renderList(){
   fillCityFilter();
   const el=$("#machineList"); el.innerHTML="";
   const fc=_cityFilterValue();
-  let ms=[...CAT.machines].sort((a,b)=>(a.city||"").localeCompare(b.city||"")||((a.visit_order||0)-(b.visit_order||0)));
+  let ms=[...activeMachines()].sort((a,b)=>(a.city||"").localeCompare(b.city||"")||((a.visit_order||0)-(b.visit_order||0)));
   if(fc!=="__all__")ms=ms.filter(m=>(m.city||"—")===fc);
   $("#listInfo").textContent=ms.length+" aparate";
   // progresi i ditës për këtë pamje
@@ -1028,9 +1029,13 @@ function renderReg(){
   }).join("");
   document.querySelectorAll('#pList [data-edit]').forEach(s=>s.onclick=()=>editProduct(parseInt(s.dataset.edit)));
   renderCatalogPicker();
-  $("#mList").innerHTML=(CAT.machines||[]).map(m=>`<div><span data-medit="${m.id}" style="flex:1;cursor:pointer">${m.id===_mEdit?'✏️ ':''}<b>${m.code}</b> · ${m.place||''} (${m.channels} kanale)${m.lat!=null?' 📍':''}${m.park_lat!=null?' 🅿️':''}${m.photo?' 📷':''}</span><span style="display:flex;gap:4px"><button data-park="${m.id}" title="Shto/ndrysho parkingun" style="color:var(--accent)">🅿️</button><button data-del="m" data-id="${m.id}">✕</button></span></div>`).join("");
+  $("#mList").innerHTML=(CAT.machines||[]).filter(m=>!m.archived).map(m=>`<div><span data-medit="${m.id}" style="flex:1;cursor:pointer">${m.id===_mEdit?'✏️ ':''}<b>${m.code}</b> · ${m.place||''} (${m.channels} kanale)${m.lat!=null?' 📍':''}${m.park_lat!=null?' 🅿️':''}${m.photo?' 📷':''}</span><span style="display:flex;gap:4px"><button data-repl="${m.id}" title="Zëvendëso aparatin (u ndërrua fizikisht)" style="color:var(--warn,#C07A16)">🔄</button><button data-park="${m.id}" title="Shto/ndrysho parkingun" style="color:var(--accent)">🅿️</button><button data-del="m" data-id="${m.id}">✕</button></span></div>`).join("");
+  const nArch=(CAT.machines||[]).filter(m=>m.archived).length;
+  if(nArch)$("#mList").innerHTML+=`<button class="sec" id="mHistBtn" style="width:100%;margin-top:8px">📜 Historiku (${nArch} të zëvendësuar)</button>`;
   document.querySelectorAll("#mList [data-park]").forEach(b=>b.onclick=()=>captureParking(parseInt(b.dataset.park)));
   document.querySelectorAll("#mList [data-medit]").forEach(s=>s.onclick=()=>editMachine(parseInt(s.dataset.medit)));
+  document.querySelectorAll("#mList [data-repl]").forEach(b=>b.onclick=()=>replaceMachine(parseInt(b.dataset.repl)));
+  const hb=$("#mHistBtn"); if(hb)hb.onclick=showMachineHistory;
   $("#whList").innerHTML=(CAT.warehouse||[]).filter(s=>s.qty).map(s=>`<div data-wh="${s.product_id}" style="cursor:pointer"><span>${s.name}</span><b>${s.qty} ✏️</b></div>`).join("");
   $("#vnList").innerHTML=(CAT.van||[]).filter(s=>s.qty).map(s=>`<div data-vn="${s.product_id}" style="cursor:pointer"><span>${s.name}</span><b>${s.qty} ✏️</b></div>`).join("");
   document.querySelectorAll("#whList [data-wh]").forEach(d=>d.onclick=()=>editStockRow("wh",parseInt(d.dataset.wh)));
@@ -1096,6 +1101,39 @@ $("#mBuild").onclick=()=>{const ch=parseInt($("#mCh").value||0),cap=parseInt($("
   const opts=(CAT.products||[]).map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
   let h="";for(let c=1;c<=ch;c++)h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" value="${cap||''}"></div>`;
   $("#mPlan").innerHTML=h;};
+function machineStats(mid){
+  // vizitat e këtij aparati (nga VIS) → performanca
+  const vs=VIS.filter(v=>v.machine_id===mid);
+  let sold=0,cash=0,disc=0; vs.forEach(v=>{sold+=(v.sold_total||0);cash+=(v.counted_cash||0);disc+=(v.discrepancy||0);});
+  return {n:vs.length,sold:sold,cash:cash,disc:disc};
+}
+function replaceMachine(id){
+  const m=(CAT.machines||[]).find(x=>x.id===id); if(!m)return;
+  if(!confirm("Aparati «"+(m.code||'#'+id)+"» u ndërrua fizikisht te kjo pikë?\n\n"+
+    "• I vjetri ARKIVOHET (historiku + vizitat ruhen)\n"+
+    "• Krijohet një aparat i RI te e njëjta pikë\n"+
+    "• Pastaj plotëso të dhënat e aparatit të ri.\n\nTë vazhdohet?"))return;
+  // arkivo të vjetrin
+  m.archived=true; m.archived_date=new Date().toISOString().slice(0,16).replace("T"," ");
+  // krijo aparatin e ri te e njëjta pikë (trashëgon qytet/vend, planogram bosh)
+  const nid=nextId();
+  const nm={id:nid,code:(m.code||'#'+id)+"-R",city:m.city||"",place:m.place||"",
+    visit_order:m.visit_order||0,channels:0,capacity:0,planogram:[],baseline:{},float:{},
+    lat:m.lat,lng:m.lng,park_lat:m.park_lat,park_lng:m.park_lng,photo:""};
+  m.replaced_by=nid;
+  CAT.machines.push(nm); save(K_CAT,CAT);
+  renderReg(); editMachine(nid);
+  alert("«"+(m.code||'#'+id)+"» u arkivua (📜 Historiku).\nTani plotëso aparatin e ri (kanale, kapacitet, foto) dhe shtyp Ruaj.");
+}
+function showMachineHistory(){
+  const arch=(CAT.machines||[]).filter(m=>m.archived);
+  if(!arch.length){alert("Ende s'ka aparate të arkivuar.");return;}
+  let msg="📜 APARATET E ZËVENDËSUAR:\n\n";
+  arch.forEach(m=>{const s=machineStats(m.id);
+    msg+="• "+(m.code||'#'+m.id)+" · "+(m.place||"")+"\n  arkivuar: "+(m.archived_date||"")+
+      "\n  "+s.n+" vizita · shitur "+s.sold+" pako · cash "+s.cash.toFixed(2)+"€ · mosp. "+(s.disc>=0?"+":"")+s.disc.toFixed(2)+"€\n\n";});
+  alert(msg);
+}
 function editMachine(id){
   const m=(CAT.machines||[]).find(x=>x.id===id); if(!m)return;
   _mEdit=id;
