@@ -398,7 +398,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v35";  // rritet me çdo version të ri
+const APP_VER="v36";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -444,11 +444,19 @@ function save(k,v){localStorage.setItem(typeof k==='function'?k():k,JSON.stringi
 function eur(c){return (c/100).toFixed(2)+" €";}
 function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.add("hidden"));$(id).classList.remove("hidden");}
 
+function switchMode(){
+  const dest=isDemo()?"LIVE (reale)":"DEMO (praktikë)";
+  if(confirm("Të kalohet në "+dest+"?\nTë dhënat e dy modave janë krejt të ndara.")){
+    if(!isDemo()){CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(()=>"apar_demo_catalog",CAT);save(()=>"apar_demo_visits",demoVisitsToday());}
+    setMode(isDemo()?"live":"demo");
+  }
+}
 function renderMode(){
   const bar=$("#modeBar"), btn=$("#btnMode");
   if(isDemo()){
-    if(bar){bar.style.display="block"; bar.style.background="#C1392B";
-      bar.textContent="🎓 MODË PRAKTIKE (DEMO) — të dhënat s'janë reale";}
+    if(bar){bar.style.display="block"; bar.style.background="#C1392B"; bar.style.cursor="pointer";
+      bar.textContent="🎓 DEMO (praktikë) — shtyp këtu për t'u kthyer në 🟢 LIVE";
+      bar.onclick=switchMode;}
     if(btn){btn.textContent="🎓 DEMO — praktikë (shtyp për LIVE)"; btn.style.background="#C1392B";}
   }else{
     if(bar)bar.style.display="none";
@@ -457,13 +465,7 @@ function renderMode(){
 }
 function boot(){
   renderMode();
-  const bm=$("#btnMode"); if(bm)bm.onclick=()=>{
-    const dest=isDemo()?"LIVE (reale)":"DEMO (praktikë)";
-    if(confirm("Të kalohet në "+dest+"?\nTë dhënat e dy modave janë krejt të ndara.")){
-      if(!isDemo()){CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(()=>"apar_demo_catalog",CAT);}
-      setMode(isDemo()?"live":"demo");
-    }
-  };
+  const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
   // në DEMO: nëse s'ka katalog, mbushe
   if(isDemo() && !load(K_CAT)){CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(K_CAT,CAT);VIS=demoVisitsToday();save(K_VIS,VIS);}
   $("#hsub").textContent="— terreni "+APP_VER;
