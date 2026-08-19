@@ -274,7 +274,18 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   <details class="card" id="detMachines"><summary>📟 Aparatet</summary>
     <div class="row" style="margin-top:8px"><input id="mCode" placeholder="Kodi (APR-01)" class="grow"><input id="mVo" type="number" inputmode="numeric" placeholder="rend" style="width:70px"></div>
     <div class="row" style="margin-top:6px"><input id="mCity" placeholder="Qyteti" class="grow"><input id="mPlace" placeholder="Lokali" class="grow"></div>
-    <div class="row" style="margin-top:6px"><input id="mCh" type="number" inputmode="numeric" placeholder="kanale" class="grow"><input id="mCap" type="number" inputmode="numeric" placeholder="kapacitet/kanal" class="grow"><button class="sec" id="mBuild">Ndërto</button></div>
+    <div class="row" style="margin-top:8px;align-items:flex-end;gap:8px">
+      <div class="grow">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:3px">🔢 Sa rende (kanale)</div>
+        <input id="mCh" type="number" inputmode="numeric" placeholder="p.sh. 6" style="width:100%">
+      </div>
+      <div class="grow">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:3px">📦 Sa pako zë çdo rend</div>
+        <input id="mCap" type="number" inputmode="numeric" placeholder="p.sh. 25" style="width:100%">
+      </div>
+      <button class="sec" id="mBuild" style="height:42px">Ndërto</button>
+    </div>
+    <p class="note" style="margin:4px 0 0">P.sh. aparat me <b>6 rende</b>, secili zë <b>25 pako</b> → shtyp <b>Ndërto</b> për të caktuar produktin e çdo rendi.</p>
     <div class="sec-t" style="margin-top:10px">📍 Aparati</div>
     <div class="row" style="margin-top:4px">
       <button class="sec grow" id="mGeo" type="button">📍 Lokacioni i aparatit (GPS)</button>
@@ -387,7 +398,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v33";  // rritet me çdo version të ri
+const APP_VER="v34";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
