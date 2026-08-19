@@ -266,7 +266,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <div class="reglist" id="pList" style="margin-top:10px"></div>
   </details>
 
-  <details class="card"><summary>📟 Aparatet</summary>
+  <details class="card" id="detMachines"><summary>📟 Aparatet</summary>
     <div class="row" style="margin-top:8px"><input id="mCode" placeholder="Kodi (APR-01)" class="grow"><input id="mVo" type="number" inputmode="numeric" placeholder="rend" style="width:70px"></div>
     <div class="row" style="margin-top:6px"><input id="mCity" placeholder="Qyteti" class="grow"><input id="mPlace" placeholder="Lokali" class="grow"></div>
     <div class="row" style="margin-top:6px"><input id="mCh" type="number" inputmode="numeric" placeholder="kanale" class="grow"><input id="mCap" type="number" inputmode="numeric" placeholder="kapacitet/kanal" class="grow"><button class="sec" id="mBuild">Ndërto</button></div>
@@ -375,7 +375,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v27";  // rritet me çdo version të ri
+const APP_VER="v28";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -575,14 +575,20 @@ function renderList(){
     const b=document.createElement("button"); b.className="grow";
     b.innerHTML=`<span class="code">${m.code||('#'+m.id)}</span><span class="grow"><div>${m.place||'—'}</div><div class="pl">rend ${m.visit_order||'—'} · ${m.channels||0} kanale</div></span>`;
     b.onclick=()=>openVisit(m);
+    wrap.appendChild(b);
     if(m.park_lat!=null&&m.park_lng!=null){
       const pk=document.createElement("button"); pk.className="sec"; pk.textContent="🅿️"; pk.title="Navigo te parkingu";
       pk.onclick=(e)=>{e.stopPropagation();navigate(m,true);};
-      wrap.appendChild(b); wrap.appendChild(pk);
-    } else { wrap.appendChild(b); }
+      wrap.appendChild(pk);
+    }
     const nav=document.createElement("button"); nav.className="sec"; nav.textContent="🧭"; nav.title="Navigo te aparati";
     nav.onclick=(e)=>{e.stopPropagation();navigate(m);};
-    wrap.appendChild(nav); el.appendChild(wrap);
+    wrap.appendChild(nav);
+    const ed=document.createElement("button"); ed.className="sec"; ed.textContent="✏️"; ed.title="Redakto/regjistro aparatin";
+    ed.onclick=(e)=>{e.stopPropagation();ensureReg();updateUndoBadges();renderReg();editMachine(m.id);show("#scrReg");
+      const det=$("#detMachines"); if(det)det.open=true; det&&det.scrollIntoView({behavior:"smooth",block:"start"});};
+    wrap.appendChild(ed);
+    el.appendChild(wrap);
   });
 }
 function navigate(m,toPark){
