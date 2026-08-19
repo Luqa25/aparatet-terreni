@@ -292,6 +292,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <input id="mGalIn" type="file" accept="image/*" style="display:none">
     <div id="mPlan" style="margin-top:8px"></div>
     <button class="pri" id="mAdd" style="width:100%;margin-top:8px">＋ Shto aparatin</button>
+    <button class="sec hidden" id="mGoStock" style="width:100%;margin-top:8px">📦 Puno me stokun e këtij aparati (sot) →</button>
     <div class="reglist" id="mList"></div>
   </details>
 
@@ -375,7 +376,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v28";  // rritet me çdo version të ri
+const APP_VER="v29";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -1015,8 +1016,14 @@ function editMachine(id){
   $("#mGeoInfo").textContent=m.lat!=null?("📍 "+m.lat+", "+m.lng):"pa lokacion";
   $("#mParkInfo").textContent=m.park_lat!=null?("🅿️ "+m.park_lat+", "+m.park_lng):"pa lokacion";
   $("#mAdd").textContent="💾 Ruaj ndryshimin";
+  const gs=$("#mGoStock"); gs.classList.remove("hidden"); gs.dataset.mid=id;   // buton: puno me stokun e këtij aparati
   $("#mCode").scrollIntoView({behavior:"smooth",block:"center"}); renderReg();
 }
+$("#mGoStock").onclick=()=>{
+  const id=parseInt($("#mGoStock").dataset.mid);
+  const m=(CAT.machines||[]).find(x=>x.id===id); if(!m)return;
+  openVisit(m);   // hap vizitën/stokun e këtij aparati për sot (kanale, sasi, mbushje, cash)
+};
 function mResetEdit(){
   _mEdit=null;
   ["#mCode","#mCity","#mPlace","#mVo","#mCh","#mCap","#mGeoManual","#mParkManual"].forEach(s=>$(s).value="");
@@ -1024,6 +1031,7 @@ function mResetEdit(){
   window._mLat=window._mLng=null;window._mParkLat=window._mParkLng=null;window._mPhoto="";
   $("#mGeoInfo").textContent="pa lokacion";$("#mParkInfo").textContent="pa lokacion";$("#mPhotoPrev").style.display="none";
   $("#mAdd").textContent="＋ Shto aparatin";
+  $("#mGoStock").classList.add("hidden");   // fshihet kur s'je duke redaktuar aparat ekzistues
 }
 $("#mAdd").onclick=()=>{ensureReg();const code=$("#mCode").value.trim();if(!code){alert("Fut kodin.");return;}
   const rows=document.querySelectorAll("#mPlan .plan-row");if(!rows.length){alert("Shtyp 'Ndërto' për kanalet.");return;}
