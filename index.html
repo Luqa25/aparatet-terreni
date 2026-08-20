@@ -264,7 +264,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li><b>🔧 Statusi:</b> 🟢 Punon / 🔧 Në defekt / ⛔ Jashtë pune + shënim — aparatet prishen herë-pas-here; statusi ruhet.</li>
       <li><b>💶 Rregullat e pagesës</b> (secilit aparat): pranon letra? kthen kusur? vetëm para të sakta? monedha 🪙 0.5–2 €? <b>🔒 Kutia e kusurit</b> që s'preket (tërhiqet vetëm arka poshtë).</li>
       <li>Te aparati: <b>📍 GPS</b> + <b>🅿️ Parkingu</b> + <b>📷 Foto kryesore</b> (prek për ta parë të plotë) + <b>📘 Manuali zyrtar / 🛠️ Defektet</b> (linqet e modelit).</li>
-      <li><b>🖼️ Galeri pa kufi (dy nivele):</b> <b>📟 Foto e aparatit</b> (kanale, defekt — arkivohen me aparatin) dhe <b>📍 Foto e pikës</b> (hyrja, vendi, prizi — MBETEN kur ndërrohet aparati; i riu i trashëgon). Prek një foto për ta parë, ✕ për ta hequr.</li>
+      <li><b>🖼️ Galeri pa kufi (dy nivele):</b> <b>📟 Foto e aparatit</b> (kanale, defekt — arkivohen me aparatin) dhe <b>📍 Foto e pikës</b> (hyrja, vendi, prizi — MBETEN kur ndërrohet aparati; i riu i trashëgon). Prek një foto për ta parë; shtyp <b>✕</b> në cep për <b>ta fshirë</b> (të kërkon konfirmim). Fshi një ose disa — nëse je te një aparat ekzistues, fshirja ruhet menjëherë dhe hiqet edhe nga cloud.</li>
       <li><b>☁️ Fotot te cloud:</b> te ☰ → <b>☁️ Sinkronizo</b>, fotot e rëndësishme (të pikës + të aparateve në defekt) ngarkohen te cloud dhe <b>hapen edhe nga PC-ja</b>. Fotot ruhen te Storage (jo databaza) → s'e mbushin.</li>
       <li>Te lista: <b>✏️</b> redakton · <b>📦</b> puno me stokun · <b>🔄 Zëvendëso</b> (aparati fizik ndërrohet: i vjetri arkivohet, ruhet historiku) · <b>📜 Historiku</b>.</li>
       <li><b>Magazina/Kombi:</b> pranim → ngarko. Klik për ndryshim. <b>↶ Undo / ↷ Redo</b>.</li>
@@ -546,7 +546,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v54";  // rritet me çdo version të ri
+const APP_VER="v55";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -615,9 +615,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v54")){
+  if(!localStorage.getItem("apar_cleaned_v55")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v54","1");
+    localStorage.setItem("apar_cleaned_v55","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1788,16 +1788,30 @@ function resizePhoto(f){return new Promise((res,rej)=>{ if(!f){rej();return;}
 function _placeKey(){ const city=$("#mCity").value.trim(),loc=$("#mPlace").value.trim();
   return (city?city+" · ":"")+loc; }
 function renderGal(){
-  const mk=(arr,el,remover)=>{ el.innerHTML="";
+  const mk=(arr,el,remover,kind)=>{ el.innerHTML="";
     arr.forEach((src,i)=>{ const w=document.createElement("div");w.style.position="relative";
       const im=document.createElement("img");im.src=src;im.style.cssText="width:64px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:zoom-in";
       im.onclick=()=>openPhoto(src);
-      const x=document.createElement("button");x.textContent="✕";x.title="Hiq";
-      x.style.cssText="position:absolute;top:-6px;right:-6px;width:20px;height:20px;padding:0;border-radius:50%;background:var(--bad,#C13B48);color:#fff;font-size:11px;border:none";
-      x.onclick=(e)=>{e.stopPropagation();remover(i);};
+      const x=document.createElement("button");x.textContent="✕";x.title="Fshi foton";
+      x.style.cssText="position:absolute;top:-6px;right:-6px;width:22px;height:22px;padding:0;border-radius:50%;background:var(--bad,#C13B48);color:#fff;font-size:12px;border:none;font-weight:700";
+      x.onclick=(e)=>{e.stopPropagation();
+        if(confirm("Të fshihet kjo foto e "+kind+"?")){
+          if(String(src).startsWith("http"))deleteCloudPhoto(src);  // hiqe edhe nga cloud Storage
+          remover(i);
+        }
+      };
       w.appendChild(im);w.appendChild(x);el.appendChild(w); }); };
-  mk(window._mMachGal,$("#mMachGal"),i=>{window._mMachGal.splice(i,1);renderGal();});
-  mk(window._mPlaceGal,$("#mPlaceGal"),i=>{window._mPlaceGal.splice(i,1);renderGal();});
+  mk(window._mMachGal,$("#mMachGal"),i=>{window._mMachGal.splice(i,1);renderGal();_persistGalIfEditing();},"aparatit");
+  mk(window._mPlaceGal,$("#mPlaceGal"),i=>{window._mPlaceGal.splice(i,1);renderGal();_persistGalIfEditing();},"pikës");
+}
+// Ruaj menjëherë fshirjen/shtimin kur je duke redaktuar një aparat EKZISTUES (që s'humbet)
+function _persistGalIfEditing(){
+  if(_mEdit==null)return;   // aparat i ri: ruhet kur shtyp «Shto»
+  const m=(CAT.machines||[]).find(x=>x.id===_mEdit); if(!m)return;
+  m.photos=(window._mMachGal||[]).slice();
+  if(!CAT.placePhotos)CAT.placePhotos={};
+  if(m.place)CAT.placePhotos[m.place]=(window._mPlaceGal||[]).slice();
+  save(K_CAT,CAT);
 }
 // kur shkruan pikën (qytet/lokal), shfaq fotot ekzistuese të asaj pike nëse s'je duke redaktuar
 function _syncPlaceGalFromKey(){ if(_mEdit!=null)return;
@@ -1807,8 +1821,8 @@ $("#mCity").addEventListener("blur",_syncPlaceGalFromKey);
 $("#mPlace").addEventListener("blur",_syncPlaceGalFromKey);
 $("#mAddMachPhoto").onclick=()=>$("#mMachPhotoIn").click();
 $("#mAddPlacePhoto").onclick=()=>$("#mPlacePhotoIn").click();
-$("#mMachPhotoIn").onchange=async(ev)=>{try{const d=await resizePhoto(ev.target.files[0]);window._mMachGal.push(d);renderGal();}catch(e){}ev.target.value="";};
-$("#mPlacePhotoIn").onchange=async(ev)=>{try{const d=await resizePhoto(ev.target.files[0]);window._mPlaceGal.push(d);renderGal();}catch(e){}ev.target.value="";};
+$("#mMachPhotoIn").onchange=async(ev)=>{try{const d=await resizePhoto(ev.target.files[0]);window._mMachGal.push(d);renderGal();_persistGalIfEditing();}catch(e){}ev.target.value="";};
+$("#mPlacePhotoIn").onchange=async(ev)=>{try{const d=await resizePhoto(ev.target.files[0]);window._mPlaceGal.push(d);renderGal();_persistGalIfEditing();}catch(e){}ev.target.value="";};
 $("#whAdd").onclick=()=>{ensureReg();const pid=parseInt($("#whProd").value)||0,q=parseInt($("#whQty").value||0)||0;
   if(!pid||!q){alert("Zgjidh produktin dhe sasinë.");return;}regSnapshot();stockBump(CAT.warehouse,pid,pName(pid),q);save(K_CAT,CAT);$("#whQty").value="";renderReg();};
 $("#vnLoad").onclick=()=>{ensureReg();const pid=parseInt($("#vnProd").value)||0,q=parseInt($("#vnQty").value||0)||0;
@@ -1839,6 +1853,18 @@ function _sha1hex(buf){ // hash i qëndrueshëm → e njëjta foto s'ngarkohet d
   return crypto.subtle.digest("SHA-1",buf).then(h=>[...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,"0")).join("").slice(0,20));
 }
 function _dataURLtoBytes(u){const c=u.indexOf(",");const bin=atob(u.slice(c+1));const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a;}
+// fshi një foto nga Supabase Storage sipas URL-së publike (nëse asnjë tjetër s'e përdor)
+async function deleteCloudPhoto(url){
+  try{
+    // po e përdor edhe ndonjë aparat/pikë tjetër? mos e fshi
+    let used=0;
+    (CAT.machines||[]).forEach(m=>{ if(m.photo===url)used++; (m.photos||[]).forEach(p=>{if(p===url)used++;}); });
+    Object.values(CAT.placePhotos||{}).forEach(a=>(a||[]).forEach(p=>{if(p===url)used++;}));
+    if(used>1)return;   // përdoret gjetiu → mos e fshi nga cloud
+    const name=url.split("/fotot/")[1]; if(!name)return;
+    await fetch(SUPA_URL+"/storage/v1/object/"+SUPA_BUCKET+"/"+name,{method:"DELETE",headers:_sh()});
+  }catch(e){}
+}
 async function uploadPhotoB64(dataURL){ // kthen URL publike ose null
   if(!dataURL) return null;
   if(dataURL.startsWith("http")) return dataURL;         // tashmë e sinkronizuar
