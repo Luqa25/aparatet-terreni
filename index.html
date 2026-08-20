@@ -268,6 +268,8 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li><b>☁️ Fotot te cloud:</b> te ☰ → <b>☁️ Sinkronizo</b>, fotot e rëndësishme (të pikës + të aparateve në defekt) ngarkohen te cloud dhe <b>hapen edhe nga PC-ja</b>. Fotot ruhen te Storage (jo databaza) → s'e mbushin.</li>
       <li>Te lista: <b>✏️</b> redakton · <b>📦</b> puno me stokun · <b>🔄 Zëvendëso</b> (aparati fizik ndërrohet: i vjetri arkivohet, ruhet historiku) · <b>📜 Historiku</b>.</li>
       <li><b>Magazina/Kombi:</b> pranim → ngarko. Klik për ndryshim. <b>↶ Undo / ↷ Redo</b>.</li>
+      <li><b>🏭 Furnitorët:</b> Buçaj, Tobacco Holding Group, PRIMA Tobacco — me GPS të depove për furnizim (🧭 navigo).</li>
+      <li><b>🧹 Fillim i pastër (LIVE):</b> te Regjistrimi lart — fshin gjithçka dhe vendos duhanet (çmime të modifikueshme) + furnitorët. Për të nisur nga zero. S'prek DEMO; të paralajmëron nëse ke punë të pa dërguar.</li>
     </ul>
 
     <h3>📊 Paneli i inventarit</h3>
@@ -305,6 +307,16 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <button class="sec grow" id="regUndo" style="font-weight:700">↶ Undo (0)</button>
     <button class="sec grow" id="regRedo" style="font-weight:700">↷ Redo (0)</button>
   </div>
+  <button class="sec" id="btnFreshStart" style="width:100%;margin-bottom:10px;color:var(--bad,#C13B48);font-weight:700">🧹 Fillim i pastër — fshi gjithçka + vendos duhanet & furnitorët</button>
+
+  <details class="card"><summary>🏭 Furnitorët (për furnizim magazine)</summary>
+    <p class="note" style="margin:6px 0">Furnitorët kryesorë të Kosovës me GPS të depove. 🧭 navigo për furnizim.</p>
+    <div class="reglist" id="supList"></div>
+    <div class="row" style="margin-top:8px"><input id="supName" placeholder="Emri i furnitorit" class="grow"></div>
+    <div class="row" style="margin-top:6px"><input id="supBrands" placeholder="Markat që sjell" class="grow"></div>
+    <div class="row" style="margin-top:6px"><input id="supGps" placeholder="GPS: 42.52, 21.11 (opsional)" class="grow"></div>
+    <button class="pri" id="supAdd" style="width:100%;margin-top:8px">＋ Shto furnitor</button>
+  </details>
 
   <details class="card" open><summary>🚬 Produktet</summary>
     <div class="row" style="margin-top:8px"><input id="pName" placeholder="Marka (p.sh. Marlboro)" class="grow"><input id="pPrice" type="text" inputmode="decimal" placeholder="çmimi €" style="width:96px"></div>
@@ -534,7 +546,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v53";  // rritet me çdo version të ri
+const APP_VER="v54";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -603,9 +615,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v53")){
+  if(!localStorage.getItem("apar_cleaned_v54")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v53","1");
+    localStorage.setItem("apar_cleaned_v54","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1463,7 +1475,7 @@ function captureParking(mid){
   },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
 }
 function renderReg(){
-  ensureReg(); fillProdSelects();
+  ensureReg(); fillProdSelects(); renderSuppliers();
   $("#pList").innerHTML=(CAT.products||[]).map(p=>{
     const prov=p.provisional; const col=prov?"var(--bad)":"var(--good)";
     const tag=prov?" <span class='pill' style='background:var(--bad);color:#fff'>çmim fillestar — vendose</span>":" <span class='pill' style='background:var(--good);color:#fff'>çmim i vendosur ✓</span>";
@@ -1496,6 +1508,47 @@ $("#btnGoReg").onclick=()=>{ensureReg();updateUndoBadges();renderReg();show("#sc
 $("#regBack").onclick=()=>show("#scrMenu");
 $("#regUndo").onclick=regUndo;
 $("#regRedo").onclick=regRedo;
+
+/* ── FURNITORËT default (Kosovë) + FILLIM I PASTËR ─────────────────── */
+const DEFAULT_SUPPLIERS=[
+  {name:"Buçaj Sh.p.k",brands:"Marlboro, Chesterfield, L&M, Philip Morris",lat:42.5215,lng:21.1180,addr:"Lipjan (Philip Morris)"},
+  {name:"Tobacco Holding Group Sh.p.k",brands:"Dunhill, Kent, Pall Mall, Rothmans, Vogue",lat:42.6100,lng:21.1550,addr:"Prishtinë (BAT)"},
+  {name:"PRIMA Tobacco L.L.C.",brands:"Winston, Camel, LD",lat:42.6440,lng:21.0980,addr:"Prishtinë (JTI)"},
+];
+function renderSuppliers(){
+  const el=$("#supList"); if(!el)return;
+  const sl=(CAT&&CAT.suppliers)||[];
+  if(!sl.length){el.innerHTML='<p class="note">S\'ka furnitorë. Shtyp «🧹 Fillim i pastër» ose shto manual.</p>';return;}
+  el.innerHTML=sl.map((s,i)=>{
+    const nav=(s.lat!=null&&s.lng!=null)?`<button class="sec" data-navsup="${i}" title="Navigo te depoja">🧭</button>`:"";
+    return `<div style="display:flex;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line)"><span class="grow"><b>${s.name}</b><div class="note">${s.brands||""}${s.addr?(" · "+s.addr):""}</div></span>${nav}<button class="sec" data-delsup="${i}">✕</button></div>`;
+  }).join("");
+  el.querySelectorAll("[data-navsup]").forEach(b=>b.onclick=()=>{const s=CAT.suppliers[+b.dataset.navsup];window.open(`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}`,"_blank");});
+  el.querySelectorAll("[data-delsup]").forEach(b=>b.onclick=()=>{regSnapshot();CAT.suppliers.splice(+b.dataset.delsup,1);save(K_CAT,CAT);renderSuppliers();});
+}
+$("#supAdd").onclick=()=>{ensureReg();const n=$("#supName").value.trim();if(!n)return;
+  if(!CAT.suppliers)CAT.suppliers=[];
+  let lat=null,lng=null;const c=parseCoords($("#supGps").value);if(c){lat=c.lat;lng=c.lng;}
+  regSnapshot();
+  CAT.suppliers.push({name:n,brands:$("#supBrands").value.trim(),lat:lat,lng:lng,addr:""});
+  save(K_CAT,CAT);$("#supName").value="";$("#supBrands").value="";$("#supGps").value="";renderSuppliers();};
+
+$("#btnFreshStart").onclick=()=>{
+  if(isDemo()){alert("Je në DEMO. «Fillim i pastër» vlen për LIVE. Kalo në LIVE së pari.");return;}
+  const pend=pendingFieldWork();
+  const warn=pend>0?("\n\n⚠️ Ke "+pend+" njësi pune TË PA DËRGUARA — dërgoji te cloud PARA se të fshish (☁️ Sinkronizo)."):"";
+  if(!confirm("🧹 FILLIM I PASTËR (LIVE)\n\nFshihen: aparatet, vizitat, magazina, kombi, depozitat, tërheqjet.\nVendosen: duhanet me çmime + furnitorët kryesorë.\n\nS'preket DEMO."+warn+"\n\nTë vazhdohet?"))return;
+  if(pend>0 && !confirm("Konfirmo përsëri: ke punë TË PA DËRGUAR që do HUMBASË. Vazhdo prapë?"))return;
+  // seed produktet nga KS_BRANDS (çmime të modifikueshme)
+  const products=KS_BRANDS.map(([nm,pr],i)=>({id:i+1,name:nm,price:pr,photo:"",provisional:true}));
+  CAT={version:1,products:products,machines:[],warehouse:[],van:[],suppliers:JSON.parse(JSON.stringify(DEFAULT_SUPPLIERS)),placePhotos:{},ownerPayments:[]};
+  save(K_CAT,CAT);
+  VIS=[];save(K_VIS,VIS);
+  DEPQ=[];save(K_DEP,DEPQ);
+  ADVE=[];save(K_ADV,ADVE);
+  updateUndoBadges&&updateUndoBadges();renderReg();updateSettle&&updateSettle();
+  alert("✓ Fillim i pastër! "+products.length+" duhane + "+DEFAULT_SUPPLIERS.length+" furnitorë u vendosën. Çmimet ndryshoji te lista (të kuqe → jeshile).");
+};
 function editProduct(id){
   const p=(CAT.products||[]).find(x=>x.id===id); if(!p)return;
   _pEdit=id; $("#pName").value=p.name; $("#pPrice").value=(+p.price||0);
