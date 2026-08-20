@@ -252,7 +252,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <p>☰ → <b>📊 Paneli i inventarit</b>: për çdo aparat — statusi, kanalet e përdorura/lira, kapaciteti total, rregullat e pagesës (ikona), produktet e çdo kanali me ⭐ të dyfishtat. Filtro sipas <b>qytetit</b>, <b>🔧 në defekt</b>, <b>⭐ dyfishtë</b>, <b>↩️ pa kusur</b>, <b>🔒 kuti kusuri</b>.</p>
 
     <h3>💼 Pronarët — sa u kam borxh</h3>
-    <p>Te regjistrimi i aparatit cakto <b>pronarin</b> + <b>marrëveshjen</b>: 💯 komision %, 🏠 qira €/muaj, ose 📦 blerje €/pako (çdo aparat mund të ketë kontratë tjetër). Pastaj ☰ → <b>💼 Pronarët</b>: për çdo pronar sheh <b>fituar − paguar = borxh</b>. Shtyp <b>💶 Paguaj</b> (me datë) → borxhi zbritet. Baza (qarkullim vs cash) ndryshohet lart.</p>
+    <p>Te regjistrimi i aparatit cakto <b>pronarin</b> + <b>marrëveshjen</b>: 💯 komision %, 🏠 qira €/muaj, ose 📦 blerje €/pako (çdo aparat mund të ketë kontratë tjetër), me <b>📅 datën</b> dhe <b>klauzolat</b>. Pastaj ☰ → <b>💼 Pronarët</b>: për çdo pronar sheh <b>fituar − paguar = borxh</b>. Shtyp <b>💶 Paguaj</b> (me datë) → borxhi zbritet. Baza (qarkullim vs cash) ndryshohet lart. Shtyp <b>🖨️</b> te një aparat për të <b>printuar fletën e marrëveshjes</b> (me firmë) për pronarin.</p>
 
     <h3>🎯 Inventari fillestar</h3>
     <p>☰ → <b>🎯 Inventari fillestar</b>: <b>(1)</b> numëro aparatet qytet-pas-qyteti (Prizren i pari) → 🟢. <b>(2)</b> numëro magazinën. <b>(3)</b> <b>Llogarit</b> → kombi = Blerë − Aparate − Depo.</p>
@@ -375,6 +375,11 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <input id="mCval" type="number" inputmode="decimal" step="0.1" placeholder="vlera" style="width:90px">
     </div>
     <p class="note" style="margin:2px 0 0">P.sh. komision <b>15</b>, ose qira <b>50</b> €/muaj, ose blerje <b>2.8</b> €/pako. Lëre bosh nëse s'ka marrëveshje.</p>
+    <div class="row" style="margin-top:6px;gap:6px;align-items:center">
+      <span class="note" style="white-space:nowrap">📅 Data e marrëveshjes</span>
+      <input id="mCstart" type="date" class="grow">
+    </div>
+    <textarea id="mCclause" placeholder="Klauzola / kushtet (për printim): afati, energjia, pastrimi, njoftimi për largim…" style="margin-top:6px;width:100%;min-height:52px"></textarea>
 
     <button class="pri" id="mAdd" style="width:100%;margin-top:10px">＋ Shto aparatin</button>
     <button class="sec hidden" id="mGoStock" style="width:100%;margin-top:8px">📦 Puno me stokun e këtij aparati (sot) →</button>
@@ -500,7 +505,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v45";  // rritet me çdo version të ri
+const APP_VER="v46";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -621,13 +626,13 @@ const DEMO_CATALOG={version:1,products:[
   {id:1,code:"APR-01",place:"Prizren · Bar Ura",city:"Prizren",visit_order:1,lat:42.21,lng:20.74,park_lat:42.211,park_lng:20.741,model:"GMV Elitouch",channels:4,capacity:25,
    planogram:[{channel:1,product_id:1,capacity:25},{channel:2,product_id:1,capacity:25},{channel:3,product_id:3,capacity:25},{channel:4,product_id:5,capacity:20}],baseline:{"1":18,"2":16,"3":12,"4":15},float:{"100":5,"50":4},
    pay:{notes:true,change:false,exact:false,cmin:0.5,cmax:2,flock:true},status:"ok",status_note:"",
-   owner:"Agroni",contract_type:"komision",contract_value:15},
+   owner:"Agroni",contract_type:"komision",contract_value:15,contract_start:"2026-03-01",contract_clause:"Pronari mban energjinë elektrike. Njoftim 30 ditë para largimit të aparatit. Pastrimi rreth aparatit nga pronari."},
   {id:2,code:"APR-02",place:"Prizren · Kiosku te Sheshi",city:"Prizren",visit_order:2,lat:42.215,lng:20.745,model:"Jofemar Goya",channels:2,capacity:30,
    planogram:[{channel:1,product_id:1,capacity:30},{channel:2,product_id:4,capacity:30}],baseline:{"1":22,"2":20},float:{}},
   {id:3,code:"APR-03",place:"Ferizaj · Restorant Era",city:"Ferizaj",visit_order:1,lat:42.37,lng:21.15,park_lat:42.371,park_lng:21.151,model:"GMV Elitouch",channels:3,capacity:25,
    planogram:[{channel:1,product_id:2,capacity:25},{channel:2,product_id:7,capacity:25},{channel:3,product_id:6,capacity:25}],baseline:{"1":10,"2":8,"3":20},float:{"100":3},
    pay:{notes:false,change:false,exact:true,cmin:0.5,cmax:2,flock:false},status:"defekt",status_note:"Lexuesi i monedhave ngec",
-   owner:"Besa",contract_type:"blerje",contract_value:2.8},
+   owner:"Besa",contract_type:"blerje",contract_value:2.8,contract_start:"2026-01-15",contract_clause:"Çmimi për pako rishikohet çdo 6 muaj."},
   {id:4,code:"APR-04",place:"Prishtinë · Sheshi Nëna Terezë",city:"Prishtinë",visit_order:1,lat:42.66,lng:21.16,model:"Jofemar Goya",channels:4,capacity:30,
    planogram:[{channel:1,product_id:1,capacity:30},{channel:2,product_id:3,capacity:30},{channel:3,product_id:8,capacity:25},{channel:4,product_id:4,capacity:25}],baseline:{"1":25,"2":18,"3":22,"4":15},float:{"200":2,"100":6}},
   {id:5,code:"APR-05",place:"Prishtinë · Stacioni i Autobusëve",city:"Prishtinë",visit_order:2,lat:42.665,lng:21.165,model:"GMV Elitouch",channels:3,capacity:25,
@@ -1062,6 +1067,33 @@ $("#invBack").onclick=()=>show("#scrMenu");
 
 /* ── PRONARËT: fituar (sipas kontratës) − paguar = borxh ─────────── */
 const CTYPE_LBL={"":"— pa marrëveshje",komision:"Komision %",qira:"Qira fikse (€/muaj)",blerje:"Blerje malli (€/pako)"};
+function _fmtDate(iso){ if(!iso)return""; const p=iso.slice(0,10).split("-"); return p.length===3?`${p[2]}.${p[1]}.${p[0]}`:iso; }
+function printContract(mid){
+  const m=(CAT.machines||[]).find(x=>x.id===mid); if(!m)return;
+  const CT={komision:"Komision "+(+m.contract_value||0)+"% i qarkullimit",qira:"Qira fikse "+(+m.contract_value||0)+" € për muaj",blerje:"Blerje malli "+(+m.contract_value||0)+" € për pako të shitur","":"Pa marrëveshje financiare"};
+  const company=(CAT.company||localStorage.getItem("apar_company")||"Operatori i aparateve");
+  const today=_fmtDate(new Date().toISOString());
+  const clause=(m.contract_clause||"").replace(/</g,"&lt;").replace(/\n/g,"<br>")||"<i style='color:#888'>(pa klauzola shtesë)</i>";
+  const html=`<!doctype html><meta charset="utf-8"><title>Marrëveshje ${m.code}</title>
+  <style>body{font-family:'Segoe UI',Arial,sans-serif;color:#111;max-width:720px;margin:0 auto;padding:24px;line-height:1.6}
+  h1{font-size:20px;text-align:center;margin:0 0 4px}.sub{text-align:center;color:#555;font-size:13px;margin-bottom:22px}
+  table{width:100%;border-collapse:collapse;margin:14px 0}td{padding:7px 6px;border-bottom:1px solid #ddd;font-size:14px}td.k{color:#555;width:38%}
+  .box{border:1px solid #ccc;border-radius:8px;padding:12px 14px;margin:14px 0;font-size:14px}
+  .sign{display:flex;justify-content:space-between;margin-top:60px}.sign div{width:44%;border-top:1px solid #333;padding-top:6px;text-align:center;font-size:13px}
+  h3{font-size:14px;margin:18px 0 6px}@media print{button{display:none}}</style>
+  <h1>Marrëveshje për vendosjen e aparatit</h1><div class="sub">${company} · lëshuar më ${today}</div>
+  <table>
+    <tr><td class="k">Pronari i lokalit</td><td><b>${m.owner||"____________"}</b></td></tr>
+    <tr><td class="k">Lokali / vendi</td><td>${m.place||""}</td></tr>
+    <tr><td class="k">Aparati (kodi)</td><td>${m.code||""}</td></tr>
+    <tr><td class="k">Lloji i marrëveshjes</td><td>${CT[m.contract_type||""]}</td></tr>
+    <tr><td class="k">Data e fillimit</td><td>${_fmtDate(m.contract_start)||"____________"}</td></tr>
+  </table>
+  <h3>Kushtet e marrëveshjes</h3><div class="box">${clause}</div>
+  <div class="sign"><div>Pronari i lokalit<br>(${m.owner||""})</div><div>Operatori<br>(${company})</div></div>
+  <p style="text-align:center;margin-top:30px"><button onclick="window.print()" style="padding:10px 22px;font-size:15px">🖨️ Printo</button></p>`;
+  const w=window.open("","_blank"); if(w){w.document.write(html);w.document.close();} else alert("Lejo dritaret pop-up për të printuar.");
+}
 function _machineTC(mid){ // pako të shitura, qarkullim, cash i tërhequr për një aparat
   let sold=0,turn=0,cash=0;
   (VIS||[]).filter(v=>v.machine_id===mid).forEach(v=>{sold+=(+v.sold_total||0);turn+=(+v.expected_cash||0);cash+=visitWithdrawn(v);});
@@ -1081,7 +1113,8 @@ function ownerAccounts(base){
     const eT=_earned(ct,cv,tc,"qarkullim"), eC=_earned(ct,cv,tc,"cash");
     const earned=base==="qarkullim"?eT:eC;
     const o=own[owner]||(own[owner]={owner:owner,machines:[],earned:0});
-    o.machines.push({code:m.code||('#'+m.id),place:m.place||"",ctype:ct,cval:cv,earned:earned,tc:tc});
+    o.machines.push({id:m.id,code:m.code||('#'+m.id),place:m.place||"",ctype:ct,cval:cv,earned:earned,tc:tc,
+      start:m.contract_start||"",clause:m.contract_clause||"",owner:owner});
     o.earned+=earned;
   });
   const pays={}; (CAT.ownerPayments||[]).forEach(p=>{pays[p.owner]=(pays[p.owner]||0)+(+p.amount||0);});
@@ -1100,7 +1133,8 @@ function renderOwners(){
     else{bal="0.00 € — shlyer ✓";cls="color:var(--good,#2C8256)";}
     const rows=a.machines.map(m=>{
       const desc=m.ctype?(CTYPE_LBL[m.ctype]+" "+(+m.cval)):"— pa marrëveshje";
-      return `<div style="display:flex;gap:8px;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line)"><span class="grow"><b>${m.code}</b> <span style="color:var(--muted)">${desc}</span></span><b>${m.earned.toFixed(2)} €</b></div>`;
+      const dt=m.start?` · <span style="color:var(--muted)">nga ${_fmtDate(m.start)}</span>`:"";
+      return `<div style="display:flex;gap:6px;align-items:center;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line)"><span class="grow"><b>${m.code}</b> <span style="color:var(--muted)">${desc}</span>${dt}</span><b>${m.earned.toFixed(2)} €</b><button class="sec" data-printc="${m.id}" title="Printo marrëveshjen" style="padding:3px 7px">🖨️</button></div>`;
     }).join("");
     html+=`<div class="card" style="margin-bottom:10px">
       <div class="row"><b class="grow" style="font-size:15px">${a.owner}</b><b style="${cls};font-size:15px">${bal}</b></div>
@@ -1122,6 +1156,7 @@ function renderOwners(){
     save(K_CAT,CAT); renderOwners();
     alert("✓ Pagesa "+amt.toFixed(2)+" € për "+owner+" u regjistrua sot.");
   });
+  document.querySelectorAll("#ownList [data-printc]").forEach(b=>b.onclick=()=>printContract(parseInt(b.dataset.printc)));
 }
 $("#btnGoOwners").onclick=()=>{ if(!CAT){alert("S'ka të dhëna.");return;} renderOwners(); show("#scrOwners"); };
 $("#ownBack").onclick=()=>show("#scrMenu");
@@ -1420,6 +1455,7 @@ function editMachine(id){
   $("#mPnotes").checked=pay.notes!==false; $("#mPchange").checked=pay.change!==false; $("#mPexact").checked=!!pay.exact;
   $("#mPcmin").value=pay.cmin||""; $("#mPcmax").value=pay.cmax||""; $("#mPflock").checked=!!pay.flock;
   $("#mOwner").value=m.owner||""; $("#mCtype").value=m.contract_type||""; $("#mCval").value=m.contract_value||"";
+  $("#mCstart").value=m.contract_start||""; $("#mCclause").value=m.contract_clause||"";
   // galeritë: fotot e aparatit + fotot e pikës (nga çelësi i pikës)
   window._mMachGal=(m.photos||[]).slice();
   window._mPlaceGal=((CAT.placePhotos||{})[m.place]||[]).slice();
@@ -1435,7 +1471,7 @@ $("#mGoStock").onclick=()=>{
 };
 function mResetEdit(){
   _mEdit=null;
-  ["#mCode","#mCity","#mPlace","#mVo","#mCh","#mCap","#mGeoManual","#mParkManual","#mStatNote","#mPcmin","#mPcmax","#mOwner","#mCval"].forEach(s=>$(s).value="");
+  ["#mCode","#mCity","#mPlace","#mVo","#mCh","#mCap","#mGeoManual","#mParkManual","#mStatNote","#mPcmin","#mPcmax","#mOwner","#mCval","#mCstart","#mCclause"].forEach(s=>$(s).value="");
   $("#mCtype").value="";
   $("#mPlan").innerHTML="";
   $("#mStatus").value="ok";$("#mPnotes").checked=true;$("#mPchange").checked=true;$("#mPexact").checked=false;$("#mPflock").checked=false;
@@ -1458,6 +1494,7 @@ $("#mAdd").onclick=()=>{ensureReg();const code=$("#mCode").value.trim();if(!code
              cmin:parseFloat($("#mPcmin").value||0)||0,cmax:parseFloat($("#mPcmax").value||0)||0,flock:$("#mPflock").checked};
   const status=$("#mStatus").value, statNote=$("#mStatNote").value.trim();
   const owner=$("#mOwner").value.trim(), ctype=$("#mCtype").value, cval=parseFloat($("#mCval").value||0)||0;
+  const cstart=$("#mCstart").value||"", cclause=$("#mCclause").value.trim();
   const pkey=(city?city+" · ":"")+loc;
   const machGal=(window._mMachGal||[]).slice();
   regSnapshot();
@@ -1467,12 +1504,12 @@ $("#mAdd").onclick=()=>{ensureReg();const code=$("#mCode").value.trim();if(!code
       m.channels=parseInt($("#mCh").value||plan.length);m.capacity=parseInt($("#mCap").value||0)||0;m.planogram=plan;
       m.lat=gLat;m.lng=gLng;m.park_lat=pLat;m.park_lng=pLng;if(window._mPhoto)m.photo=window._mPhoto;
       m.pay=pay;m.status=status;m.status_note=statNote;m.photos=machGal;
-      m.owner=owner;m.contract_type=ctype;m.contract_value=cval;}
+      m.owner=owner;m.contract_type=ctype;m.contract_value=cval;m.contract_start=cstart;m.contract_clause=cclause;}
   } else {
     CAT.machines.push({id:nextId(),code:code,city:city,place:pkey,visit_order:parseInt($("#mVo").value||0)||0,
       channels:parseInt($("#mCh").value||plan.length),capacity:parseInt($("#mCap").value||0)||0,planogram:plan,baseline:{},float:{},
       lat:gLat,lng:gLng,park_lat:pLat,park_lng:pLng,photo:(window._mPhoto||""),pay:pay,status:status,status_note:statNote,photos:machGal,
-      owner:owner,contract_type:ctype,contract_value:cval});
+      owner:owner,contract_type:ctype,contract_value:cval,contract_start:cstart,contract_clause:cclause});
   }
   // fotot e pikës → ruhen sipas çelësit të pikës (mbeten kur ndërrohet aparati)
   if(!CAT.placePhotos)CAT.placePhotos={};
