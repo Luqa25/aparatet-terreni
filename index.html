@@ -273,8 +273,12 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <h3>📊 Paneli i inventarit</h3>
     <p>☰ → <b>📊 Paneli i inventarit</b>: për çdo aparat — statusi, kanalet e përdorura/lira, kapaciteti total, rregullat e pagesës (ikona), produktet e çdo kanali me ⭐ të dyfishtat. Filtro sipas <b>qytetit</b>, <b>🔧 në defekt</b>, <b>⭐ dyfishtë</b>, <b>↩️ pa kusur</b>, <b>🔒 kuti kusuri</b>.</p>
 
-    <h3>💼 Pronarët — sa u kam borxh</h3>
-    <p>Te regjistrimi i aparatit cakto <b>pronarin</b> + <b>marrëveshjen</b>: 💯 komision %, 🏠 qira €/muaj, ose 📦 blerje €/pako (çdo aparat mund të ketë kontratë tjetër), me <b>📅 datën</b> dhe <b>klauzolat</b>. Pastaj ☰ → <b>💼 Pronarët</b>: për çdo pronar sheh <b>fituar − paguar = borxh</b>. Shtyp <b>💶 Paguaj</b> (me datë) → borxhi zbritet. Baza (qarkullim vs cash) ndryshohet lart. Shtyp <b>🖨️</b> te një aparat për të <b>printuar fletën e marrëveshjes</b> (me firmë) për pronarin.</p>
+    <h3>🤝 DY lloje pronarësh — mos i ngatërro</h3>
+    <p><b>1) Pronari i kompanisë</b> ku ti punon (p.sh. Haxhi Malota) — atij i dorëzon cash-in. Barazimi yt me të është te <b>karta lart në ☰</b> («🤝 Barazimi im me pronarin e kompanisë») + dorëzimet te <b>🏦 Dorëzim cash-i</b>. Prek emrin te karta për ta vendosur.</p>
+    <p><b>2) Pronarët e lokaleve</b> (bar/kiosk) që mbajnë aparatet — atyre u paguan komision. Kjo është te skeda <b>💼 Pronarët</b> (poshtë).</p>
+
+    <h3>💼 Pronarët e lokaleve — sa u kam borxh</h3>
+    <p>Te regjistrimi i aparatit cakto <b>pronarin e lokalit</b> + <b>marrëveshjen</b>: 💯 komision %, 🏠 qira €/muaj, ose 📦 blerje €/pako (çdo aparat mund të ketë kontratë tjetër), me <b>📅 datën</b> dhe <b>klauzolat</b>. Pastaj ☰ → <b>💼 Pronarët</b>: për çdo pronar sheh <b>fituar − paguar = borxh</b>. Shtyp <b>💶 Paguaj</b> (me datë) → borxhi zbritet. Baza (qarkullim vs cash) ndryshohet lart. Shtyp <b>🖨️</b> te një aparat për të <b>printuar fletën e marrëveshjes</b> (me firmë) për pronarin.</p>
 
     <h3>🎯 Inventari fillestar</h3>
     <p>☰ → <b>🎯 Inventari fillestar</b>: <b>(1)</b> numëro aparatet qytet-pas-qyteti (Prizren i pari) → 🟢. <b>(2)</b> numëro magazinën. <b>(3)</b> <b>Llogarit</b> → kombi = Blerë − Aparate − Depo.</p>
@@ -428,17 +432,15 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 <!-- MENU / EXPORT -->
 <div class="wrap screen hidden" id="scrMenu">
   <div class="card" id="settleCard">
-    <div class="row"><b class="grow">💼 Sa i kam borxh pronarit</b><span class="pill" id="settleDeal">—</span></div>
+    <div class="row"><b class="grow">🤝 Barazimi im me pronarin e kompanisë</b><span class="pill" id="settleDeal" style="cursor:pointer" title="Prek për të vendosur emrin">—</span></div>
     <div class="recon" style="margin-top:6px">
-      <div><span>Cash i mbledhur</span><b id="sCollected">0.00 €</b></div>
-      <div><span>Depozituar në bankë</span><b id="sDeposited">0.00 €</b></div>
-      <div><span>👤 Dorëzuar pronarit të kompanisë</span><b id="sHandover">0.00 €</b></div>
-      <div><span>💸 Cash emergjent (të hua, pa kthyer)</span><b id="sAdvance">0.00 €</b></div>
-      <div><span>Kesh në dorë</span><b id="sHand">0.00 €</b></div>
-      <div><span>Pjesa e pronarit të lokalit (vlerësim)</span><b id="sOwner">0.00 €</b></div>
-      <div><span>Pjesa jote</span><b id="sMine">0.00 €</b></div>
+      <div><span>Cash i mbledhur nga aparatet</span><b id="sCollected">0.00 €</b></div>
+      <div><span>− Dorëzuar në bankë</span><b id="sDeposited">0.00 €</b></div>
+      <div><span>− 👤 Dorëzuar pronarit të kompanisë</span><b id="sHandover">0.00 €</b></div>
+      <div><span>− 💸 Cash emergjent (të hua, pa kthyer)</span><b id="sAdvance">0.00 €</b></div>
+      <div style="border-top:1px solid var(--line);margin-top:4px;padding-top:4px"><span><b>= Mbetur te unë (pa dorëzuar)</b></span><b id="sHand">0.00 €</b></div>
     </div>
-    <p class="note" style="margin:6px 0 0">Vlerësim nga terreni. Barazimi zyrtar bëhet në PC (🏦 Banka).</p>
+    <p class="note" style="margin:6px 0 0">Barazimi yt me pronarin e kompanisë ku punon. Marrëveshjet me <b>pronarët e lokaleve</b> (që mbajnë aparatet) → te <b>💼 Pronarët</b>.</p>
   </div>
   <div class="card">
     <h3 style="margin-top:0">☁️ Dërgo vizitat</h3>
@@ -530,7 +532,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v48";  // rritet me çdo version të ri
+const APP_VER="v49";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -1263,6 +1265,8 @@ function _depDestToggle(){
   $("#depOwnerRow").style.display=owner?"block":"none";
   $("#depBankRow").style.display=owner?"none":"block";
   $("#depSave").textContent=owner?"💾 Ruaj dorëzimin te pronari":"💾 Ruaj depozitën";
+  // parambush emrin e pronarit të kompanisë nëse s'është shkruar
+  if(owner&&!$("#depOwnerName").value){const c=localStorage.getItem("apar_company_owner")||"";if(c)$("#depOwnerName").value=c;}
 }
 $("#depDest").onchange=_depDestToggle;
 async function osmNearestBank(lat,lng){
@@ -1804,19 +1808,24 @@ function updateSettle(){
   let deposited=0,handover=0;
   (DEPQ||[]).forEach(d=>{ if(d.dest==="owner") handover+=(+d.amount||0); else deposited+=(+d.amount||0); });
   const advOut=advOutstanding();
-  // kesh në dorë = mbledhur − depozituar − dorëzuar pronarit − cash emergjent (pa kthyer)
+  // mbetur te unë = mbledhur − dorëzuar bankë − dorëzuar pronarit − cash emergjent (pa kthyer)
   const hand=collected-deposited-handover-advOut;
-  const comm=+(load("apar_owner_comm")||12);
-  const owner=collected*comm/100, mine=collected-owner;
-  $("#settleDeal").textContent="komision "+comm+"%";
+  const cowner=localStorage.getItem("apar_company_owner")||"";
+  $("#settleDeal").textContent=cowner||"vendos emrin ✏️";
   $("#sCollected").textContent=collected.toFixed(2)+" €";
   $("#sDeposited").textContent=deposited.toFixed(2)+" €";
   $("#sHandover").textContent=handover.toFixed(2)+" €";
   $("#sAdvance").textContent=advOut.toFixed(2)+" €";
   const h=$("#sHand"); h.textContent=hand.toFixed(2)+" €"; h.className=hand>0.01?"neg":"pos";
-  $("#sOwner").textContent=owner.toFixed(2)+" €";
-  $("#sMine").textContent=mine.toFixed(2)+" €";
 }
+// vendos emrin e pronarit të kompanisë (prek pill-in)
+document.addEventListener("DOMContentLoaded",()=>{
+  const p=$("#settleDeal"); if(p)p.onclick=()=>{
+    const cur=localStorage.getItem("apar_company_owner")||"";
+    const n=prompt("Emri i pronarit të kompanisë ku punon (p.sh. Haxhi Malota):",cur);
+    if(n!=null){localStorage.setItem("apar_company_owner",n.trim());updateSettle();}
+  };
+});
 async function cloudPullCatalog(){
   try{
     const r=await fetch(SUPA_URL+"/rest/v1/catalog?select=data&id=eq.1",{headers:_sh()});
