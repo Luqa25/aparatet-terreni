@@ -287,8 +287,9 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <p>☰ → <b>🏦 Dorëzim cash-i</b>: zgjidh ku shkon paraja — <b>🏦 në bankë</b> (me lokacion bankomati) ose <b>👤 te pronari i kompanisë/menaxheri</b> (me emër). Të dyja zbriten nga «kesh në dorë» te barazimi lart.</p>
     <p><b>💸 Cash emergjent (tërheqje nga arka):</b> po te i njëjti ekran — para të marra për emergjencë (sëmundje, karburant), <b>transparente e të kthyeshme</b>. Shtyp <b>💶 Kthej</b> kur i kthen. Sa janë pa kthyer zbriten nga kesh në dorë. <b>Sinkronizohet me PC</b> (☁️): tërheqjet nga iPhone dhe PC bashkohen, që barazimi të jetë i njëjtë në të dyja anët.</p>
 
-    <h3>🧭 Rruga · ☁️ Sync</h3>
-    <p><b>🧭 Optimizo rrugën</b> (mbi parkingun) → renditje sipas rrugës më të shkurtër. Vizitat/depozitat dërgohen <b>vetë te cloud</b> me internet (ose ☰ → ☁️ Sinkronizo); PC i tërheq me <b>☁️ Tërhiq</b>. Punon offline.</p>
+    <h3>🧭 Rruga · ☁️ Sync (puna s'humb)</h3>
+    <p><b>🧭 Optimizo rrugën</b> → renditje sipas rrugës më të shkurtër. <b>Puna e terrenit (vizita, depozita, tërheqje) dërgohet VETË te cloud</b> sa herë ka internet — në hapje, kur kthehet interneti, dhe çdo minutë. Sa presin dërgim shihet lart («⏳ X pa dërguar (ruhen)»). Edhe pa internet <b>ruhen te telefoni</b> dhe dërgohen më vonë — s'humbin kurrë.</p>
+    <p><b>☁️ Merr katalogun</b> është i sigurt: para se ta zëvendësojë, dërgon punën tënde, ruan kopje sigurie, dhe mban aparatet që regjistrove në telefon. Vizitat/depozitat NUK preken.</p>
 
     <h3>🤖 Paneli AI (te ☰ → Udhëzuesi i plotë / PC)</h3>
     <p>Përdor Groq (falas). S'ke çelës? Shtyp <b>❓ Si ta marr çelësin</b> te paneli AI (console.groq.com). Ose Ollama pa çelës.</p>
@@ -533,7 +534,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v52";  // rritet me çdo version të ri
+const APP_VER="v53";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -602,9 +603,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v52")){
+  if(!localStorage.getItem("apar_cleaned_v53")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v52","1");
+    localStorage.setItem("apar_cleaned_v53","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1029,9 +1030,22 @@ $("#btnCloudSync").onclick=async()=>{
         +(ph?("\n🖼️ "+ph+" foto u ngarkuan te cloud (hapen edhe nga PC)."):""));
 };
 $("#btnCloudCat").onclick=async()=>{
-  if(!confirm("Të marrësh katalogun nga cloud? (zëvendëson atë aktual)"))return;
+  // 1) Sigurohu që puna e terrenit është dërguar PARA se të zëvendësohet katalogu
+  let pend=pendingFieldWork();
+  if(pend>0){
+    if(navigator.onLine){
+      const r=await syncAllField(); pend=r.pending;
+    }
+    if(pend>0){
+      if(!confirm("⚠️ Ke "+pend+" njësi pune terreni (vizita/depozita/tërheqje) TË PA DËRGUARA.\n\n"+
+                  "Nëse s'ke internet tani, ato RUHEN te telefoni dhe dërgohen vetë kur të kesh internet — "+
+                  "s'humbin. Të vazhdohet marrja e katalogut?")) return;
+    }
+  }
+  if(!confirm("Të marrësh katalogun (produkte/aparate) nga PC-ja?\n\nVizitat, depozitat dhe tërheqjet e tua NUK preken. "+
+              "Regjistrimet e reja të aparateve në telefon (nëse ke bërë) ruhen si kopje sigurie.")) return;
   const ok=await cloudPullCatalog();
-  if(ok){renderList();alert("✓ Katalogu u mor nga cloud.");show("#scrList");}
+  if(ok){renderList();alert("✓ Katalogu u mor nga PC. Puna jote e terrenit është e paprekur.");show("#scrList");}
   else alert("S'u mor (pa internet ose katalog bosh në cloud).");
 };
 $("#btnGoList").onclick=()=>{renderList();show("#scrList");};
@@ -1812,7 +1826,7 @@ async function cloudPush(v){
   return r.ok;
 }
 async function cloudSync(){
-  if(isDemo())return;   // në DEMO sync-u është i çaktivizuar (të dhënat s'janë reale)
+  if(isDemo())return {sent:0,fail:0};   // në DEMO sync-u është i çaktivizuar
   let sent=0,fail=0;
   for(const v of VIS){
     if(v._synced)continue;
@@ -1821,9 +1835,27 @@ async function cloudSync(){
   save(K_VIS,VIS);
   return {sent,fail};
 }
+// Sync i PLOTË i punës së terrenit: vizita + depozita + cash emergjent. Puna s'humb.
+async function syncAllField(){
+  if(isDemo())return {sent:0,fail:0,pending:0};
+  let sent=0,fail=0;
+  const rv=await cloudSync(); sent+=rv.sent; fail+=rv.fail;
+  try{ const d=await depSync(); sent+=(d||0); }catch(e){}
+  try{ await advSync(); }catch(e){}
+  return {sent,fail,pending:pendingFieldWork()};
+}
+// Sa njësi pune terreni presin dërgim (vizita+depozita+cash emergjent të pa dërguara)
+function pendingFieldWork(){
+  const v=(VIS||[]).filter(x=>!x._synced).length;
+  const d=(DEPQ||[]).filter(x=>!x._synced).length;
+  const a=(ADVE||[]).filter(x=>!x._pushed).length;
+  return v+d+a;
+}
 function unsynced(){return VIS.filter(v=>!v._synced).length;}
 function updateSyncBadge(res){
-  const b=$("#syncBadge"); if(b){const n=unsynced(); b.textContent=n?(n+" pa dërguar"):"të gjitha të dërguara ✓";}
+  const b=$("#syncBadge"); if(b){const n=pendingFieldWork();
+    b.textContent=n?("⏳ "+n+" pa dërguar (ruhen)"):"të gjitha të dërguara ✓";
+    b.style.color=n?"var(--warn,#B26A16)":"var(--good,#2C8256)";}
   updateSettle();
 }
 function denSum(o){let t=0;for(const k in(o||{}))t+=(+k)*(+o[k]);return t/100;}
@@ -1863,17 +1895,42 @@ async function cloudPullCatalog(){
     if(!r.ok)return false;
     const j=await r.json();
     if(j[0]&&j[0].data&&(j[0].data.machines||j[0].data.products)){
-      CAT=j[0].data; ensureReg&&ensureReg(); save(K_CAT,CAT); return true;
+      // KOPJE SIGURIE e katalogut aktual para zëvendësimit (mund të rikthehet)
+      try{ localStorage.setItem("apar_"+MODE+"_catalog_backup", JSON.stringify({t:Date.now(),data:CAT})); }catch(e){}
+      const cloud=j[0].data;
+      // RUAJ aparatet/produktet e regjistruar NË TELEFON që cloud-i s'i ka (pune terreni)
+      const oldM=(CAT&&CAT.machines)||[], oldP=(CAT&&CAT.products)||[];
+      const cloudCodes=new Set((cloud.machines||[]).map(m=>m.code));
+      const cloudPNames=new Set((cloud.products||[]).map(p=>(p.name||"").toLowerCase()));
+      const keepM=oldM.filter(m=>m.code&&!cloudCodes.has(m.code));
+      const keepP=oldP.filter(p=>p.name&&!cloudPNames.has((p.name||"").toLowerCase()));
+      cloud.machines=(cloud.machines||[]).concat(keepM);
+      cloud.products=(cloud.products||[]).concat(keepP);
+      CAT=cloud; ensureReg&&ensureReg(); save(K_CAT,CAT);
+      if(keepM.length||keepP.length){
+        setTimeout(()=>alert("ℹ️ U ruajtën "+keepM.length+" aparate + "+keepP.length+
+          " produkte që i regjistrove në telefon dhe PC-ja s'i kishte. Dërgoji te PC me «📤 Eksporto»."),300);
+      }
+      return true;
     }
+  }catch(e){}
+  return false;
+}
+// Rikthe katalogun e fundit para marrjes nga cloud (nëse diçka shkoi keq)
+function restoreCatalogBackup(){
+  try{ const b=JSON.parse(localStorage.getItem("apar_"+MODE+"_catalog_backup")||"null");
+    if(b&&b.data){ CAT=b.data; save(K_CAT,CAT); renderList&&renderList(); return true; }
   }catch(e){}
   return false;
 }
 
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{});}
 boot();
-// provo sync-un në hapje (nëse ka internet)
-setTimeout(()=>{ if(navigator.onLine){ cloudSync().then(updateSyncBadge); if(typeof depSync==="function")depSync(); } }, 1500);
-window.addEventListener("online",()=>{ cloudSync().then(updateSyncBadge); if(typeof depSync==="function")depSync(); });
+// AUTO-SYNC i punës së terrenit — puna s'humb: dërgohet vetë sa herë ka internet
+async function autoSyncField(){ if(!navigator.onLine||isDemo())return; try{ await syncAllField(); updateSyncBadge(); }catch(e){} }
+setTimeout(autoSyncField, 1500);                    // në hapje
+window.addEventListener("online", autoSyncField);   // sapo kthehet interneti
+setInterval(autoSyncField, 60000);                  // çdo minutë (rrjet sigurie)
 </script>
 </body>
 </html>
