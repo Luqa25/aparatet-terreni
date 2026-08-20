@@ -275,6 +275,9 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <h3>📊 Paneli i inventarit</h3>
     <p>☰ → <b>📊 Paneli i inventarit</b>: për çdo aparat — statusi, kanalet e përdorura/lira, kapaciteti total, rregullat e pagesës (ikona), produktet e çdo kanali me ⭐ të dyfishtat. Filtro sipas <b>qytetit</b>, <b>🔧 në defekt</b>, <b>⭐ dyfishtë</b>, <b>↩️ pa kusur</b>, <b>🔒 kuti kusuri</b>.</p>
 
+    <h3>📋 Raporti ditor (pronarit)</h3>
+    <p>Në fund të ditës: ☰ → <b>📋 Raporti ditor</b>. Ndërtohet vetë me: 💶 cash-i (mbledhur/dorëzuar/mbetur), 📟 aparatet e vizituar sot, 🚬 shitjet sipas markës, ⚠️ mospërputhjet + defektet. Shtyp <b>📤 Dërgo (Viber)</b> për ta çuar pronarit, ose <b>🖨️ Fletë PDF</b>. Shtyp <b>💾 Ruaj</b> → shkon te arkivi (me datë) dhe dërgohet te PC. Çdo raport ruhet në iPhone + PC.</p>
+
     <h3>🤝 DY lloje pronarësh — mos i ngatërro</h3>
     <p><b>1) Pronari i kompanisë</b> ku ti punon (p.sh. Haxhi Malota) — atij i dorëzon cash-in. Barazimi yt me të është te <b>karta lart në ☰</b> («🤝 Barazimi im me pronarin e kompanisë») + dorëzimet te <b>🏦 Dorëzim cash-i</b>. Prek emrin te karta për ta vendosur.</p>
     <p><b>2) Pronarët e lokaleve</b> (bar/kiosk) që mbajnë aparatet — atyre u paguan komision. Kjo është te skeda <b>💼 Pronarët</b> (poshtë).</p>
@@ -478,6 +481,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <button class="pri" id="btnGoInv" style="width:100%;margin-top:8px">📊 Paneli i inventarit (aparatet)</button>
     <button class="pri" id="btnGoOwners" style="width:100%;margin-top:8px">💼 Pronarët e lokaleve (komisioni)</button>
     <button class="pri" id="btnGoDep" style="width:100%;margin-top:8px">🏦 Dorëzim cash-i · 💸 emergjent</button>
+    <button class="pri" id="btnGoReport" style="width:100%;margin-top:8px;background:#0C6675">📋 Raporti ditor (pronarit)</button>
     <button class="sec" id="btnGoStock" style="width:100%;margin-top:8px">📦 Stoku i automjetit</button>
     <button class="sec" id="btnGoList" style="width:100%;margin-top:8px">← Kthehu te aparatet</button>
     <button class="sec" id="btnReimport2" style="width:100%;margin-top:8px">📥 Ngarko katalog të ri</button>
@@ -521,6 +525,27 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   <div id="ownList"></div>
 </div>
 
+<!-- RAPORTI DITOR -->
+<div class="wrap screen hidden" id="scrReport">
+  <div class="row" style="margin-bottom:8px"><b class="grow">📋 Raporti ditor</b><button class="sec" id="repBack">←</button></div>
+  <div class="card">
+    <div class="row" style="align-items:center;gap:8px">
+      <span class="note" style="white-space:nowrap">📅 Data</span>
+      <input id="repDate" type="date" class="grow">
+    </div>
+    <div id="repPreview" style="margin-top:10px;white-space:pre-wrap;font-family:monospace;font-size:12.5px;background:var(--elev);border:1px solid var(--line);border-radius:10px;padding:12px;max-height:340px;overflow:auto"></div>
+    <div class="row" style="margin-top:10px;gap:6px">
+      <button class="pri grow" id="repViber">📤 Dërgo (Viber/kopjo)</button>
+      <button class="sec grow" id="repPrint">🖨️ Fletë PDF</button>
+    </div>
+    <button class="sec" id="repSave" style="width:100%;margin-top:8px">💾 Ruaj te arkivi (+ dërgo te PC)</button>
+  </div>
+  <div class="card">
+    <b>🗄️ Arkivi i raporteve</b>
+    <div id="repArchive" style="margin-top:8px"></div>
+  </div>
+</div>
+
 <!-- LIGHTBOX: foto e plotë -->
 <div id="photoModal" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:1000;align-items:center;justify-content:center;padding:16px">
   <img id="photoModalImg" style="max-width:100%;max-height:100%;border-radius:10px;object-fit:contain">
@@ -546,7 +571,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v56";  // rritet me çdo version të ri
+const APP_VER="v57";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -615,9 +640,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v56")){
+  if(!localStorage.getItem("apar_cleaned_v57")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v56","1");
+    localStorage.setItem("apar_cleaned_v57","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1228,6 +1253,133 @@ $("#btnGoOwners").onclick=()=>{ if(!CAT){alert("S'ka të dhëna.");return;} rend
 $("#ownBack").onclick=()=>show("#scrMenu");
 $("#ownBase").onchange=renderOwners;
 $("#invCity").onchange=renderInv; $("#invFlt").onchange=renderInv;
+
+/* ═══════════ RAPORTI DITOR PËR PRONARIN E KOMPANISË ═══════════ */
+const K_REP=()=>"apar_"+MODE+"_reports"; let REPORTS=load(K_REP)||[];
+function _dayVisits(day){ return (VIS||[]).filter(v=>(v.date||"").slice(0,10)===day); }
+function _dayDeposits(day){ return (DEPQ||[]).filter(d=>(d.date||"").slice(0,10)===day); }
+function _dayAdvances(day){ return (ADVE||[]).filter(e=>(e.date||"").slice(0,10)===day); }
+function _machName(mid){ const m=(CAT.machines||[]).find(x=>x.id===mid); return m?(m.code+(m.place?(" · "+m.place):"")):("#"+mid); }
+// ndërton objektin e raportit për një ditë
+function buildReport(day){
+  const vs=_dayVisits(day), deps=_dayDeposits(day), advs=_dayAdvances(day);
+  let collected=0,soldTotal=0,discTotal=0;
+  const byBrand={}, machineRows=[], issues=[];
+  vs.forEach(v=>{
+    const wd=visitWithdrawn(v); collected+=wd; soldTotal+=(+v.sold_total||0); discTotal+=(+v.discrepancy||0);
+    (v.lines||[]).forEach(ln=>{ if(ln.product_id&&ln.sold){const nm=pName(ln.product_id);
+      byBrand[nm]=byBrand[nm]||{pako:0,vlere:0}; byBrand[nm].pako+=(+ln.sold||0); byBrand[nm].vlere+=(+ln.sold||0)*(+ln.price||0);}});
+    machineRows.push({name:_machName(v.machine_id),sold:+v.sold_total||0,cash:wd,disc:+v.discrepancy||0});
+    if(Math.abs(+v.discrepancy||0)>0.5) issues.push("⚠️ "+_machName(v.machine_id)+": mospërputhje "+(+v.discrepancy).toFixed(2)+" €");
+  });
+  // defektet (aparate në status defekt/jashtë)
+  (CAT.machines||[]).forEach(m=>{ if((m.status||"ok")!=="ok") issues.push((m.status==="jashte"?"⛔ ":"🔧 ")+(m.code||"#"+m.id)+": "+(m.status_note||m.status)); });
+  let inBank=0,toOwner=0; deps.forEach(d=>{ if(d.dest==="owner")toOwner+=(+d.amount||0); else inBank+=(+d.amount||0); });
+  const advOut=advs.reduce((s,e)=>s+((e.kind==="repay"?-1:1)*(+e.amount||0)),0);
+  const onhand=collected-inBank-toOwner-Math.max(0,advOut);
+  return {day,collected,soldTotal,discTotal,byBrand,machineRows,issues,inBank,toOwner,advOut,onhand,nVisits:vs.length};
+}
+// formaton raportin si tekst për Viber
+function reportText(r){
+  const cowner=localStorage.getItem("apar_company_owner")||"Pronari";
+  const d=new Date(r.day+"T00:00:00"); const ds=d.toLocaleDateString("sq-AL",{day:"2-digit",month:"long",year:"numeric"});
+  let t="📋 RAPORTI DITOR — "+ds+"\nPër: "+cowner+"\n";
+  t+="───────────────\n";
+  t+="💶 CASH\n";
+  t+="• Mbledhur nga aparatet: "+r.collected.toFixed(2)+" €\n";
+  t+="• Dorëzuar në bankë: "+r.inBank.toFixed(2)+" €\n";
+  t+="• Dorëzuar te "+cowner+": "+r.toOwner.toFixed(2)+" €\n";
+  if(r.advOut>0.005) t+="• Cash emergjent (pa kthyer): "+r.advOut.toFixed(2)+" €\n";
+  t+="• MBETUR TE UNË: "+r.onhand.toFixed(2)+" €\n";
+  t+="───────────────\n";
+  t+="📟 APARATET SOT ("+r.nVisits+")\n";
+  if(r.machineRows.length) r.machineRows.forEach(m=>{ t+="• "+m.name+": "+m.sold+" pako, "+m.cash.toFixed(2)+" €"+(Math.abs(m.disc)>0.5?(" ("+(m.disc>0?"+":"")+m.disc.toFixed(2)+"€ mosp.)"):"")+"\n"; });
+  else t+="• (asnjë vizitë)\n";
+  t+="───────────────\n";
+  t+="🚬 SHITJET SIPAS MARKËS\n";
+  const brands=Object.entries(r.byBrand).sort((a,b)=>b[1].pako-a[1].pako);
+  if(brands.length) brands.forEach(([nm,x])=>{ t+="• "+nm+": "+x.pako+" pako ("+x.vlere.toFixed(2)+" €)\n"; });
+  else t+="• (s'ka shitje)\n";
+  t+="Gjithsej: "+r.soldTotal+" pako\n";
+  if(r.issues.length){ t+="───────────────\n⚠️ VËMENDJE\n"; r.issues.forEach(i=>t+="• "+i+"\n"); }
+  t+="───────────────\nAparatet · raport terreni";
+  return t;
+}
+function renderReport(){
+  const day=$("#repDate").value||new Date().toISOString().slice(0,10);
+  const r=buildReport(day);
+  window._curReport=r;
+  $("#repPreview").textContent=reportText(r);
+  renderRepArchive();
+}
+function renderRepArchive(){
+  const el=$("#repArchive"); if(!el)return;
+  if(!REPORTS.length){el.innerHTML='<p class="note">Ende s\'ka raporte të ruajtura.</p>';return;}
+  el.innerHTML=REPORTS.slice().reverse().map((r,ri)=>{
+    const idx=REPORTS.length-1-ri;
+    const d=new Date(r.day+"T00:00:00").toLocaleDateString("sq-AL",{day:"2-digit",month:"short",year:"numeric"});
+    return `<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)">
+      <span class="grow"><b>${d}</b> · mbledhur ${(+r.collected||0).toFixed(2)}€ · ${r.nVisits} aparate</span>
+      <button class="sec" data-repview="${idx}" style="padding:3px 8px">👁️</button>
+      <button class="sec" data-repdel="${idx}" style="padding:3px 8px">✕</button></div>`;
+  }).join("");
+  el.querySelectorAll("[data-repview]").forEach(b=>b.onclick=()=>{const r=REPORTS[+b.dataset.repview];$("#repDate").value=r.day;$("#repPreview").textContent=reportText(r);window._curReport=r;});
+  el.querySelectorAll("[data-repdel]").forEach(b=>b.onclick=()=>{if(confirm("Fshi këtë raport nga arkivi?")){REPORTS.splice(+b.dataset.repdel,1);save(K_REP,REPORTS);renderRepArchive();}});
+}
+$("#btnGoReport").onclick=()=>{ $("#repDate").value=new Date().toISOString().slice(0,10); renderReport(); show("#scrReport"); };
+$("#repBack").onclick=()=>show("#scrMenu");
+$("#repDate").onchange=renderReport;
+$("#repViber").onclick=async()=>{
+  const txt=reportText(window._curReport||buildReport($("#repDate").value));
+  // provo Viber direkt, pastaj share sheet, pastaj kopjim
+  try{ if(navigator.share){await navigator.share({text:txt});return;} }catch(e){}
+  try{ await navigator.clipboard.writeText(txt); alert("✓ Raporti u kopjua. Ngjite te Viber-i.");
+    location.href="viber://forward?text="+encodeURIComponent(txt); }catch(e){ prompt("Kopjo raportin:",txt); }
+};
+$("#repPrint").onclick=()=>{
+  const r=window._curReport||buildReport($("#repDate").value);
+  const cowner=localStorage.getItem("apar_company_owner")||"Pronari";
+  const ds=new Date(r.day+"T00:00:00").toLocaleDateString("sq-AL",{day:"2-digit",month:"long",year:"numeric"});
+  const brands=Object.entries(r.byBrand).sort((a,b)=>b[1].pako-a[1].pako);
+  const html=`<!doctype html><meta charset="utf-8"><title>Raport ${r.day}</title>
+  <style>body{font-family:'Segoe UI',Arial,sans-serif;color:#111;max-width:720px;margin:0 auto;padding:24px;line-height:1.6}
+  h1{font-size:20px;text-align:center;margin:0 0 2px}.sub{text-align:center;color:#555;font-size:13px;margin-bottom:20px}
+  h3{font-size:14px;margin:16px 0 6px;border-bottom:2px solid #0C6675;padding-bottom:3px;color:#0C6675}
+  table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px;border-bottom:1px solid #ddd;text-align:left}
+  td.r,th.r{text-align:right}.big{font-size:16px;font-weight:700}.warn{color:#B0413A}@media print{button{display:none}}</style>
+  <h1>Raporti Ditor</h1><div class="sub">${ds} · Për: ${cowner}</div>
+  <h3>💶 Cash</h3><table>
+  <tr><td>Mbledhur nga aparatet</td><td class="r big">${r.collected.toFixed(2)} €</td></tr>
+  <tr><td>Dorëzuar në bankë</td><td class="r">${r.inBank.toFixed(2)} €</td></tr>
+  <tr><td>Dorëzuar te ${cowner}</td><td class="r">${r.toOwner.toFixed(2)} €</td></tr>
+  ${r.advOut>0.005?`<tr><td>Cash emergjent (pa kthyer)</td><td class="r">${r.advOut.toFixed(2)} €</td></tr>`:""}
+  <tr><td><b>Mbetur te unë</b></td><td class="r big">${r.onhand.toFixed(2)} €</td></tr></table>
+  <h3>📟 Aparatet sot (${r.nVisits})</h3><table><tr><th>Aparati</th><th class="r">Pako</th><th class="r">Cash</th><th class="r">Mosp.</th></tr>
+  ${r.machineRows.map(m=>`<tr><td>${m.name}</td><td class="r">${m.sold}</td><td class="r">${m.cash.toFixed(2)}€</td><td class="r ${Math.abs(m.disc)>0.5?'warn':''}">${m.disc?((m.disc>0?"+":"")+m.disc.toFixed(2)+"€"):"—"}</td></tr>`).join("")||'<tr><td colspan=4>—</td></tr>'}</table>
+  <h3>🚬 Shitjet sipas markës</h3><table><tr><th>Marka</th><th class="r">Pako</th><th class="r">Vlera</th></tr>
+  ${brands.map(([nm,x])=>`<tr><td>${nm}</td><td class="r">${x.pako}</td><td class="r">${x.vlere.toFixed(2)}€</td></tr>`).join("")||'<tr><td colspan=3>—</td></tr>'}
+  <tr><td><b>Gjithsej</b></td><td class="r"><b>${r.soldTotal}</b></td><td></td></tr></table>
+  ${r.issues.length?`<h3 class="warn">⚠️ Vëmendje</h3><ul>${r.issues.map(i=>`<li>${i}</li>`).join("")}</ul>`:""}
+  <p style="text-align:center;margin-top:26px"><button onclick="window.print()" style="padding:10px 22px;font-size:15px">🖨️ Printo / PDF</button></p>`;
+  const w=window.open("","_blank"); if(w){w.document.write(html);w.document.close();} else alert("Lejo pop-up për printim.");
+};
+$("#repSave").onclick=async()=>{
+  const r=window._curReport||buildReport($("#repDate").value);
+  // zëvendëso nëse ekziston raport për të njëjtën ditë
+  const ix=REPORTS.findIndex(x=>x.day===r.day);
+  const rec={...r,savedAt:new Date().toISOString()};
+  if(ix>=0)REPORTS[ix]=rec; else REPORTS.push(rec);
+  save(K_REP,REPORTS); renderRepArchive();
+  let cloud=""; try{ if(navigator.onLine&&!isDemo()){ if(await pushReport(rec))cloud=" + dërguar te PC ✓"; } }catch(e){}
+  alert("💾 Raporti u ruajt te arkivi"+cloud+".");
+};
+async function pushReport(r){
+  const cowner=localStorage.getItem("apar_company_owner")||"";
+  const body={day:r.day,owner:cowner,collected:r.collected,in_bank:r.inBank,to_owner:r.toOwner,
+    onhand:r.onhand,sold_total:r.soldTotal,n_visits:r.nVisits,data:JSON.stringify(r),source:"iphone"};
+  const rr=await fetch(SUPA_URL+"/rest/v1/reports",{method:"POST",headers:{..._sh(),"Prefer":"return=minimal"},body:JSON.stringify(body)});
+  return rr.ok;
+}
 $("#ocBack").onclick=()=>{renderOpening();show("#scrOpening");};
 $("#odBack").onclick=()=>{renderOpening();show("#scrOpening");};
 
