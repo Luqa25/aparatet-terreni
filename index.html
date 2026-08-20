@@ -281,7 +281,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 
     <h3>🏦 Dorëzim cash-i · 💸 Cash emergjent</h3>
     <p>☰ → <b>🏦 Dorëzim cash-i</b>: zgjidh ku shkon paraja — <b>🏦 në bankë</b> (me lokacion bankomati) ose <b>👤 te pronari i kompanisë/menaxheri</b> (me emër). Të dyja zbriten nga «kesh në dorë» te barazimi lart.</p>
-    <p><b>💸 Cash emergjent (tërheqje nga arka):</b> po te i njëjti ekran — para të marra për emergjencë (sëmundje, karburant), <b>transparente e të kthyeshme</b>. Shtyp <b>💶 Kthej</b> kur i kthen. Sa janë pa kthyer zbriten nga kesh në dorë.</p>
+    <p><b>💸 Cash emergjent (tërheqje nga arka):</b> po te i njëjti ekran — para të marra për emergjencë (sëmundje, karburant), <b>transparente e të kthyeshme</b>. Shtyp <b>💶 Kthej</b> kur i kthen. Sa janë pa kthyer zbriten nga kesh në dorë. <b>Sinkronizohet me PC</b> (☁️): tërheqjet nga iPhone dhe PC bashkohen, që barazimi të jetë i njëjtë në të dyja anët.</p>
 
     <h3>🧭 Rruga · ☁️ Sync</h3>
     <p><b>🧭 Optimizo rrugën</b> (mbi parkingun) → renditje sipas rrugës më të shkurtër. Vizitat/depozitat dërgohen <b>vetë te cloud</b> me internet (ose ☰ → ☁️ Sinkronizo); PC i tërheq me <b>☁️ Tërhiq</b>. Punon offline.</p>
@@ -530,7 +530,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v47";  // rritet me çdo version të ri
+const APP_VER="v48";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -1015,6 +1015,7 @@ $("#btnCloudSync").onclick=async()=>{
   const b=$("#syncBadge"); b.textContent="duke dërguar…";
   const r=await cloudSync();
   let ph=0; try{ b.textContent="duke ngarkuar fotot…"; ph=await syncImportantPhotos(); }catch(e){}
+  try{ b.textContent="cash emergjent…"; await advSync(); }catch(e){}
   updateSyncBadge();
   alert("☁️ U dërguan "+r.sent+" vizita te cloud."+(r.fail?(" "+r.fail+" dështuan (pa internet?)"):"")
         +(ph?("\n🖼️ "+ph+" foto u ngarkuan te cloud (hapen edhe nga PC)."):""));
@@ -1313,32 +1314,65 @@ $("#depSave").onclick=async()=>{
 };
 
 /* ── CASH EMERGJENT (tërheqje nga arka — të hua) ─────────────────── */
-const K_ADV="apar_advances"; let ADVQ=load(K_ADV)||[];
+/* Cash emergjent si NGJARJE (take/repay) me uid → sync dykahësh me PC */
+const K_ADV="apar_adv_events"; let ADVE=load(K_ADV)||[];
+function _uid(){return "ip-"+Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
 $("#advSave").onclick=()=>{
   const amt=parseNum($("#advAmt").value);if(amt<=0){alert("Fut shumën.");return;}
   const reason=$("#advReason").value.trim();
-  ADVQ.push({date:new Date().toISOString(),amount:amt,reason:reason,repaid:0});
-  save(K_ADV,ADVQ); $("#advAmt").value="";$("#advReason").value="";
-  renderAdvances(); updateSettle();
+  ADVE.push({uid:_uid(),kind:"take",date:new Date().toISOString(),amount:amt,reason:reason,source:"iphone",_pushed:false});
+  save(K_ADV,ADVE); $("#advAmt").value="";$("#advReason").value="";
+  renderAdvances(); updateSettle(); advSync();
   alert("💸 Tërheqja "+amt.toFixed(2)+" € u regjistrua (të hua, e kthyeshme).");
 };
-function advOutstanding(){return (ADVQ||[]).reduce((s,a)=>s+((+a.amount||0)-(+a.repaid||0)),0);}
+function advOutstanding(){
+  let t=0;(ADVE||[]).forEach(e=>{t+=(e.kind==="repay"?-1:1)*(+e.amount||0);});
+  return t;
+}
+// Pamje: take-t me sa u kthye gjithsej (kthimet zbriten FIFO për shfaqje)
+function _advView(){
+  const takes=(ADVE||[]).filter(e=>e.kind==="take").sort((a,b)=>(a.date||"").localeCompare(b.date||"")).map(e=>({...e,repaid:0}));
+  let pool=(ADVE||[]).filter(e=>e.kind==="repay").reduce((s,e)=>s+(+e.amount||0),0);
+  for(const t of takes){const r=Math.min(pool,+t.amount||0);t.repaid=r;pool-=r;}
+  return takes.reverse();
+}
 function renderAdvances(){
   const el=$("#advList");if(!el)return;
-  if(!ADVQ.length){el.innerHTML='<p class="note">Ende s\'ka tërheqje.</p>';return;}
-  el.innerHTML=ADVQ.map((a,i)=>{
-    const left=(+a.amount||0)-(+a.repaid||0);
+  const view=_advView();
+  if(!view.length){el.innerHTML='<p class="note">Ende s\'ka tërheqje.</p>';return;}
+  el.innerHTML=view.map(a=>{
+    const left=(+a.amount||0)-a.repaid;
     return `<div style="display:flex;gap:8px;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line)">
-      <span class="grow">${_fmtDate(a.date)} · <b>${(+a.amount).toFixed(2)} €</b>${a.reason?(" · "+a.reason):""} ${left<=0?'<span style="color:var(--good,#2C8256)">✓ kthyer</span>':('· mbetet '+left.toFixed(2)+' €')}</span>
-      ${left>0?`<button class="sec" data-repay="${i}" style="padding:3px 8px">💶 Kthej</button>`:""}
+      <span class="grow">${_fmtDate(a.date)} · <b>${(+a.amount).toFixed(2)} €</b>${a.reason?(" · "+a.reason):""}${a.source==="pc"?' <span style="color:var(--muted)">(PC)</span>':""} ${left<=0.005?'<span style="color:var(--good,#2C8256)">✓ kthyer</span>':('· mbetet '+left.toFixed(2)+' €')}</span>
+      ${left>0.005?`<button class="sec" data-left="${left.toFixed(2)}" style="padding:3px 8px">💶 Kthej</button>`:""}
     </div>`;
   }).join("");
-  el.querySelectorAll("[data-repay]").forEach(b=>b.onclick=()=>{
-    const i=+b.dataset.repay,a=ADVQ[i],left=(+a.amount||0)-(+a.repaid||0);
+  el.querySelectorAll("[data-left]").forEach(b=>b.onclick=()=>{
+    const left=parseFloat(b.dataset.left);
     const s=prompt("Sa po kthen? (mbetet "+left.toFixed(2)+" €)",left.toFixed(2));
     if(s==null)return;const v=parseFloat(s);if(!(v>0))return;
-    a.repaid=(+a.repaid||0)+v;save(K_ADV,ADVQ);renderAdvances();updateSettle();
+    ADVE.push({uid:_uid(),kind:"repay",date:new Date().toISOString(),amount:v,reason:"kthim",source:"iphone",_pushed:false});
+    save(K_ADV,ADVE);renderAdvances();updateSettle();advSync();
   });
+}
+async function advPush(e){
+  const body={uid:e.uid,kind:e.kind,date:e.date,amount:e.amount,reason:e.reason||"",source:e.source||"iphone"};
+  const r=await fetch(SUPA_URL+"/rest/v1/advances",{method:"POST",headers:{..._sh(),"Prefer":"return=minimal"},body:JSON.stringify(body)});
+  return r.ok||r.status===409;   // 409 = uid ekziston → sukses
+}
+async function advSync(){
+  if(isDemo())return 0;
+  for(const e of ADVE){ if(e._pushed)continue; try{ if(await advPush(e))e._pushed=true; }catch(x){} }
+  try{
+    const r=await fetch(SUPA_URL+"/rest/v1/advances?select=*",{headers:_sh()});
+    if(r.ok){ const rows=await r.json(); const have=new Set(ADVE.map(e=>e.uid));
+      rows.forEach(row=>{ if(row.uid&&!have.has(row.uid)){
+        ADVE.push({uid:row.uid,kind:row.kind||"take",date:row.date,amount:+row.amount||0,reason:row.reason||"",source:row.source||"cloud",_pushed:true});
+        have.add(row.uid);
+      }});
+    }
+  }catch(x){}
+  save(K_ADV,ADVE); renderAdvances(); updateSettle();
 }
 $("#btnUpdate").onclick=async()=>{
   if(!confirm("Të merret versioni i ri nga interneti? (të dhënat s'fshihen)"))return;
