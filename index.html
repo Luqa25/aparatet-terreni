@@ -54,6 +54,8 @@ td.prod{text-align:left;font-weight:600}
 .foot{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:10px 14px;display:flex;gap:8px}
 .foot button{flex:1}
 .note{font-size:12px;color:var(--muted);line-height:1.5}
+.pchk{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:14px;cursor:pointer}
+.pchk input{width:18px;height:18px}
 summary{cursor:pointer;font-weight:700;padding:6px 0}
 </style>
 </head>
@@ -236,10 +238,16 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <ul style="padding-left:18px">
       <li><b>Produktet:</b> markat + çmimi. Klik mbi një produkt për ta <b>ndryshuar</b>. Çmim fillestar 🔴 → i vendosur 🟢.</li>
       <li><b>Aparatet:</b> kod, qytet, lokal → dy kutitë e qarta: <b>🔢 Sa rende</b> + <b>📦 Sa pako zë çdo rend</b> → <b>Ndërto</b> → cakto produktin e çdo rendi.</li>
-      <li>Te aparati: <b>📍 GPS i aparatit</b> + <b>🅿️ GPS i parkingut</b> + <b>📷 Foto</b> (prek parapamjen për ta parë të plotë).</li>
-      <li>Te lista: <b>✏️</b> redakton · <b>📦</b> puno me stokun · <b>🔄 Zëvendëso</b> (kur ndërrohet aparati fizik: i vjetri arkivohet, ruhet historiku) · <b>📜 Historiku</b>.</li>
-      <li><b>Magazina/Kombi:</b> pranim → ngarko. Klik për ndryshim. <b>↶ Undo / ↷ Redo</b> (Redo i kuq = kthim përpara).</li>
+      <li><b>⭐ Produkt i dyfishtë:</b> produkti që shitet shumë vëre në <b>dy rende</b> (i njëjti produkt) — sistemi i mbledh vetë (50 pako, shitje e përbashkët).</li>
+      <li><b>🔧 Statusi:</b> 🟢 Punon / 🔧 Në defekt / ⛔ Jashtë pune + shënim — aparatet prishen herë-pas-here; statusi ruhet.</li>
+      <li><b>💶 Rregullat e pagesës</b> (secilit aparat): pranon letra? kthen kusur? vetëm para të sakta? monedha 🪙 0.5–2 €? <b>🔒 Kutia e kusurit</b> që s'preket (tërhiqet vetëm arka poshtë).</li>
+      <li>Te aparati: <b>📍 GPS</b> + <b>🅿️ Parkingu</b> + <b>📷 Foto</b> (prek për ta parë të plotë) + <b>📘 Manuali zyrtar / 🛠️ Defektet</b> (linqet e modelit — referohu kur prishet).</li>
+      <li>Te lista: <b>✏️</b> redakton · <b>📦</b> puno me stokun · <b>🔄 Zëvendëso</b> (aparati fizik ndërrohet: i vjetri arkivohet, ruhet historiku) · <b>📜 Historiku</b>.</li>
+      <li><b>Magazina/Kombi:</b> pranim → ngarko. Klik për ndryshim. <b>↶ Undo / ↷ Redo</b>.</li>
     </ul>
+
+    <h3>📊 Paneli i inventarit</h3>
+    <p>☰ → <b>📊 Paneli i inventarit</b>: për çdo aparat — statusi, kanalet e përdorura/lira, kapaciteti total, rregullat e pagesës (ikona), produktet e çdo kanali me ⭐ të dyfishtat. Filtro sipas <b>qytetit</b>, <b>🔧 në defekt</b>, <b>⭐ dyfishtë</b>, <b>↩️ pa kusur</b>, <b>🔒 kuti kusuri</b>.</p>
 
     <h3>🎯 Inventari fillestar</h3>
     <p>☰ → <b>🎯 Inventari fillestar</b>: <b>(1)</b> numëro aparatet qytet-pas-qyteti (Prizren i pari) → 🟢. <b>(2)</b> numëro magazinën. <b>(3)</b> <b>Llogarit</b> → kombi = Blerë − Aparate − Depo.</p>
@@ -311,8 +319,33 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     </div>
     <input id="mPhotoIn" type="file" accept="image/*" capture="environment" style="display:none">
     <input id="mGalIn" type="file" accept="image/*" style="display:none">
+    <p class="note" style="margin:6px 0 0">💡 Produkti që shitet shumë mund të zërë <b>dy rende</b> — cakto të njëjtin produkt në dy rende; sistemi i mbledh vetë (⭐ i dyfishtë).</p>
     <div id="mPlan" style="margin-top:8px"></div>
-    <button class="pri" id="mAdd" style="width:100%;margin-top:8px">＋ Shto aparatin</button>
+
+    <div class="sec-t" style="margin-top:12px">🔧 Statusi i aparatit</div>
+    <div class="row" style="margin-top:4px">
+      <select id="mStatus" class="grow">
+        <option value="ok">🟢 Punon</option>
+        <option value="defekt">🔧 Në defekt</option>
+        <option value="jashte">⛔ Jashtë pune</option>
+      </select>
+    </div>
+    <input id="mStatNote" placeholder="përshkrimi i defektit (nëse ka)" style="margin-top:6px;width:100%">
+
+    <div class="sec-t" style="margin-top:12px">💶 Rregullat e pagesës (këtij aparati)</div>
+    <label class="pchk"><input type="checkbox" id="mPnotes" checked> Pranon kartëmonedha (letra)</label>
+    <label class="pchk"><input type="checkbox" id="mPchange" checked> Kthen kusur</label>
+    <label class="pchk"><input type="checkbox" id="mPexact"> Vetëm para të sakta</label>
+    <div class="row" style="margin-top:4px;align-items:center;gap:6px">
+      <span class="note" style="white-space:nowrap">🪙 Monedha</span>
+      <input id="mPcmin" type="number" inputmode="decimal" step="0.5" placeholder="min €" class="grow">
+      <span>–</span>
+      <input id="mPcmax" type="number" inputmode="decimal" step="0.5" placeholder="max €" class="grow">
+    </div>
+    <label class="pchk"><input type="checkbox" id="mPflock"> 🔒 Kutia e kusurit s'preket kur tërheq (tërhiqet vetëm arka)</label>
+    <p class="note" style="margin:2px 0 0">Disa aparate kanë kuti të veçantë kusuri që NUK preket; parat për tërheqje bien poshtë në arkë.</p>
+
+    <button class="pri" id="mAdd" style="width:100%;margin-top:10px">＋ Shto aparatin</button>
     <button class="sec hidden" id="mGoStock" style="width:100%;margin-top:8px">📦 Puno me stokun e këtij aparati (sot) →</button>
     <div class="reglist" id="mList"></div>
   </details>
@@ -365,6 +398,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     </a>
     <button class="pri" id="btnGoReg" style="width:100%;margin-top:8px">🗂️ Regjistrimi (produkte/aparate/stok)</button>
     <button class="pri" id="btnGoOpen" style="width:100%;margin-top:8px">🎯 Inventari fillestar</button>
+    <button class="pri" id="btnGoInv" style="width:100%;margin-top:8px">📊 Paneli i inventarit (aparatet)</button>
     <button class="pri" id="btnGoDep" style="width:100%;margin-top:8px">🏦 Depozitë në bankë</button>
     <button class="sec" id="btnGoStock" style="width:100%;margin-top:8px">📦 Stoku i automjetit</button>
     <button class="sec" id="btnGoList" style="width:100%;margin-top:8px">← Kthehu te aparatet</button>
@@ -376,6 +410,23 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <p class="note" style="margin:8px 0 0">Kërkon internet një herë. Të dhënat e tua (katalog/vizita) NUK fshihen.</p>
   </div>
   <p class="note">Sync bazik me skedar. Serveri cloud (sync automatik me SIM) shtohet më vonë.</p>
+</div>
+
+<!-- PANELI I INVENTARIT -->
+<div class="wrap screen hidden" id="scrInv">
+  <div class="row" style="margin-bottom:8px"><b class="grow">📊 Paneli i inventarit</b><button class="sec" id="invBack">←</button></div>
+  <div class="row" style="margin-bottom:8px;gap:6px">
+    <select id="invCity" class="grow"></select>
+    <select id="invFlt" class="grow">
+      <option value="">Të gjithë</option>
+      <option value="fault">🔧 Në defekt</option>
+      <option value="double">⭐ Produkt i dyfishtë</option>
+      <option value="nochange">↩️ Pa kusur</option>
+      <option value="flock">🔒 Kuti kusuri e mbrojtur</option>
+    </select>
+  </div>
+  <div class="pill" id="invSum" style="margin-bottom:8px"></div>
+  <div id="invList"></div>
 </div>
 
 <!-- LIGHTBOX: foto e plotë -->
@@ -403,7 +454,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v39";  // rritet me çdo version të ri
+const APP_VER="v40";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -521,12 +572,14 @@ const DEMO_CATALOG={version:1,products:[
   {id:5,name:"Chesterfield",price:3.00,photo:""},{id:6,name:"L&M",price:3.00,photo:""},
   {id:7,name:"Camel",price:3.50,photo:""},{id:8,name:"Parliament",price:4.00,photo:""}],
  machines:[
-  {id:1,code:"APR-01",place:"Prizren · Bar Ura",city:"Prizren",visit_order:1,lat:42.21,lng:20.74,park_lat:42.211,park_lng:20.741,model:"GMV Elitouch",channels:3,capacity:25,
-   planogram:[{channel:1,product_id:1,capacity:25},{channel:2,product_id:3,capacity:25},{channel:3,product_id:5,capacity:20}],baseline:{"1":18,"2":12,"3":15},float:{"100":5,"50":4}},
+  {id:1,code:"APR-01",place:"Prizren · Bar Ura",city:"Prizren",visit_order:1,lat:42.21,lng:20.74,park_lat:42.211,park_lng:20.741,model:"GMV Elitouch",channels:4,capacity:25,
+   planogram:[{channel:1,product_id:1,capacity:25},{channel:2,product_id:1,capacity:25},{channel:3,product_id:3,capacity:25},{channel:4,product_id:5,capacity:20}],baseline:{"1":18,"2":16,"3":12,"4":15},float:{"100":5,"50":4},
+   pay:{notes:true,change:false,exact:false,cmin:0.5,cmax:2,flock:true},status:"ok",status_note:""},
   {id:2,code:"APR-02",place:"Prizren · Kiosku te Sheshi",city:"Prizren",visit_order:2,lat:42.215,lng:20.745,model:"Jofemar Goya",channels:2,capacity:30,
    planogram:[{channel:1,product_id:1,capacity:30},{channel:2,product_id:4,capacity:30}],baseline:{"1":22,"2":20},float:{}},
   {id:3,code:"APR-03",place:"Ferizaj · Restorant Era",city:"Ferizaj",visit_order:1,lat:42.37,lng:21.15,park_lat:42.371,park_lng:21.151,model:"GMV Elitouch",channels:3,capacity:25,
-   planogram:[{channel:1,product_id:2,capacity:25},{channel:2,product_id:7,capacity:25},{channel:3,product_id:6,capacity:25}],baseline:{"1":10,"2":8,"3":20},float:{"100":3}},
+   planogram:[{channel:1,product_id:2,capacity:25},{channel:2,product_id:7,capacity:25},{channel:3,product_id:6,capacity:25}],baseline:{"1":10,"2":8,"3":20},float:{"100":3},
+   pay:{notes:false,change:false,exact:true,cmin:0.5,cmax:2,flock:false},status:"defekt",status_note:"Lexuesi i monedhave ngec"},
   {id:4,code:"APR-04",place:"Prishtinë · Sheshi Nëna Terezë",city:"Prishtinë",visit_order:1,lat:42.66,lng:21.16,model:"Jofemar Goya",channels:4,capacity:30,
    planogram:[{channel:1,product_id:1,capacity:30},{channel:2,product_id:3,capacity:30},{channel:3,product_id:8,capacity:25},{channel:4,product_id:4,capacity:25}],baseline:{"1":25,"2":18,"3":22,"4":15},float:{"200":2,"100":6}},
   {id:5,code:"APR-05",place:"Prishtinë · Stacioni i Autobusëve",city:"Prishtinë",visit_order:2,lat:42.665,lng:21.165,model:"GMV Elitouch",channels:3,capacity:25,
@@ -882,6 +935,60 @@ $("#helpBack").onclick=()=>show("#scrMenu");
 let _ocMachine=null;
 $("#btnGoOpen").onclick=()=>{ if(!CAT||!CAT.machines.length){alert("S'ka aparate. Bëj së pari regjistrimin.");return;} renderOpening(); show("#scrOpening"); };
 $("#openBack").onclick=()=>show("#scrMenu");
+
+/* ── PANELI I INVENTARIT ─────────────────────────────────────────── */
+const STATUS_LBL={ok:"🟢 Punon",defekt:"🔧 Në defekt",jashte:"⛔ Jashtë pune"};
+function machineProducts(m){ // grupon planogramin sipas produktit (dy kanale = ⭐)
+  const agg={};
+  (m.planogram||[]).forEach(p=>{ if(p.product_id==null)return;
+    const a=agg[p.product_id]||(agg[p.product_id]={pid:p.product_id,channels:[],cap:0});
+    a.channels.push(p.channel); a.cap+=(+p.capacity||0); });
+  return Object.values(agg).map(a=>({...a,channels:a.channels.sort((x,y)=>x-y),
+    n:a.channels.length,dbl:a.channels.length>1})).sort((x,y)=>x.channels[0]-y.channels[0]);
+}
+function paySummary(pay){ pay=pay||{}; const p=[];
+  p.push(pay.notes!==false?"💵 letra":"🚫 pa letra");
+  if(pay.exact) p.push("🎯 vetëm para të sakta"); else if(pay.change===false) p.push("↩️ pa kusur"); else p.push("💱 kthen kusur");
+  if(pay.cmin||pay.cmax) p.push(pay.cmax?`🪙 ${(+pay.cmin||0).toFixed(2)}–${(+pay.cmax).toFixed(2)} €`:`🪙 nga ${(+pay.cmin).toFixed(2)} €`);
+  if(pay.flock) p.push("🔒 kutia e kusurit s'preket");
+  return p.join(" · ");
+}
+function renderInv(){
+  const ms=activeMachines();
+  // mbush filtrin e qyteteve
+  const cities=[...new Set(ms.map(m=>m.city).filter(Boolean))].sort();
+  const cur=$("#invCity").value;
+  $("#invCity").innerHTML='<option value="">Të gjitha qytetet</option>'+cities.map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join("");
+  const fCity=$("#invCity").value, fFlt=$("#invFlt").value;
+  let shown=0,html="";
+  ms.forEach(m=>{
+    if(fCity&&m.city!==fCity) return;
+    const prods=machineProducts(m), nDbl=prods.filter(p=>p.dbl).length;
+    const pay=m.pay||{}, status=m.status||"ok";
+    if(fFlt==="fault"&&status==="ok") return;
+    if(fFlt==="double"&&!nDbl) return;
+    if(fFlt==="nochange"&&(pay.change!==false||pay.exact)) return;
+    if(fFlt==="flock"&&!pay.flock) return;
+    shown++;
+    const used=prods.reduce((s,p)=>s+p.n,0), tot=m.channels||used, capTot=prods.reduce((s,p)=>s+p.cap,0);
+    const plist=prods.map(p=>`kanali ${p.channels.join(",")}: <b>${pName(p.pid)}</b> (${p.cap} pako)${p.dbl?" ⭐":""}`).join(" · ")||"<i>pa planogram</i>";
+    html+=`<div class="card" style="margin-bottom:10px">
+      <div class="row"><b class="grow">${m.code||('#'+m.id)}</b><span class="pill">${STATUS_LBL[status]||STATUS_LBL.ok}</span></div>
+      <div class="note" style="margin-top:2px">${m.place||'—'}</div>
+      ${status!=="ok"&&m.status_note?`<div style="color:var(--warn,#B26A16);font-size:13px;margin-top:2px">🔧 ${m.status_note}</div>`:""}
+      <div style="font-size:13px;margin-top:6px">📟 kanalet <b>${used}/${tot}</b> · 📦 ${capTot} pako</div>
+      <div style="font-size:13px;color:#3A6B7A;margin-top:2px">${paySummary(pay)}</div>
+      <div style="font-size:13px;margin-top:6px">${plist}</div>
+    </div>`;
+  });
+  $("#invList").innerHTML=html||'<p class="note">Asnjë aparat me këtë filtër.</p>';
+  const faults=ms.filter(m=>(m.status||"ok")!=="ok").length;
+  const dbls=ms.filter(m=>machineProducts(m).some(p=>p.dbl)).length;
+  $("#invSum").textContent=`📟 ${shown}/${ms.length} aparate · 🔧 ${faults} defekt · ⭐ ${dbls} me dyfishtë`;
+}
+$("#btnGoInv").onclick=()=>{ if(!CAT||!activeMachines().length){alert("S'ka aparate ende.");return;} renderInv(); show("#scrInv"); };
+$("#invBack").onclick=()=>show("#scrMenu");
+$("#invCity").onchange=renderInv; $("#invFlt").onchange=renderInv;
 $("#ocBack").onclick=()=>{renderOpening();show("#scrOpening");};
 $("#odBack").onclick=()=>{renderOpening();show("#scrOpening");};
 
@@ -1169,6 +1276,11 @@ function editMachine(id){
   if(m.photo){pv.src=m.photo;pv.style.display="block";}else{pv.style.display="none";}
   $("#mGeoInfo").textContent=m.lat!=null?("📍 "+m.lat+", "+m.lng):"pa lokacion";
   $("#mParkInfo").textContent=m.park_lat!=null?("🅿️ "+m.park_lat+", "+m.park_lng):"pa lokacion";
+  // statusi + rregullat e pagesës
+  $("#mStatus").value=m.status||"ok"; $("#mStatNote").value=m.status_note||"";
+  const pay=m.pay||{};
+  $("#mPnotes").checked=pay.notes!==false; $("#mPchange").checked=pay.change!==false; $("#mPexact").checked=!!pay.exact;
+  $("#mPcmin").value=pay.cmin||""; $("#mPcmax").value=pay.cmax||""; $("#mPflock").checked=!!pay.flock;
   $("#mAdd").textContent="💾 Ruaj ndryshimin";
   const gs=$("#mGoStock"); gs.classList.remove("hidden"); gs.dataset.mid=id;   // buton: puno me stokun e këtij aparati
   $("#mCode").scrollIntoView({behavior:"smooth",block:"center"}); renderReg();
@@ -1180,8 +1292,9 @@ $("#mGoStock").onclick=()=>{
 };
 function mResetEdit(){
   _mEdit=null;
-  ["#mCode","#mCity","#mPlace","#mVo","#mCh","#mCap","#mGeoManual","#mParkManual"].forEach(s=>$(s).value="");
+  ["#mCode","#mCity","#mPlace","#mVo","#mCh","#mCap","#mGeoManual","#mParkManual","#mStatNote","#mPcmin","#mPcmax"].forEach(s=>$(s).value="");
   $("#mPlan").innerHTML="";
+  $("#mStatus").value="ok";$("#mPnotes").checked=true;$("#mPchange").checked=true;$("#mPexact").checked=false;$("#mPflock").checked=false;
   window._mLat=window._mLng=null;window._mParkLat=window._mParkLng=null;window._mPhoto="";
   $("#mGeoInfo").textContent="pa lokacion";$("#mParkInfo").textContent="pa lokacion";$("#mPhotoPrev").style.display="none";
   $("#mAdd").textContent="＋ Shto aparatin";
@@ -1196,16 +1309,20 @@ $("#mAdd").onclick=()=>{ensureReg();const code=$("#mCode").value.trim();if(!code
   let pLat=(window._mParkLat!=null?window._mParkLat:null), pLng=(window._mParkLng!=null?window._mParkLng:null);
   if(pLat==null){const c=parseCoords($("#mParkManual").value);if(c){pLat=c.lat;pLng=c.lng;}}
   const city=$("#mCity").value.trim(),loc=$("#mPlace").value.trim();
+  const pay={notes:$("#mPnotes").checked,change:$("#mPchange").checked,exact:$("#mPexact").checked,
+             cmin:parseFloat($("#mPcmin").value||0)||0,cmax:parseFloat($("#mPcmax").value||0)||0,flock:$("#mPflock").checked};
+  const status=$("#mStatus").value, statNote=$("#mStatNote").value.trim();
   regSnapshot();
   if(_mEdit!=null){
     const m=CAT.machines.find(x=>x.id===_mEdit);
     if(m){m.code=code;m.city=city;m.place=(city?city+" · ":"")+loc;m.visit_order=parseInt($("#mVo").value||0)||0;
       m.channels=parseInt($("#mCh").value||plan.length);m.capacity=parseInt($("#mCap").value||0)||0;m.planogram=plan;
-      m.lat=gLat;m.lng=gLng;m.park_lat=pLat;m.park_lng=pLng;if(window._mPhoto)m.photo=window._mPhoto;}
+      m.lat=gLat;m.lng=gLng;m.park_lat=pLat;m.park_lng=pLng;if(window._mPhoto)m.photo=window._mPhoto;
+      m.pay=pay;m.status=status;m.status_note=statNote;}
   } else {
     CAT.machines.push({id:nextId(),code:code,city:city,place:(city?city+" · ":"")+loc,visit_order:parseInt($("#mVo").value||0)||0,
       channels:parseInt($("#mCh").value||plan.length),capacity:parseInt($("#mCap").value||0)||0,planogram:plan,baseline:{},float:{},
-      lat:gLat,lng:gLng,park_lat:pLat,park_lng:pLng,photo:(window._mPhoto||"")});
+      lat:gLat,lng:gLng,park_lat:pLat,park_lng:pLng,photo:(window._mPhoto||""),pay:pay,status:status,status_note:statNote});
   }
   save(K_CAT,CAT);mResetEdit();renderReg();};
 
