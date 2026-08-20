@@ -462,7 +462,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <button class="pri" id="btnGoReg" style="width:100%;margin-top:8px">🗂️ Regjistrimi (produkte/aparate/stok)</button>
     <button class="pri" id="btnGoOpen" style="width:100%;margin-top:8px">🎯 Inventari fillestar</button>
     <button class="pri" id="btnGoInv" style="width:100%;margin-top:8px">📊 Paneli i inventarit (aparatet)</button>
-    <button class="pri" id="btnGoOwners" style="width:100%;margin-top:8px">💼 Pronarët (sa u kam borxh)</button>
+    <button class="pri" id="btnGoOwners" style="width:100%;margin-top:8px">💼 Pronarët e lokaleve (komisioni)</button>
     <button class="pri" id="btnGoDep" style="width:100%;margin-top:8px">🏦 Dorëzim cash-i · 💸 emergjent</button>
     <button class="sec" id="btnGoStock" style="width:100%;margin-top:8px">📦 Stoku i automjetit</button>
     <button class="sec" id="btnGoList" style="width:100%;margin-top:8px">← Kthehu te aparatet</button>
@@ -495,7 +495,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 
 <!-- PRONARËT -->
 <div class="wrap screen hidden" id="scrOwners">
-  <div class="row" style="margin-bottom:8px"><b class="grow">💼 Pronarët</b><button class="sec" id="ownBack">←</button></div>
+  <div class="row" style="margin-bottom:8px"><b class="grow">💼 Pronarët e lokaleve</b><button class="sec" id="ownBack">←</button></div>
   <div class="row" style="margin-bottom:8px;gap:6px;align-items:center">
     <span class="note">Baza:</span>
     <select id="ownBase" class="grow">
@@ -532,7 +532,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v49";  // rritet me çdo version të ri
+const APP_VER="v50";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -600,6 +600,11 @@ function renderMode(){
   }
 }
 function boot(){
+  // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
+  if(!localStorage.getItem("apar_cleaned_v50")){
+    ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
+    localStorage.setItem("apar_cleaned_v50","1");
+  }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
   // në DEMO: nëse s'ka katalog, mbushe
