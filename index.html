@@ -571,7 +571,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v58";  // rritet me çdo version të ri
+const APP_VER="v59";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -640,9 +640,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v58")){
+  if(!localStorage.getItem("apar_cleaned_v59")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v58","1");
+    localStorage.setItem("apar_cleaned_v59","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -2056,9 +2056,10 @@ async function uploadPhotoB64(dataURL){ // kthen URL publike ose null
     const ext=dataURL.indexOf("png")>=0?".png":".jpg";
     const name=(await _sha1hex(bytes.buffer))+ext;
     const ct=dataURL.slice(5,dataURL.indexOf(";"));
-    const r=await fetch(SUPA_URL+"/storage/v1/object/"+SUPA_BUCKET+"/"+name,
+    const r=await fetchRetry(SUPA_URL+"/storage/v1/object/"+SUPA_BUCKET+"/"+name,
       {method:"POST",headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":ct||"image/jpeg"},body:bytes});
-    if(r.ok||r.status===200||r.status===201) return SUPA_URL+"/storage/v1/object/public/"+SUPA_BUCKET+"/"+name;
+    // 409 = emri (hash) ekziston tashmë = e njëjta foto → sukses
+    if(r.ok||r.status===200||r.status===201||r.status===409) return SUPA_URL+"/storage/v1/object/public/"+SUPA_BUCKET+"/"+name;
     return null;
   }catch(e){return null;}
 }
