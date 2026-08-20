@@ -197,21 +197,43 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 
 <!-- DEPOZITË NË BANKË -->
 <div class="wrap screen hidden" id="scrDep">
-  <div class="row" style="margin-bottom:8px"><b class="grow">🏦 Depozitë në bankë</b><button class="sec" id="depBack">←</button></div>
+  <div class="row" style="margin-bottom:8px"><b class="grow">🏦 Dorëzim cash-i</b><button class="sec" id="depBack">←</button></div>
   <div class="card">
-    <div class="sec-t">Banka</div>
-    <select id="depBank" style="width:100%"></select>
-    <div class="row" style="margin-top:8px">
-      <input id="depAmt" type="text" inputmode="decimal" placeholder="shuma €" class="grow">
-      <input id="depRef" placeholder="referenca" class="grow">
+    <div class="sec-t">Ku shkon cash-i?</div>
+    <select id="depDest" style="width:100%">
+      <option value="bank">🏦 Depozitë në bankë</option>
+      <option value="owner">👤 Dorëzim te pronari i kompanisë (menaxheri)</option>
+    </select>
+    <div id="depBankRow">
+      <div class="sec-t" style="margin-top:10px">Banka</div>
+      <select id="depBank" style="width:100%"></select>
+    </div>
+    <div id="depOwnerRow" style="display:none">
+      <div class="sec-t" style="margin-top:10px">Kujt ia dorëzove</div>
+      <input id="depOwnerName" placeholder="Emri i pronarit/menaxherit" style="width:100%">
     </div>
     <div class="row" style="margin-top:8px">
-      <button class="sec grow" id="depGeo" type="button">📍 Merr lokacionin (bankomati)</button>
+      <input id="depAmt" type="text" inputmode="decimal" placeholder="shuma €" class="grow">
+      <input id="depRef" placeholder="referenca/shënim" class="grow">
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="sec grow" id="depGeo" type="button">📍 Merr lokacionin</button>
       <span class="pill" id="depGeoInfo">pa lokacion</span>
     </div>
     <input id="depGeoManual" placeholder="ose koordinata: 42.66, 21.16" style="margin-top:6px;width:100%">
-    <button class="pri" id="depSave" style="width:100%;margin-top:10px">💾 Ruaj depozitën</button>
+    <button class="pri" id="depSave" style="width:100%;margin-top:10px">💾 Ruaj dorëzimin</button>
     <p class="note" id="depSync">—</p>
+  </div>
+
+  <div class="card">
+    <div class="row"><b class="grow">💸 Cash emergjent (tërheqje nga arka)</b></div>
+    <p class="note" style="margin:4px 0 8px">Para të marra nga arka për emergjencë (sëmundje, karburant…) — <b>transparente e të kthyeshme</b>, jo të fshehura. Zbriten nga «kesh në dorë».</p>
+    <div class="row">
+      <input id="advAmt" type="text" inputmode="decimal" placeholder="shuma €" class="grow">
+      <input id="advReason" placeholder="arsyeja" class="grow">
+    </div>
+    <button class="sec" id="advSave" style="width:100%;margin-top:8px">💸 Regjistro tërheqjen</button>
+    <div id="advList" style="margin-top:8px"></div>
   </div>
 </div>
 
@@ -257,8 +279,9 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <h3>🎯 Inventari fillestar</h3>
     <p>☰ → <b>🎯 Inventari fillestar</b>: <b>(1)</b> numëro aparatet qytet-pas-qyteti (Prizren i pari) → 🟢. <b>(2)</b> numëro magazinën. <b>(3)</b> <b>Llogarit</b> → kombi = Blerë − Aparate − Depo.</p>
 
-    <h3>🏦 Depozitë · 💸 Tërheqje</h3>
-    <p>☰ → <b>🏦 Depozitë</b>: bankë + shumë + <b>📍 lokacioni</b> (GPS gjen bankomatin nga interneti). Në PC te 🏦 Banka ka edhe <b>💸 Tërheqje nga arka</b> (të hua për emergjencë — transparente, e kthyeshme).</p>
+    <h3>🏦 Dorëzim cash-i · 💸 Cash emergjent</h3>
+    <p>☰ → <b>🏦 Dorëzim cash-i</b>: zgjidh ku shkon paraja — <b>🏦 në bankë</b> (me lokacion bankomati) ose <b>👤 te pronari i kompanisë/menaxheri</b> (me emër). Të dyja zbriten nga «kesh në dorë» te barazimi lart.</p>
+    <p><b>💸 Cash emergjent (tërheqje nga arka):</b> po te i njëjti ekran — para të marra për emergjencë (sëmundje, karburant), <b>transparente e të kthyeshme</b>. Shtyp <b>💶 Kthej</b> kur i kthen. Sa janë pa kthyer zbriten nga kesh në dorë.</p>
 
     <h3>🧭 Rruga · ☁️ Sync</h3>
     <p><b>🧭 Optimizo rrugën</b> (mbi parkingun) → renditje sipas rrugës më të shkurtër. Vizitat/depozitat dërgohen <b>vetë te cloud</b> me internet (ose ☰ → ☁️ Sinkronizo); PC i tërheq me <b>☁️ Tërhiq</b>. Punon offline.</p>
@@ -409,8 +432,10 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <div class="recon" style="margin-top:6px">
       <div><span>Cash i mbledhur</span><b id="sCollected">0.00 €</b></div>
       <div><span>Depozituar në bankë</span><b id="sDeposited">0.00 €</b></div>
+      <div><span>👤 Dorëzuar pronarit të kompanisë</span><b id="sHandover">0.00 €</b></div>
+      <div><span>💸 Cash emergjent (të hua, pa kthyer)</span><b id="sAdvance">0.00 €</b></div>
       <div><span>Kesh në dorë</span><b id="sHand">0.00 €</b></div>
-      <div><span>Pjesa e pronarit (vlerësim)</span><b id="sOwner">0.00 €</b></div>
+      <div><span>Pjesa e pronarit të lokalit (vlerësim)</span><b id="sOwner">0.00 €</b></div>
       <div><span>Pjesa jote</span><b id="sMine">0.00 €</b></div>
     </div>
     <p class="note" style="margin:6px 0 0">Vlerësim nga terreni. Barazimi zyrtar bëhet në PC (🏦 Banka).</p>
@@ -436,7 +461,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <button class="pri" id="btnGoOpen" style="width:100%;margin-top:8px">🎯 Inventari fillestar</button>
     <button class="pri" id="btnGoInv" style="width:100%;margin-top:8px">📊 Paneli i inventarit (aparatet)</button>
     <button class="pri" id="btnGoOwners" style="width:100%;margin-top:8px">💼 Pronarët (sa u kam borxh)</button>
-    <button class="pri" id="btnGoDep" style="width:100%;margin-top:8px">🏦 Depozitë në bankë</button>
+    <button class="pri" id="btnGoDep" style="width:100%;margin-top:8px">🏦 Dorëzim cash-i · 💸 emergjent</button>
     <button class="sec" id="btnGoStock" style="width:100%;margin-top:8px">📦 Stoku i automjetit</button>
     <button class="sec" id="btnGoList" style="width:100%;margin-top:8px">← Kthehu te aparatet</button>
     <button class="sec" id="btnReimport2" style="width:100%;margin-top:8px">📥 Ngarko katalog të ri</button>
@@ -505,7 +530,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v46";  // rritet me çdo version të ri
+const APP_VER="v47";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -1228,9 +1253,17 @@ let _depLat=null,_depLng=null;
 $("#btnGoDep").onclick=()=>{
   const sel=$("#depBank");if(!sel.options.length)sel.innerHTML=BANKS.map(b=>`<option>${b}</option>`).join("");
   _depLat=_depLng=null;$("#depGeoInfo").textContent="pa lokacion";$("#depGeoManual").value="";$("#depAmt").value="";$("#depRef").value="";
+  $("#depDest").value="bank";_depDestToggle();renderAdvances();
   depSyncBadge();show("#scrDep");
 };
 $("#depBack").onclick=()=>show("#scrMenu");
+function _depDestToggle(){
+  const owner=$("#depDest").value==="owner";
+  $("#depOwnerRow").style.display=owner?"block":"none";
+  $("#depBankRow").style.display=owner?"none":"block";
+  $("#depSave").textContent=owner?"💾 Ruaj dorëzimin te pronari":"💾 Ruaj depozitën";
+}
+$("#depDest").onchange=_depDestToggle;
 async function osmNearestBank(lat,lng){
   try{
     const q=`[out:json][timeout:8];(node(around:200,${lat},${lng})["amenity"~"atm|bank"];);out;`;
@@ -1253,7 +1286,10 @@ $("#depGeo").onclick=()=>{
   },e=>{$("#depGeoInfo").textContent=(e.code===1?"leje e bllokuar":"s'u mor")+" — shkruaj manual";},{enableHighAccuracy:true,timeout:12000,maximumAge:0});
 };
 async function depPush(d){
-  const body={date:d.date,bank:d.bank,amount:d.amount,reference:d.reference,lat:d.lat,lng:d.lng,notes:d.notes};
+  // dorëzimi te pronari shënohet te 'bank' si "Pronari: Emri" dhe te notes, që PC ta dallojë
+  const bankField=d.dest==="owner"?("👤 Pronari: "+(d.owner||"")):d.bank;
+  const notes=(d.dest==="owner"?"[dorëzim pronarit] ":"")+(d.notes||"");
+  const body={date:d.date,bank:bankField,amount:d.amount,reference:d.reference,lat:d.lat,lng:d.lng,notes:notes};
   const r=await fetch(SUPA_URL+"/rest/v1/deposits",{method:"POST",headers:{..._sh(),"Prefer":"return=minimal"},body:JSON.stringify(body)});
   return r.ok;
 }
@@ -1261,15 +1297,49 @@ async function depSync(){let s=0;for(const d of DEPQ){if(d._synced)continue;try{
 function depSyncBadge(){const n=DEPQ.filter(d=>!d._synced).length;$("#depSync").textContent=n?(n+" depozita pa dërguar"):"të gjitha të dërguara ✓";}
 $("#depSave").onclick=async()=>{
   const amt=parseNum($("#depAmt").value);if(amt<=0){alert("Fut shumën.");return;}
+  const dest=$("#depDest").value;
+  const owner=$("#depOwnerName").value.trim();
+  if(dest==="owner"&&!owner){alert("Shkruaj emrin e pronarit/menaxherit.");return;}
   let la=_depLat,ln=_depLng;
   if(la==null){const c=parseCoords($("#depGeoManual").value);if(c){la=c.lat;ln=c.lng;}}
-  const d={date:new Date().toISOString(),bank:$("#depBank").value,amount:amt,reference:$("#depRef").value.trim(),lat:la,lng:ln,notes:"",_synced:false};
+  const d={date:new Date().toISOString(),dest:dest,bank:dest==="bank"?$("#depBank").value:"",owner:owner,
+    amount:amt,reference:$("#depRef").value.trim(),lat:la,lng:ln,notes:"",_synced:false};
   DEPQ.push(d);save(K_DEP,DEPQ);
   let ok=false;try{ok=await depPush(d);if(ok)d._synced=true;save(K_DEP,DEPQ);}catch(e){}
-  depSyncBadge();
-  alert("💾 Depozita u ruajt"+(ok?" dhe u dërgua te cloud ✓":" (do dërgohet kur ke internet)"));
+  depSyncBadge(); updateSettle();
+  alert((dest==="owner"?"👤 Dorëzimi te pronari u ruajt":"💾 Depozita u ruajt")+(ok?" dhe u dërgua te cloud ✓":" (do dërgohet kur ke internet)"));
+  $("#depAmt").value="";$("#depRef").value="";$("#depOwnerName").value="";
   show("#scrMenu");
 };
+
+/* ── CASH EMERGJENT (tërheqje nga arka — të hua) ─────────────────── */
+const K_ADV="apar_advances"; let ADVQ=load(K_ADV)||[];
+$("#advSave").onclick=()=>{
+  const amt=parseNum($("#advAmt").value);if(amt<=0){alert("Fut shumën.");return;}
+  const reason=$("#advReason").value.trim();
+  ADVQ.push({date:new Date().toISOString(),amount:amt,reason:reason,repaid:0});
+  save(K_ADV,ADVQ); $("#advAmt").value="";$("#advReason").value="";
+  renderAdvances(); updateSettle();
+  alert("💸 Tërheqja "+amt.toFixed(2)+" € u regjistrua (të hua, e kthyeshme).");
+};
+function advOutstanding(){return (ADVQ||[]).reduce((s,a)=>s+((+a.amount||0)-(+a.repaid||0)),0);}
+function renderAdvances(){
+  const el=$("#advList");if(!el)return;
+  if(!ADVQ.length){el.innerHTML='<p class="note">Ende s\'ka tërheqje.</p>';return;}
+  el.innerHTML=ADVQ.map((a,i)=>{
+    const left=(+a.amount||0)-(+a.repaid||0);
+    return `<div style="display:flex;gap:8px;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line)">
+      <span class="grow">${_fmtDate(a.date)} · <b>${(+a.amount).toFixed(2)} €</b>${a.reason?(" · "+a.reason):""} ${left<=0?'<span style="color:var(--good,#2C8256)">✓ kthyer</span>':('· mbetet '+left.toFixed(2)+' €')}</span>
+      ${left>0?`<button class="sec" data-repay="${i}" style="padding:3px 8px">💶 Kthej</button>`:""}
+    </div>`;
+  }).join("");
+  el.querySelectorAll("[data-repay]").forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.repay,a=ADVQ[i],left=(+a.amount||0)-(+a.repaid||0);
+    const s=prompt("Sa po kthen? (mbetet "+left.toFixed(2)+" €)",left.toFixed(2));
+    if(s==null)return;const v=parseFloat(s);if(!(v>0))return;
+    a.repaid=(+a.repaid||0)+v;save(K_ADV,ADVQ);renderAdvances();updateSettle();
+  });
+}
 $("#btnUpdate").onclick=async()=>{
   if(!confirm("Të merret versioni i ri nga interneti? (të dhënat s'fshihen)"))return;
   try{
@@ -1697,13 +1767,18 @@ function updateSettle(){
   if(!$("#sCollected"))return;
   let collected=0;
   (VIS||[]).forEach(v=>{collected+=visitWithdrawn(v);});
-  let deposited=0; (DEPQ||[]).forEach(d=>{deposited+=(+d.amount||0);});
-  const hand=collected-deposited;
+  let deposited=0,handover=0;
+  (DEPQ||[]).forEach(d=>{ if(d.dest==="owner") handover+=(+d.amount||0); else deposited+=(+d.amount||0); });
+  const advOut=advOutstanding();
+  // kesh në dorë = mbledhur − depozituar − dorëzuar pronarit − cash emergjent (pa kthyer)
+  const hand=collected-deposited-handover-advOut;
   const comm=+(load("apar_owner_comm")||12);
   const owner=collected*comm/100, mine=collected-owner;
   $("#settleDeal").textContent="komision "+comm+"%";
   $("#sCollected").textContent=collected.toFixed(2)+" €";
   $("#sDeposited").textContent=deposited.toFixed(2)+" €";
+  $("#sHandover").textContent=handover.toFixed(2)+" €";
+  $("#sAdvance").textContent=advOut.toFixed(2)+" €";
   const h=$("#sHand"); h.textContent=hand.toFixed(2)+" €"; h.className=hand>0.01?"neg":"pos";
   $("#sOwner").textContent=owner.toFixed(2)+" €";
   $("#sMine").textContent=mine.toFixed(2)+" €";
