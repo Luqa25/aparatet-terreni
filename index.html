@@ -571,7 +571,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v57";  // rritet me çdo version të ri
+const APP_VER="v58";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -640,9 +640,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v57")){
+  if(!localStorage.getItem("apar_cleaned_v58")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v57","1");
+    localStorage.setItem("apar_cleaned_v58","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1377,7 +1377,7 @@ async function pushReport(r){
   const cowner=localStorage.getItem("apar_company_owner")||"";
   const body={day:r.day,owner:cowner,collected:r.collected,in_bank:r.inBank,to_owner:r.toOwner,
     onhand:r.onhand,sold_total:r.soldTotal,n_visits:r.nVisits,data:JSON.stringify(r),source:"iphone"};
-  const rr=await fetch(SUPA_URL+"/rest/v1/reports",{method:"POST",headers:{..._sh(),"Prefer":"return=minimal"},body:JSON.stringify(body)});
+  const rr=await fetchRetry(SUPA_URL+"/rest/v1/reports",{method:"POST",headers:{..._sh(),"Prefer":"return=minimal"},body:JSON.stringify(body)});
   return rr.ok;
 }
 $("#ocBack").onclick=()=>{renderOpening();show("#scrOpening");};
@@ -2019,6 +2019,15 @@ $("#regExport").onclick=()=>{ensureReg();
 const SUPA_URL="https://tzjoldrtnnvfwlkjkewg.supabase.co";
 const SUPA_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6am9sZHJ0bm52Zndsa2prZXdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3MjU1MjEsImV4cCI6MjEwMjMwMTUyMX0.0qBVDYW2Y0OhpyeZSWX-pmWYFKhCitRa_3Zs1RD4uMA";
 function _sh(){return {"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json"};}
+// fetch me riprovim automatik (terren me sinjal të dobët) — 3 prova
+async function fetchRetry(url,opts,tries){
+  tries=tries||3; let last;
+  for(let i=0;i<tries;i++){
+    try{ return await fetch(url,opts); }
+    catch(e){ last=e; await new Promise(res=>setTimeout(res,1000*(i+1))); }
+  }
+  throw last;
+}
 
 /* ── STORAGE i fotove: base64 → ngarko → URL publike (hapet edhe nga PC) ── */
 const SUPA_BUCKET="fotot";
