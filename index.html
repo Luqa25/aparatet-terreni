@@ -454,7 +454,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v40";  // rritet me çdo version të ri
+const APP_VER="v41";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -815,14 +815,21 @@ function recalc(){
     sold+=s; exp+=s*parseFloat(tr.dataset.price||0);
   });
   const tc=window._tc||0, tf=window._tf||0;
-  const counted_e=tc/100, disc=counted_e-exp, wd=(tc-tf)/100;
+  const pay=(cur&&cur.pay)||{};
+  const locked=!!pay.flock, noChange=(pay.change===false)||pay.exact;
+  const counted_e=tc/100, disc=counted_e-exp;
+  // kuti kusuri e mbrojtur → tërhiqet e gjithë arka; përndryshe counted − kusur
+  const wd=locked?counted_e:(tc-tf)/100;
   $("#rSold").textContent=sold;
   $("#rExp").textContent=exp.toFixed(2)+" €";
   $("#rCounted").textContent=counted_e.toFixed(2)+" €";
-  $("#rFloat").textContent=(tf/100).toFixed(2)+" €";
+  $("#rFloat").textContent=locked?"🔒 e mbrojtur":(tf/100).toFixed(2)+" €";
   $("#rWith").textContent=wd.toFixed(2)+" €";
-  const dEl=$("#rDisc"); dEl.textContent=(disc>=0?"+":"")+disc.toFixed(2)+" €";
-  dEl.className=Math.abs(disc)<=0.5?"pos":"neg";
+  const dEl=$("#rDisc");
+  let flag=Math.abs(disc)>0.5;
+  if(noChange && disc>0){ flag=false; dEl.textContent="+"+disc.toFixed(2)+" € (mbipagesë)"; }
+  else dEl.textContent=(disc>=0?"+":"")+disc.toFixed(2)+" €";
+  dEl.className=flag?"neg":"pos";
   window._sold=sold; window._exp=exp; window._disc=disc; window._counted=counted_e;
   renderPickList();
 }
@@ -864,10 +871,14 @@ $("#btnSaveVisit").onclick=()=>{
   });
   const cJson={},fJson={};
   DENOMS.forEach(([c])=>{if(counted[c])cJson[c]=counted[c];if(flt[c])fJson[c]=flt[c];});
+  const locked=!!(cur.pay&&cur.pay.flock);
+  const tf=window._tf||0;
+  const withdrawn=+(locked?window._counted:(window._counted-tf/100)).toFixed(2);
   const v={machine_id:cur.id,machine_code:cur.code||("#"+cur.id),date:new Date().toISOString(),
     lines:lines,sold_total:window._sold,expected_cash:+window._exp.toFixed(2),
     counted_cash:+window._counted.toFixed(2),discrepancy:+window._disc.toFixed(2),
-    counted_json:cJson,float_json:fJson,new_baseline:newbase,notes:$("#vNote").value.trim(),_synced:false};
+    counted_json:cJson,float_json:fJson,new_baseline:newbase,float_locked:locked,withdrawn:withdrawn,
+    notes:$("#vNote").value.trim(),_synced:false};
   VIS.push(v); save(K_VIS,VIS);
   cloudSync().then(updateSyncBadge);   // dërgo te cloud (nëse ka internet)
   // përditëso baseline+float lokalisht për vizitën tjetër
@@ -1425,10 +1436,15 @@ function updateSyncBadge(res){
   updateSettle();
 }
 function denSum(o){let t=0;for(const k in(o||{}))t+=(+k)*(+o[k]);return t/100;}
+function visitWithdrawn(v){ // tërhequr: kuti kusuri e mbrojtur → e gjithë arka; përndryshe counted − kusur
+  if(v.withdrawn!=null) return +v.withdrawn;
+  if(v.float_locked) return (+v.counted_cash||0);
+  return (+v.counted_cash||0)-denSum(v.float_json);
+}
 function updateSettle(){
   if(!$("#sCollected"))return;
   let collected=0;
-  (VIS||[]).forEach(v=>{collected+=(+v.counted_cash||0)-denSum(v.float_json);});
+  (VIS||[]).forEach(v=>{collected+=visitWithdrawn(v);});
   let deposited=0; (DEPQ||[]).forEach(d=>{deposited+=(+d.amount||0);});
   const hand=collected-deposited;
   const comm=+(load("apar_owner_comm")||12);
