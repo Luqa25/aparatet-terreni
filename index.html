@@ -441,6 +441,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <div style="border-top:1px solid var(--line);margin-top:4px;padding-top:4px"><span><b>= Mbetur te unë (pa dorëzuar)</b></span><b id="sHand">0.00 €</b></div>
     </div>
     <p class="note" style="margin:6px 0 0">Barazimi yt me pronarin e kompanisë ku punon. Marrëveshjet me <b>pronarët e lokaleve</b> (që mbajnë aparatet) → te <b>💼 Pronarët</b>.</p>
+    <button class="sec" id="btnClearSettle" style="width:100%;margin-top:8px;font-size:13px">🧹 Fshi depozitat/tërheqjet e kësaj mode</button>
   </div>
   <div class="card">
     <h3 style="margin-top:0">☁️ Dërgo vizitat</h3>
@@ -532,7 +533,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v51";  // rritet me çdo version të ri
+const APP_VER="v52";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -601,9 +602,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v51")){
+  if(!localStorage.getItem("apar_cleaned_v52")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v51","1");
+    localStorage.setItem("apar_cleaned_v52","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1412,6 +1413,16 @@ $("#btnExport").onclick=()=>{
   a.download="visits_"+new Date().toISOString().slice(0,10)+".json"; a.click();
 };
 $("#btnClearVisits").onclick=()=>{if(confirm("Fshi vizitat e dërguara nga tableti?")){VIS=[];save(K_VIS,VIS);$("#pendCount").textContent=0;alert("U fshinë.");}};
+// pastro depozitat + tërheqjet e MODËS aktuale (rrjet sigurie kundër të dhënave fantazmë)
+const _cbs=document.getElementById("btnClearSettle");
+if(_cbs)_cbs.onclick=()=>{
+  const m=(MODE==="demo")?"DEMO":"LIVE";
+  if(!confirm("Të fshihen TË GJITHA depozitat dhe tërheqjet e emergjencës te modaliteti "+m+"?\n\nS'preken vizitat, katalogu apo modaliteti tjetër.")) return;
+  DEPQ=[]; save(K_DEP,DEPQ);
+  ADVE=[]; save(K_ADV,ADVE);
+  updateSettle(); if($("#advList"))renderAdvances();
+  alert("✓ U pastruan depozitat dhe tërheqjet e "+m+".");
+};
 
 /* ---- REGJISTRIMI (i plotë në tablet) ---- */
 function nextId(){let n=parseInt(localStorage.getItem("regseq")||"-1");localStorage.setItem("regseq",n-1);return n;}
