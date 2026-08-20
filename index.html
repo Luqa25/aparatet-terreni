@@ -241,7 +241,8 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li><b>⭐ Produkt i dyfishtë:</b> produkti që shitet shumë vëre në <b>dy rende</b> (i njëjti produkt) — sistemi i mbledh vetë (50 pako, shitje e përbashkët).</li>
       <li><b>🔧 Statusi:</b> 🟢 Punon / 🔧 Në defekt / ⛔ Jashtë pune + shënim — aparatet prishen herë-pas-here; statusi ruhet.</li>
       <li><b>💶 Rregullat e pagesës</b> (secilit aparat): pranon letra? kthen kusur? vetëm para të sakta? monedha 🪙 0.5–2 €? <b>🔒 Kutia e kusurit</b> që s'preket (tërhiqet vetëm arka poshtë).</li>
-      <li>Te aparati: <b>📍 GPS</b> + <b>🅿️ Parkingu</b> + <b>📷 Foto</b> (prek për ta parë të plotë) + <b>📘 Manuali zyrtar / 🛠️ Defektet</b> (linqet e modelit — referohu kur prishet).</li>
+      <li>Te aparati: <b>📍 GPS</b> + <b>🅿️ Parkingu</b> + <b>📷 Foto kryesore</b> (prek për ta parë të plotë) + <b>📘 Manuali zyrtar / 🛠️ Defektet</b> (linqet e modelit).</li>
+      <li><b>🖼️ Galeri pa kufi (dy nivele):</b> <b>📟 Foto e aparatit</b> (kanale, defekt — arkivohen me aparatin) dhe <b>📍 Foto e pikës</b> (hyrja, vendi, prizi — MBETEN kur ndërrohet aparati; i riu i trashëgon). Prek një foto për ta parë, ✕ për ta hequr.</li>
       <li>Te lista: <b>✏️</b> redakton · <b>📦</b> puno me stokun · <b>🔄 Zëvendëso</b> (aparati fizik ndërrohet: i vjetri arkivohet, ruhet historiku) · <b>📜 Historiku</b>.</li>
       <li><b>Magazina/Kombi:</b> pranim → ngarko. Klik për ndryshim. <b>↶ Undo / ↷ Redo</b>.</li>
     </ul>
@@ -319,7 +320,20 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     </div>
     <input id="mPhotoIn" type="file" accept="image/*" capture="environment" style="display:none">
     <input id="mGalIn" type="file" accept="image/*" style="display:none">
-    <p class="note" style="margin:6px 0 0">💡 Produkti që shitet shumë mund të zërë <b>dy rende</b> — cakto të njëjtin produkt në dy rende; sistemi i mbledh vetë (⭐ i dyfishtë).</p>
+
+    <div class="sec-t" style="margin-top:12px">🖼️ Galeri fotosh (pa kufi)</div>
+    <div class="row" style="margin-top:4px;gap:6px">
+      <button class="sec grow" id="mAddMachPhoto" type="button">📟 + Foto e aparatit</button>
+      <button class="sec grow" id="mAddPlacePhoto" type="button">📍 + Foto e pikës</button>
+    </div>
+    <input id="mMachPhotoIn" type="file" accept="image/*" style="display:none">
+    <input id="mPlacePhotoIn" type="file" accept="image/*" style="display:none">
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">📟 Aparati (kanale, defekt) — arkivohen me aparatin:</div>
+    <div id="mMachGal" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">📍 Pika (hyrja, vendi, prizi) — MBETEN kur ndërrohet aparati:</div>
+    <div id="mPlaceGal" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
+
+    <p class="note" style="margin:8px 0 0">💡 Produkti që shitet shumë mund të zërë <b>dy rende</b> — cakto të njëjtin produkt në dy rende; sistemi i mbledh vetë (⭐ i dyfishtë).</p>
     <div id="mPlan" style="margin-top:8px"></div>
 
     <div class="sec-t" style="margin-top:12px">🔧 Statusi i aparatit</div>
@@ -454,7 +468,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v42";  // rritet me çdo version të ri
+const APP_VER="v43";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -1301,6 +1315,10 @@ function editMachine(id){
   const pay=m.pay||{};
   $("#mPnotes").checked=pay.notes!==false; $("#mPchange").checked=pay.change!==false; $("#mPexact").checked=!!pay.exact;
   $("#mPcmin").value=pay.cmin||""; $("#mPcmax").value=pay.cmax||""; $("#mPflock").checked=!!pay.flock;
+  // galeritë: fotot e aparatit + fotot e pikës (nga çelësi i pikës)
+  window._mMachGal=(m.photos||[]).slice();
+  window._mPlaceGal=((CAT.placePhotos||{})[m.place]||[]).slice();
+  renderGal();
   $("#mAdd").textContent="💾 Ruaj ndryshimin";
   const gs=$("#mGoStock"); gs.classList.remove("hidden"); gs.dataset.mid=id;   // buton: puno me stokun e këtij aparati
   $("#mCode").scrollIntoView({behavior:"smooth",block:"center"}); renderReg();
@@ -1315,6 +1333,7 @@ function mResetEdit(){
   ["#mCode","#mCity","#mPlace","#mVo","#mCh","#mCap","#mGeoManual","#mParkManual","#mStatNote","#mPcmin","#mPcmax"].forEach(s=>$(s).value="");
   $("#mPlan").innerHTML="";
   $("#mStatus").value="ok";$("#mPnotes").checked=true;$("#mPchange").checked=true;$("#mPexact").checked=false;$("#mPflock").checked=false;
+  window._mMachGal=[];window._mPlaceGal=[];if($("#mMachGal"))renderGal();
   window._mLat=window._mLng=null;window._mParkLat=window._mParkLng=null;window._mPhoto="";
   $("#mGeoInfo").textContent="pa lokacion";$("#mParkInfo").textContent="pa lokacion";$("#mPhotoPrev").style.display="none";
   $("#mAdd").textContent="＋ Shto aparatin";
@@ -1332,18 +1351,23 @@ $("#mAdd").onclick=()=>{ensureReg();const code=$("#mCode").value.trim();if(!code
   const pay={notes:$("#mPnotes").checked,change:$("#mPchange").checked,exact:$("#mPexact").checked,
              cmin:parseFloat($("#mPcmin").value||0)||0,cmax:parseFloat($("#mPcmax").value||0)||0,flock:$("#mPflock").checked};
   const status=$("#mStatus").value, statNote=$("#mStatNote").value.trim();
+  const pkey=(city?city+" · ":"")+loc;
+  const machGal=(window._mMachGal||[]).slice();
   regSnapshot();
   if(_mEdit!=null){
     const m=CAT.machines.find(x=>x.id===_mEdit);
-    if(m){m.code=code;m.city=city;m.place=(city?city+" · ":"")+loc;m.visit_order=parseInt($("#mVo").value||0)||0;
+    if(m){m.code=code;m.city=city;m.place=pkey;m.visit_order=parseInt($("#mVo").value||0)||0;
       m.channels=parseInt($("#mCh").value||plan.length);m.capacity=parseInt($("#mCap").value||0)||0;m.planogram=plan;
       m.lat=gLat;m.lng=gLng;m.park_lat=pLat;m.park_lng=pLng;if(window._mPhoto)m.photo=window._mPhoto;
-      m.pay=pay;m.status=status;m.status_note=statNote;}
+      m.pay=pay;m.status=status;m.status_note=statNote;m.photos=machGal;}
   } else {
-    CAT.machines.push({id:nextId(),code:code,city:city,place:(city?city+" · ":"")+loc,visit_order:parseInt($("#mVo").value||0)||0,
+    CAT.machines.push({id:nextId(),code:code,city:city,place:pkey,visit_order:parseInt($("#mVo").value||0)||0,
       channels:parseInt($("#mCh").value||plan.length),capacity:parseInt($("#mCap").value||0)||0,planogram:plan,baseline:{},float:{},
-      lat:gLat,lng:gLng,park_lat:pLat,park_lng:pLng,photo:(window._mPhoto||""),pay:pay,status:status,status_note:statNote});
+      lat:gLat,lng:gLng,park_lat:pLat,park_lng:pLng,photo:(window._mPhoto||""),pay:pay,status:status,status_note:statNote,photos:machGal});
   }
+  // fotot e pikës → ruhen sipas çelësit të pikës (mbeten kur ndërrohet aparati)
+  if(!CAT.placePhotos)CAT.placePhotos={};
+  CAT.placePhotos[pkey]=(window._mPlaceGal||[]).slice();
   save(K_CAT,CAT);mResetEdit();renderReg();};
 
 /* GPS + foto e aparatit (në tablet) */
@@ -1399,6 +1423,40 @@ $("#mPhotoBtn").onclick=()=>$("#mPhotoIn").click();
 $("#mGalBtn").onclick=()=>$("#mGalIn").click();
 $("#mPhotoIn").onchange=(ev)=>processPhoto(ev.target.files[0]);
 $("#mGalIn").onchange=(ev)=>processPhoto(ev.target.files[0]);
+
+/* ── GALERI FOTOSH DY-NIVELËSHE (aparati + pika) ─────────────────── */
+window._mMachGal=[]; window._mPlaceGal=[];
+function resizePhoto(f){return new Promise((res,rej)=>{ if(!f){rej();return;}
+  const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{
+    let w=img.width,h=img.height,max=900;
+    if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>max){w=Math.round(w*max/h);h=max;}
+    const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);
+    res(c.toDataURL("image/jpeg",0.6));
+  };img.src=r.result;};r.readAsDataURL(f);});}
+function _placeKey(){ const city=$("#mCity").value.trim(),loc=$("#mPlace").value.trim();
+  return (city?city+" · ":"")+loc; }
+function renderGal(){
+  const mk=(arr,el,remover)=>{ el.innerHTML="";
+    arr.forEach((src,i)=>{ const w=document.createElement("div");w.style.position="relative";
+      const im=document.createElement("img");im.src=src;im.style.cssText="width:64px;height:46px;object-fit:cover;border-radius:6px;border:1px solid var(--line);cursor:zoom-in";
+      im.onclick=()=>openPhoto(src);
+      const x=document.createElement("button");x.textContent="✕";x.title="Hiq";
+      x.style.cssText="position:absolute;top:-6px;right:-6px;width:20px;height:20px;padding:0;border-radius:50%;background:var(--bad,#C13B48);color:#fff;font-size:11px;border:none";
+      x.onclick=(e)=>{e.stopPropagation();remover(i);};
+      w.appendChild(im);w.appendChild(x);el.appendChild(w); }); };
+  mk(window._mMachGal,$("#mMachGal"),i=>{window._mMachGal.splice(i,1);renderGal();});
+  mk(window._mPlaceGal,$("#mPlaceGal"),i=>{window._mPlaceGal.splice(i,1);renderGal();});
+}
+// kur shkruan pikën (qytet/lokal), shfaq fotot ekzistuese të asaj pike nëse s'je duke redaktuar
+function _syncPlaceGalFromKey(){ if(_mEdit!=null)return;
+  const k=_placeKey(); const ex=(CAT.placePhotos||{})[k];
+  if(ex && !window._mPlaceGal.length){window._mPlaceGal=ex.slice();renderGal();} }
+$("#mCity").addEventListener("blur",_syncPlaceGalFromKey);
+$("#mPlace").addEventListener("blur",_syncPlaceGalFromKey);
+$("#mAddMachPhoto").onclick=()=>$("#mMachPhotoIn").click();
+$("#mAddPlacePhoto").onclick=()=>$("#mPlacePhotoIn").click();
+$("#mMachPhotoIn").onchange=async(ev)=>{try{const d=await resizePhoto(ev.target.files[0]);window._mMachGal.push(d);renderGal();}catch(e){}ev.target.value="";};
+$("#mPlacePhotoIn").onchange=async(ev)=>{try{const d=await resizePhoto(ev.target.files[0]);window._mPlaceGal.push(d);renderGal();}catch(e){}ev.target.value="";};
 $("#whAdd").onclick=()=>{ensureReg();const pid=parseInt($("#whProd").value)||0,q=parseInt($("#whQty").value||0)||0;
   if(!pid||!q){alert("Zgjidh produktin dhe sasinë.");return;}regSnapshot();stockBump(CAT.warehouse,pid,pName(pid),q);save(K_CAT,CAT);$("#whQty").value="";renderReg();};
 $("#vnLoad").onclick=()=>{ensureReg();const pid=parseInt($("#vnProd").value)||0,q=parseInt($("#vnQty").value||0)||0;
