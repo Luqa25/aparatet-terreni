@@ -532,7 +532,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v50";  // rritet me çdo version të ri
+const APP_VER="v51";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -601,9 +601,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v50")){
+  if(!localStorage.getItem("apar_cleaned_v51")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v50","1");
+    localStorage.setItem("apar_cleaned_v51","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1256,7 +1256,17 @@ $("#btnOpenCalc").onclick=()=>{
 };
 
 const BANKS=["BKT","ProCredit Bank","Raiffeisen Bank","NLB Banka","TEB","Banka për Biznes (BpB)","Banka Ekonomike","Ziraat Bank","Tjetër"];
-const K_DEP="apar_deposits"; let DEPQ=load(K_DEP)||[];
+// mode-aware (si K_CAT/K_VIS): depozitat DEMO vs LIVE të ndara plotësisht
+const K_DEP=()=>"apar_"+MODE+"_deposits";
+// migrim njëherësh: çelësi i vjetër i përbashkët "apar_deposits" ishte i përzier DEMO+LIVE →
+// e çojmë te DEMO (praktikë) që LIVE të nisë i pastër nga 0; useri s'humb asgjë reale.
+(function(){ const old=localStorage.getItem("apar_deposits");
+  if(old!=null){
+    if(!localStorage.getItem("apar_demo_deposits")) localStorage.setItem("apar_demo_deposits",old);
+    localStorage.removeItem("apar_deposits");
+  }
+})();
+let DEPQ=load(K_DEP)||[];
 let _depLat=null,_depLng=null;
 $("#btnGoDep").onclick=()=>{
   const sel=$("#depBank");if(!sel.options.length)sel.innerHTML=BANKS.map(b=>`<option>${b}</option>`).join("");
@@ -1324,7 +1334,12 @@ $("#depSave").onclick=async()=>{
 
 /* ── CASH EMERGJENT (tërheqje nga arka — të hua) ─────────────────── */
 /* Cash emergjent si NGJARJE (take/repay) me uid → sync dykahësh me PC */
-const K_ADV="apar_adv_events"; let ADVE=load(K_ADV)||[];
+const K_ADV=()=>"apar_"+MODE+"_adv_events";
+(function(){ const old=localStorage.getItem("apar_adv_events");  // migrim: i vjetri i përzier → DEMO
+  if(old!=null){ if(!localStorage.getItem("apar_demo_adv_events")) localStorage.setItem("apar_demo_adv_events",old);
+    localStorage.removeItem("apar_adv_events"); }
+})();
+let ADVE=load(K_ADV)||[];
 function _uid(){return "ip-"+Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
 $("#advSave").onclick=()=>{
   const amt=parseNum($("#advAmt").value);if(amt<=0){alert("Fut shumën.");return;}
