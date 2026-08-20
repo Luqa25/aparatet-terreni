@@ -546,7 +546,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v55";  // rritet me çdo version të ri
+const APP_VER="v56";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -615,9 +615,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v55")){
+  if(!localStorage.getItem("apar_cleaned_v56")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v55","1");
+    localStorage.setItem("apar_cleaned_v56","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -684,7 +684,13 @@ const DEMO_CATALOG={version:1,products:[
   {id:5,code:"APR-05",place:"Prishtinë · Stacioni i Autobusëve",city:"Prishtinë",visit_order:2,lat:42.665,lng:21.165,model:"GMV Elitouch",channels:3,capacity:25,
    planogram:[{channel:1,product_id:1,capacity:25},{channel:2,product_id:7,capacity:25},{channel:3,product_id:5,capacity:25}],baseline:{"1":12,"2":14,"3":19},float:{}},
   {id:6,code:"APR-06",place:"Gjakovë · Çarshia e Vjetër",city:"Gjakovë",visit_order:1,lat:42.38,lng:20.43,park_lat:42.381,park_lng:20.431,model:"Jofemar Goya",channels:2,capacity:30,
-   planogram:[{channel:1,product_id:2,capacity:30},{channel:2,product_id:8,capacity:30}],baseline:{"1":20,"2":24},float:{"100":4}}],
+   planogram:[{channel:1,product_id:2,capacity:30},{channel:2,product_id:8,capacity:30}],baseline:{"1":20,"2":24},float:{"100":4}},
+  {id:7,code:"APR-07",place:"Prizren · Hotel Best Western",city:"Prizren",visit_order:3,lat:42.213,lng:20.742,model:"AZKOYEN Serie-N",channels:26,capacity:22,
+   planogram:[{channel:1,product_id:1,capacity:22},{channel:2,product_id:3,capacity:22},{channel:3,product_id:3,capacity:22},{channel:4,product_id:4,capacity:22},{channel:5,product_id:5,capacity:22},{channel:6,product_id:6,capacity:22},{channel:7,product_id:7,capacity:22},{channel:8,product_id:8,capacity:22}],
+   baseline:{"1":15,"2":18,"3":16,"4":10,"5":12,"6":14,"7":9,"8":11},float:{"200":3,"100":5,"50":6},
+   pay:{notes:true,change:true,exact:false,cmin:0.1,cmax:2,flock:false},status:"ok",status_note:"",
+   owner:"Lund Tobacco",contract_type:"komision",contract_value:12,contract_start:"2026-02-01",contract_clause:"Aparat 26 kanale në hyrje të hotelit. Energjia nga hoteli.",
+   model_channels:26}],
  van:[{product_id:1,name:"Marlboro Red",qty:180},{product_id:2,name:"Marlboro Gold",qty:140},{product_id:3,name:"Winston Blue",qty:120},{product_id:4,name:"Lucky Strike",qty:90},{product_id:5,name:"Chesterfield",qty:100},{product_id:6,name:"L&M",qty:80},{product_id:7,name:"Camel",qty:70},{product_id:8,name:"Parliament",qty:60}],
  warehouse:[{product_id:1,name:"Marlboro Red",qty:400},{product_id:2,name:"Marlboro Gold",qty:300},{product_id:3,name:"Winston Blue",qty:250}]};
 function demoVisitsToday(){
@@ -1541,14 +1547,29 @@ $("#btnFreshStart").onclick=()=>{
   if(pend>0 && !confirm("Konfirmo përsëri: ke punë TË PA DËRGUAR që do HUMBASË. Vazhdo prapë?"))return;
   // seed produktet nga KS_BRANDS (çmime të modifikueshme)
   const products=KS_BRANDS.map(([nm,pr],i)=>({id:i+1,name:nm,price:pr,photo:"",provisional:true}));
-  CAT={version:1,products:products,machines:[],warehouse:[],van:[],suppliers:JSON.parse(JSON.stringify(DEFAULT_SUPPLIERS)),placePhotos:{},ownerPayments:[]};
+  const machines=[];
+  // opsional: shto aparatin AZKOYEN Serie-N (26 kanale) si gati — vetëm plotëso pikën/planogramin
+  if(confirm("Të shtohet edhe aparati «AZKOYEN Serie-N» (26 kanale) si gati?\n\n(Do plotësosh vetëm pikën, produktet e kanaleve dhe çmimet.)")){
+    machines.push(makeAzkoyen(1,products));
+  }
+  CAT={version:1,products:products,machines:machines,warehouse:[],van:[],suppliers:JSON.parse(JSON.stringify(DEFAULT_SUPPLIERS)),placePhotos:{},ownerPayments:[]};
   save(K_CAT,CAT);
   VIS=[];save(K_VIS,VIS);
   DEPQ=[];save(K_DEP,DEPQ);
   ADVE=[];save(K_ADV,ADVE);
   updateUndoBadges&&updateUndoBadges();renderReg();updateSettle&&updateSettle();
-  alert("✓ Fillim i pastër! "+products.length+" duhane + "+DEFAULT_SUPPLIERS.length+" furnitorë u vendosën. Çmimet ndryshoji te lista (të kuqe → jeshile).");
+  alert("✓ Fillim i pastër! "+products.length+" duhane + "+DEFAULT_SUPPLIERS.length+" furnitorë"+(machines.length?" + aparati AZKOYEN":"")+" u vendosën. Çmimet ndryshoji te lista (të kuqe → jeshile).");
 };
+// Krijon një aparat AZKOYEN Serie-N (26 kanale) me rregullat e pagesës gati; planogrami bosh (plotësohet)
+function makeAzkoyen(id,products){
+  const cap=22; // pako për kanal (orientuese; ndryshoje)
+  const plan=[]; for(let c=1;c<=26;c++)plan.push({channel:c,product_id:null,capacity:cap});
+  return {id:id,code:"AZK-01",place:"",city:"",visit_order:0,lat:null,lng:null,park_lat:null,park_lng:null,
+    model:"AZKOYEN Serie-N",channels:26,capacity:cap,model_channels:26,
+    planogram:plan,baseline:{},float:{},photo:"",photos:[],
+    pay:{notes:true,change:true,exact:false,cmin:0.1,cmax:2,flock:false},
+    status:"ok",status_note:"",owner:"",contract_type:"",contract_value:0,contract_start:"",contract_clause:""};
+}
 function editProduct(id){
   const p=(CAT.products||[]).find(x=>x.id===id); if(!p)return;
   _pEdit=id; $("#pName").value=p.name; $("#pPrice").value=(+p.price||0);
