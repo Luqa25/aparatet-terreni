@@ -1,0 +1,263 @@
+<title>Rendi i Vizitës</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14171A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rendi i Vizitës">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#14171A; --surface:#1E2327; --surface-2:#272D32; --line:#343C42;
+  --ink:#EDF1F3; --ink-soft:#A6AFB5; --ink-faint:#6C767C;
+  --teal:#33B5C7; --teal-soft:#33B5C71E; --teal-ink:#04252B;
+  --done:#4FBE87; --done-soft:#4FBE871E;
+  --gold:#E0A93E; --gold-soft:#E0A93E18;
+  --shadow:0 2px 6px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.34);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;line-height:1.55;
+  -webkit-font-smoothing:antialiased;padding:0 0 90px}
+.disp{font-family:"Barlow Condensed",Impact,sans-serif;letter-spacing:.01em;line-height:1.05}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+
+header{background:linear-gradient(160deg,#232A2F,#14171A);border-bottom:1px solid var(--line);
+  padding:calc(env(safe-area-inset-top) + 26px) 0 22px;position:relative;overflow:hidden}
+.kick{font-family:"Barlow Condensed";font-size:13px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--teal)}
+header h1{font-size:34px;font-weight:700;text-transform:uppercase;margin-top:4px;font-family:"Barlow Condensed"}
+header .sub{color:var(--ink-soft);font-size:14px;margin-top:8px}
+.progress{margin-top:16px;display:flex;align-items:center;gap:10px}
+.progress .bar{flex:1;height:9px;background:var(--surface-2);border-radius:100px;overflow:hidden}
+.progress .fill{height:100%;background:var(--done);width:0;transition:width .3s}
+.progress .txt{font-family:"Barlow Condensed";font-size:15px;font-weight:700;color:var(--done);white-space:nowrap}
+
+.route{display:flex;align-items:center;gap:8px;padding:12px 0;color:var(--ink-soft);font-size:13px;flex-wrap:wrap}
+.route .pin{color:var(--teal);font-weight:700}
+
+section{margin:8px 0 26px}
+
+/* hapat — karta të mëdha me checkbox */
+.step{background:var(--surface);border:1px solid var(--line);border-radius:16px;margin-bottom:12px;
+  box-shadow:var(--shadow);overflow:hidden;transition:border-color .2s,background .2s}
+.step.done{border-color:var(--done);background:var(--done-soft)}
+.step-top{display:flex;align-items:center;gap:14px;padding:16px 18px;cursor:pointer}
+.step .num{width:40px;height:40px;border-radius:11px;background:var(--teal);color:var(--teal-ink);
+  font-family:"Barlow Condensed";font-weight:700;font-size:22px;display:flex;align-items:center;justify-content:center;flex:none}
+.step.done .num{background:var(--done);color:#06301D}
+.step .ti{flex:1}
+.step .ti h3{font-size:19px;font-weight:700;line-height:1.2}
+.step .ti .hint{font-size:13.5px;color:var(--ink-soft);margin-top:2px}
+.step.done .ti h3{text-decoration:line-through;text-decoration-color:var(--done);color:var(--ink-soft)}
+.step .chk{width:30px;height:30px;border-radius:9px;border:2px solid var(--ink-faint);flex:none;
+  display:flex;align-items:center;justify-content:center;font-size:18px;color:transparent;transition:.15s}
+.step.done .chk{background:var(--done);border-color:var(--done);color:#06301D}
+.step .body{padding:0 18px 16px 72px;display:none}
+.step.open .body{display:block}
+.step .body ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.step .body li{position:relative;padding-left:20px;font-size:14.5px;color:var(--ink-soft)}
+.step .body li::before{content:"›";position:absolute;left:2px;color:var(--teal);font-weight:700;font-size:16px}
+.step .body li b{color:var(--ink)}
+.step .body .warn{color:var(--gold);font-weight:600}
+.step .app{display:inline-block;font-size:12px;font-weight:600;color:var(--teal);background:var(--teal-soft);
+  padding:2px 9px;border-radius:6px;margin-top:10px}
+
+/* sugjerime nga terreni */
+.tips{background:var(--gold-soft);border:1px solid var(--gold);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow)}
+.tips h2{font-family:"Barlow Condensed";font-size:22px;font-weight:700;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.tips .lead{font-size:13.5px;color:var(--ink-soft);margin-bottom:12px}
+.tip{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid rgba(224,169,62,.2)}
+.tip:last-child{border-bottom:none}
+.tip .ic{font-size:20px;flex:none;width:26px;text-align:center}
+.tip .tx{font-size:14px}.tip .tx b{color:var(--ink)}
+
+.sec-title{font-family:"Barlow Condensed";font-size:15px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-faint);margin:26px 0 12px;display:flex;align-items:center;gap:10px}
+.sec-title::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* buton fund */
+.footbar{position:fixed;left:0;right:0;bottom:0;background:rgba(20,23,26,.92);backdrop-filter:blur(8px);
+  border-top:1px solid var(--line);padding:12px 16px calc(env(safe-area-inset-bottom) + 12px);display:flex;gap:10px}
+.btn{flex:1;border:none;border-radius:12px;padding:14px;font-family:"Barlow Condensed";font-size:17px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.03em;cursor:pointer}
+.btn.reset{background:var(--teal);color:var(--teal-ink)}
+.btn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);flex:0 0 auto;padding:14px 18px}
+
+.note-inst{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:14px 16px;font-size:13px;color:var(--ink-soft);margin-top:20px}
+.note-inst b{color:var(--teal)}
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="kick">Aparatet · Terreni</div>
+    <h1>Rendi i vizitës</h1>
+    <p class="sub">Ndiqi hapat me radhë te çdo pikë. Prek kutinë kur e kryen.</p>
+    <div class="route">
+      <span class="pin">📍 Gjakovë</span> <span>→</span> <span>🅿️ Parkingu</span> <span>→</span> <span>🎰 Aparati</span> <span>→</span> <span class="pin">pika tjetër</span>
+    </div>
+    <div class="progress">
+      <div class="bar"><div class="fill" id="pfill"></div></div>
+      <span class="txt" id="ptxt">0 / 8</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="sec-title">Në çdo pikë — 8 hapa</div>
+  <section id="steps">
+
+    <div class="step" data-k="s1">
+      <div class="step-top"><div class="num">1</div><div class="ti"><h3>Nisu & navigo</h3><div class="hint">Nga Gjakova te parkingu i aparatit</div></div><div class="chk">✓</div></div>
+      <div class="body">
+        <ul>
+          <li>Te programi, filtro <b>qytetin</b> dhe zgjidh pikën e radhës (ngjyra 🟡 pret).</li>
+          <li>Shtyp <b>🅿️ Navigo te parkingu</b> — të çon te vendi ku parkon, jo mu te aparati.</li>
+          <li>Parko, pastaj ec te aparati.</li>
+        </ul>
+        <span class="app">Te lista → 🅿️ / 🧭</span>
+      </div>
+    </div>
+
+    <div class="step" data-k="s2">
+      <div class="step-top"><div class="num">2</div><div class="ti"><h3>📷 Foto e aparatit</h3><div class="hint">Para se ta prekësh</div></div><div class="chk">✓</div></div>
+      <div class="body">
+        <ul>
+          <li>Bëj foton e <b>aparatit të mbyllur</b> (pamja e jashtme, kanalet).</li>
+          <li>Nëse ka defekt të dukshëm — bëj foto veç.</li>
+          <li>Foto e <b>pikës</b> (hyrja, vendi) → mbetet edhe nëse ndërrohet aparati.</li>
+        </ul>
+        <span class="app">Te aparati → 📟 Foto e aparatit / 📍 Foto e pikës</span>
+      </div>
+    </div>
+
+    <div class="step" data-k="s3">
+      <div class="step-top"><div class="num">3</div><div class="ti"><h3>Regjistro & merr të dhënat</h3><div class="hint">Herën e parë: pasaporta e plotë</div></div><div class="chk">✓</div></div>
+      <div class="body">
+        <ul>
+          <li>Kod, qytet, lokal, <b>📍 GPS i aparatit</b> + <b>🅿️ GPS i parkingut</b>.</li>
+          <li>Modeli + <b>🔢 rende</b> dhe <b>📦 pako/rend</b> → <b>Ndërto</b>.</li>
+          <li>Cakto produktin e çdo kanali + <b>💶 çmimin</b> (lëre global ose vendos per-aparat).</li>
+          <li>Rregullat e pagesës: letra? kthen kusur? kuti kusuri e mbrojtur?</li>
+          <li>Marrëveshja me pronarin e lokalit (komision/qira/blerje).</li>
+        </ul>
+        <span class="app">☰ → Regjistrimi → 📟 Aparatet</span>
+      </div>
+    </div>
+
+    <div class="step" data-k="s4">
+      <div class="step-top"><div class="num">4</div><div class="ti"><h3>🔢 Numëro stokun</h3><div class="hint">Sa pako gjete në çdo kanal</div></div><div class="chk">✓</div></div>
+      <div class="body">
+        <ul>
+          <li>Hap aparatin. Te <b>«Tani»</b> fut sa pako <b>gjete</b> në çdo kanal.</li>
+          <li><b>Shitur</b> del vetë (para − tani).</li>
+          <li class="warn">⚠️ Mos ngut — numërimi i saktë = barazim i saktë.</li>
+        </ul>
+        <span class="app">Te aparati → 📦 Puno me stokun → «Tani»</span>
+      </div>
+    </div>
+
+    <div class="step" data-k="s5">
+      <div class="step-top"><div class="num">5</div><div class="ti"><h3>🚬 Mbushe me duhan</h3><div class="hint">Nga kombi te kanalet</div></div><div class="chk">✓</div></div>
+      <div class="body">
+        <ul>
+          <li>Shtyp <b>🧮 Mbush në maksimum</b> ose fut me dorë te «Pas mbushjes».</li>
+          <li><b>📥 Merr nga kombi</b>: sa pako të marrësh; 🔴 = mungon në komb.</li>
+          <li>Sa vendos në aparat zbritet vetë nga kombi.</li>
+        </ul>
+        <span class="app">Te vizita → «Pas mbushjes» / 📥</span>
+      </div>
+    </div>
+
+    <div class="step" data-k="s6">
+      <div class="step-top"><div class="num">6</div><div class="ti"><h3>💶 Merr cash-in</h3><div class="hint">Numëro sipas prerjeve</div></div><div class="chk">✓</div></div>
+      <div class="body">
+        <ul>
+          <li>Numëro cash-in sipas prerjeve (5€, 2€, 1€, 50c…) — saktësi absolute.</li>
+          <li>Fut edhe <b>kusurin e lënë</b>. Kutia e mbrojtur → numëro vetëm arkën.</li>
+          <li>Kontrollo <b>barazimin</b>: 🔴 mospërputhje nëse cash ≠ shitur × çmim.</li>
+        </ul>
+        <span class="app">Te vizita → 💶 Numëro cash-in</span>
+      </div>
+    </div>
+
+    <div class="step" data-k="s7">
+      <div class="step-top"><div class="num">7</div><div class="ti"><h3>✅ Mbylle & kontrollo</h3><div class="hint">A funksionon aparati</div></div><div class="chk">✓</div></div>
+      <div class="body">
+        <ul>
+          <li>Mbylle aparatin. <b>Testoje</b>: fut një monedhë / provo një kanal.</li>
+          <li>Nëse s'punon → shëno statusin <b>🔧 Në defekt</b> + shënim.</li>
+          <li>Shtyp <b>💾 Ruaj vizitën</b> — dërgohet vetë te cloud.</li>
+        </ul>
+        <span class="app">💾 Ruaj → status 🟢/🔧</span>
+      </div>
+    </div>
+
+    <div class="step" data-k="s8">
+      <div class="step-top"><div class="num">8</div><div class="ti"><h3>➡️ Pika tjetër</h3><div class="hint">Vazhdo rrugën</div></div><div class="chk">✓</div></div>
+      <div class="body">
+        <ul>
+          <li>Shtyp <b>➡️ Aparati tjetër</b> — të çon te i pavizituari i radhës me navigim.</li>
+          <li>Aparati i kryer bëhet 🟢 te lista; progresi lart tregon X/Y.</li>
+          <li class="warn">📅 Fund dite: bëj <b>Raportin ditor</b> për pronarin (☰ → 📋).</li>
+        </ul>
+        <span class="app">➡️ Aparati tjetër</span>
+      </div>
+    </div>
+
+  </section>
+
+  <div class="sec-title">Sugjerime nga terreni</div>
+  <div class="tips">
+    <h2>💡 Që të mos biesh në gracka</h2>
+    <p class="lead">Gjëra që i mësojnë vetëm në rrugë — ki kujdes:</p>
+    <div class="tip"><span class="ic">🔋</span><div class="tx"><b>Bateri + power bank.</b> GPS-i dhe fotot e hanë baterinë. Merr një power bank — dita është e gjatë.</div></div>
+    <div class="tip"><span class="ic">📶</span><div class="tx"><b>Pa sinjal? S'ka problem.</b> Gjithçka ruhet te telefoni dhe dërgohet vetë kur ke internet. Puna s'humb kurrë.</div></div>
+    <div class="tip"><span class="ic">📷</span><div class="tx"><b>Foto para & pas.</b> Herën e parë, bëj foto të kanaleve para mbushjes — të ndihmon të kujtosh planogramin.</div></div>
+    <div class="tip"><span class="ic">🔢</span><div class="tx"><b>Numëro para se të mbushësh.</b> Kurrë mos mbush para se të numërosh sa gjete — ndryshe humb shitjen reale.</div></div>
+    <div class="tip"><span class="ic">💰</span><div class="tx"><b>Ndaj cash-in e aparateve.</b> Mos e përziej me para të tjera; numëroje te vetë aparati që barazimi të dalë.</div></div>
+    <div class="tip"><span class="ic">🔧</span><div class="tx"><b>Aparat me defekt = shëno menjëherë.</b> Mos e lër "për vonë". Statusi 🔧 + foto → e di saktë kur të kthehesh.</div></div>
+    <div class="tip"><span class="ic">🗺️</span><div class="tx"><b>Grupo sipas qytetit.</b> Mbaro të gjitha pikat e një qyteti para se të kalosh te tjetri — kursen karburant e kohë.</div></div>
+    <div class="tip"><span class="ic">🕐</span><div class="tx"><b>Datë e kaluar?</b> Nëse harron një pikë dhe e regjistron nesër, ndrysho datën te shiriti «📅 Regjistrim për» që të mbetet e sotmja e vërtetë.</div></div>
+    <div class="tip"><span class="ic">🛟</span><div class="tx"><b>Backup çdo mbrëmje.</b> ☰ → 🛟 Backup → shkarko një kopje. Puna e ditës e sigurt dyfish.</div></div>
+  </div>
+
+  <div class="note-inst">
+    <b>📲 Vëre në ekranin kryesor:</b> te Safari, shtyp <b>Share (⬆️)</b> → <b>Add to Home Screen</b>. Kështu e hap si ikonë të vetën, veç nga programi, dhe e lexon kurdo — edhe pa internet.
+  </div>
+
+</div>
+
+<div class="footbar">
+  <button class="btn ghost" id="expand">⇕</button>
+  <button class="btn reset" id="reset">Fillo pikën e re</button>
+</div>
+
+<script>
+  const steps=[...document.querySelectorAll(".step")];
+  const KEY="rendi_vizites_v1";
+  function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return {}}}
+  function save(o){localStorage.setItem(KEY,JSON.stringify(o))}
+  function refresh(){
+    const st=load(); let done=0;
+    steps.forEach(s=>{const k=s.dataset.k; if(st[k]){s.classList.add("done");done++;}else s.classList.remove("done");});
+    document.getElementById("ptxt").textContent=done+" / "+steps.length;
+    document.getElementById("pfill").style.width=(done/steps.length*100)+"%";
+  }
+  steps.forEach(s=>{
+    const top=s.querySelector(".step-top"), chk=s.querySelector(".chk"), k=s.dataset.k;
+    // klik mbi kutinë = kryer/jo; klik mbi tekstin = hap/mbyll detajet
+    chk.addEventListener("click",e=>{e.stopPropagation();const st=load();st[k]=!st[k];save(st);refresh();
+      if(navigator.vibrate)navigator.vibrate(30);});
+    top.addEventListener("click",()=>s.classList.toggle("open"));
+  });
+  document.getElementById("reset").addEventListener("click",()=>{
+    if(confirm("Fillo një pikë të re? (çeklista pastrohet)")){save({});refresh();
+      steps.forEach(s=>s.classList.remove("open"));window.scrollTo({top:0,behavior:"smooth"});}
+  });
+  let allOpen=false;
+  document.getElementById("expand").addEventListener("click",()=>{
+    allOpen=!allOpen; steps.forEach(s=>s.classList.toggle("open",allOpen));
+  });
+  refresh();
+</script>
