@@ -34,6 +34,11 @@ input,textarea,select{font:inherit;background:var(--surface);color:var(--text);b
 .plan-row{display:grid;grid-template-columns:30px 1fr 52px 60px;gap:5px;align-items:center;margin-bottom:5px}
 .plan-row .ch{text-align:center;color:var(--muted);font-weight:700}
 .plan-row input{padding:6px 5px;font-size:13px}
+.regstep{display:flex;align-items:center;gap:10px;margin:16px 0 4px;padding-top:12px;border-top:1px solid var(--line)}
+.regstep .rn{width:24px;height:24px;border-radius:7px;background:var(--accent,#0C6675);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
+.regstep b{flex:1;font-size:15px}
+.regstep.done .rn{background:var(--good,#2C8256)}
+.regstep .rok{font-size:15px}
 .plan-hd{display:grid;grid-template-columns:30px 1fr 52px 60px;gap:5px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px;padding:0 2px}
 .plan-hd span{text-align:center}
 textarea{width:100%;min-height:120px;font-family:ui-monospace,monospace;font-size:12px}
@@ -279,7 +284,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li><b>⭐ Produkt i dyfishtë:</b> produkti që shitet shumë vëre në <b>dy rende</b> (i njëjti produkt) — sistemi i mbledh vetë (50 pako, shitje e përbashkët).</li>
       <li><b>🔧 Statusi:</b> 🟢 Punon / 🔧 Në defekt / ⛔ Jashtë pune + shënim — aparatet prishen herë-pas-here; statusi ruhet.</li>
       <li><b>💶 Rregullat e pagesës</b> (secilit aparat): pranon letra? kthen kusur? vetëm para të sakta? monedha 🪙 0.5–2 €? <b>🔒 Kutia e kusurit</b> që s'preket (tërhiqet vetëm arka poshtë).</li>
-      <li>Te aparati: <b>📍 GPS</b> + <b>🅿️ Parkingu</b> + <b>📷 Foto kryesore</b> (prek për ta parë të plotë) + <b>📘 Manuali zyrtar / 🛠️ Defektet</b> (linqet e modelit).</li>
+      <li><b>Rendi i hapave</b> (sipas terrenit, të numëruar): <b>1)</b> 🅿️ GPS parkingu → <b>2)</b> 📍 GPS aparati → <b>3)</b> 📷 Foto → <b>4)</b> 🏷️ Të dhënat → <b>5)</b> 🔢 Planogrami. Çdo hap i kryer bëhet 🟢 dhe të çon te i radhësi vetë. Linqet: 📘 Manuali / 🛠️ Defektet (të modelit).</li>
       <li><b>🖼️ Galeri pa kufi (dy nivele):</b> <b>📟 Foto e aparatit</b> (kanale, defekt — arkivohen me aparatin) dhe <b>📍 Foto e pikës</b> (hyrja, vendi, prizi — MBETEN kur ndërrohet aparati; i riu i trashëgon). Prek një foto për ta parë; shtyp <b>✕</b> në cep për <b>ta fshirë</b> (të kërkon konfirmim). Fshi një ose disa — nëse je te një aparat ekzistues, fshirja ruhet menjëherë dhe hiqet edhe nga cloud.</li>
       <li><b>☁️ Fotot te cloud:</b> te ☰ → <b>☁️ Sinkronizo</b>, fotot e rëndësishme (të pikës + të aparateve në defekt) ngarkohen te cloud dhe <b>hapen edhe nga PC-ja</b>. Fotot ruhen te Storage (jo databaza) → s'e mbushin.</li>
       <li>Te lista: <b>✏️</b> redakton · <b>📦</b> puno me stokun · <b>🔄 Zëvendëso</b> (aparati fizik ndërrohet: i vjetri arkivohet, ruhet historiku) · <b>📜 Historiku</b>.</li>
@@ -350,9 +355,55 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   </details>
 
   <details class="card" id="detMachines"><summary>📟 Aparatet</summary>
-    <div class="row" style="margin-top:8px"><input id="mCode" placeholder="Kodi (APR-01)" class="grow"><input id="mVo" type="number" inputmode="numeric" placeholder="rend" style="width:70px"></div>
+    <p class="note" style="margin:6px 0 10px">Ndiqe rendin sipas terrenit — hapat janë të numëruar. 🟢 = kryer.</p>
+
+    <!-- HAPI 1: PARKINGU (këtu je kur mbërrin) -->
+    <div class="regstep" id="rst-park"><span class="rn">1</span><b>🅿️ GPS i parkingut</b><span class="rok" style="display:none">🟢</span></div>
+    <div class="row" style="margin-top:4px">
+      <button class="sec grow" id="mPark" type="button">🅿️ Merr GPS-in këtu (te parkingu)</button>
+      <span class="pill" id="mParkInfo">pa lokacion</span>
+    </div>
+    <input id="mParkManual" placeholder="ose koordinata: 42.37, 21.16" style="margin-top:6px;width:100%">
+    <p class="note" style="margin:4px 0 0">Qëndro te <b>vendi ku parke</b> kur e shtyp.</p>
+
+    <!-- HAPI 2: GPS I APARATIT (fut brenda, te aparati) -->
+    <div class="regstep" id="rst-geo"><span class="rn">2</span><b>📍 GPS i aparatit</b><span class="rok" style="display:none">🟢</span></div>
+    <div class="row" style="margin-top:4px">
+      <button class="sec grow" id="mGeo" type="button">📍 Merr GPS-in te aparati</button>
+      <span class="pill" id="mGeoInfo">pa lokacion</span>
+    </div>
+    <input id="mGeoManual" placeholder="ose koordinata: 42.37, 21.16" style="margin-top:6px;width:100%">
+    <p class="note" style="margin:4px 0 0">Qëndro <b>te aparati</b> kur e shtyp.</p>
+
+    <!-- HAPI 3: FOTO -->
+    <div class="regstep" id="rst-photo"><span class="rn">3</span><b>📷 Foto</b><span class="rok" style="display:none">🟢</span></div>
+    <div class="row" style="margin-top:4px;gap:6px">
+      <button class="sec grow" id="mAddMachPhoto" type="button">📟 Foto e aparatit</button>
+      <button class="sec grow" id="mAddPlacePhoto" type="button">📍 Foto e pikës</button>
+    </div>
+    <input id="mMachPhotoIn" type="file" accept="image/*" capture="environment" style="display:none">
+    <input id="mPlacePhotoIn" type="file" accept="image/*" capture="environment" style="display:none">
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">📟 Aparati (kanale, defekt):</div>
+    <div id="mMachGal" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">📍 Pika (hyrja, vendi) — mbeten kur ndërrohet aparati:</div>
+    <div id="mPlaceGal" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
+    <!-- foto kryesore (kopertinë) — e fshehur nën galeri, opsionale -->
+    <div class="row" style="margin-top:6px;display:none">
+      <button class="sec grow" id="mPhotoBtn" type="button">📷 Foto kryesore</button>
+      <button class="sec grow" id="mGalBtn" type="button">🖼️ Galeri</button>
+      <img id="mPhotoPrev" style="width:56px;height:40px;object-fit:cover;border-radius:6px;display:none;border:1px solid var(--line)">
+    </div>
+    <input id="mPhotoIn" type="file" accept="image/*" capture="environment" style="display:none">
+    <input id="mGalIn" type="file" accept="image/*" style="display:none">
+
+    <!-- HAPI 4: TË DHËNAT -->
+    <div class="regstep" id="rst-data"><span class="rn">4</span><b>🏷️ Të dhënat e aparatit</b><span class="rok" style="display:none">🟢</span></div>
+    <div class="row" style="margin-top:4px"><input id="mCode" placeholder="Kodi (APR-01)" class="grow"><input id="mVo" type="number" inputmode="numeric" placeholder="rend" style="width:70px"></div>
     <div class="row" style="margin-top:6px"><input id="mCity" placeholder="Qyteti" class="grow"><input id="mPlace" placeholder="Lokali" class="grow"></div>
-    <div class="row" style="margin-top:8px;align-items:flex-end;gap:8px">
+
+    <!-- HAPI 5: PLANOGRAMI -->
+    <div class="regstep" id="rst-plan"><span class="rn">5</span><b>🔢 Rendet & planogrami</b><span class="rok" style="display:none">🟢</span></div>
+    <div class="row" style="margin-top:4px;align-items:flex-end;gap:8px">
       <div class="grow">
         <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:3px">🔢 Sa rende (kanale)</div>
         <input id="mCh" type="number" inputmode="numeric" placeholder="p.sh. 6" style="width:100%">
@@ -363,41 +414,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       </div>
       <button class="sec" id="mBuild" style="height:42px">Ndërto</button>
     </div>
-    <p class="note" style="margin:4px 0 0">P.sh. aparat me <b>6 rende</b>, secili zë <b>25 pako</b> → shtyp <b>Ndërto</b> për të caktuar produktin e çdo rendi.</p>
-    <div class="sec-t" style="margin-top:10px">📍 Aparati</div>
-    <div class="row" style="margin-top:4px">
-      <button class="sec grow" id="mGeo" type="button">📍 Lokacioni i aparatit (GPS)</button>
-      <span class="pill" id="mGeoInfo">pa lokacion</span>
-    </div>
-    <input id="mGeoManual" placeholder="ose koordinata të aparatit: 42.37, 21.16" style="margin-top:6px;width:100%">
-    <div class="sec-t" style="margin-top:12px">🅿️ Parkingu i automjetit</div>
-    <div class="row" style="margin-top:4px">
-      <button class="sec grow" id="mPark" type="button">🅿️ Vendi i parkingut (GPS)</button>
-      <span class="pill" id="mParkInfo">pa lokacion</span>
-    </div>
-    <input id="mParkManual" placeholder="ose koordinata të parkingut: 42.37, 21.16" style="margin-top:6px;width:100%">
-    <p class="note" style="margin:6px 0 0">Qëndro te <b>aparati</b> kur shtyp të parën; shko te <b>vendi ku parkon</b> kur shtyp të dytën.</p>
-    <div class="row" style="margin-top:6px">
-      <button class="sec grow" id="mPhotoBtn" type="button">📷 Foto (kamerë)</button>
-      <button class="sec grow" id="mGalBtn" type="button">🖼️ Galeri</button>
-      <img id="mPhotoPrev" style="width:56px;height:40px;object-fit:cover;border-radius:6px;display:none;border:1px solid var(--line)">
-    </div>
-    <input id="mPhotoIn" type="file" accept="image/*" capture="environment" style="display:none">
-    <input id="mGalIn" type="file" accept="image/*" style="display:none">
-
-    <div class="sec-t" style="margin-top:12px">🖼️ Galeri fotosh (pa kufi)</div>
-    <div class="row" style="margin-top:4px;gap:6px">
-      <button class="sec grow" id="mAddMachPhoto" type="button">📟 + Foto e aparatit</button>
-      <button class="sec grow" id="mAddPlacePhoto" type="button">📍 + Foto e pikës</button>
-    </div>
-    <input id="mMachPhotoIn" type="file" accept="image/*" style="display:none">
-    <input id="mPlacePhotoIn" type="file" accept="image/*" style="display:none">
-    <div style="font-size:11px;color:var(--muted);margin-top:6px">📟 Aparati (kanale, defekt) — arkivohen me aparatin:</div>
-    <div id="mMachGal" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
-    <div style="font-size:11px;color:var(--muted);margin-top:8px">📍 Pika (hyrja, vendi, prizi) — MBETEN kur ndërrohet aparati:</div>
-    <div id="mPlaceGal" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
-
-    <p class="note" style="margin:8px 0 0">💡 Produkti që shitet shumë mund të zërë <b>dy rende</b> — cakto të njëjtin produkt në dy rende; sistemi i mbledh vetë (⭐ i dyfishtë).</p>
+    <p class="note" style="margin:4px 0 0">Cakto produktin + 💶 çmimin e çdo rendi. 💡 Best-seller në dy rende = ⭐ i dyfishtë.</p>
     <div id="mPlan" style="margin-top:8px"></div>
 
     <div class="sec-t" style="margin-top:12px">🔧 Statusi i aparatit</div>
@@ -640,7 +657,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v62";  // rritet me çdo version të ri
+const APP_VER="v63";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -709,9 +726,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v62")){
+  if(!localStorage.getItem("apar_cleaned_v63")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v62","1");
+    localStorage.setItem("apar_cleaned_v63","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1936,13 +1953,15 @@ $("#pAddAll").onclick=()=>{
   save(K_CAT,CAT); renderReg();
   alert("U shtuan "+toAdd.length+" marka me çmim demo (portokalli). Ndryshoji çmimet për t'i bërë të freskëta.");
 };
+// hapi 4 (të dhënat) kryhet kur fut kodin
+$("#mCode").addEventListener("blur",()=>{ if($("#mCode").value.trim())regStepDone("rst-data","rst-plan"); });
 $("#mBuild").onclick=()=>{const ch=parseInt($("#mCh").value||0),cap=parseInt($("#mCap").value||0);
   if(!ch){alert("Fut nr. e kanaleve.");return;}
   if(!(CAT.products||[]).length){alert("Shto produktet së pari.");return;}
   const opts=(CAT.products||[]).map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
   let h='<div class="plan-hd"><span>#</span><span style="text-align:left">Produkti</span><span>Pako</span><span>Çmim €</span></div>';
   for(let c=1;c<=ch;c++)h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" placeholder="pako" value="${cap||''}"><input class="pl-price" type="number" inputmode="decimal" step="0.1" placeholder="global"></div>`;
-  $("#mPlan").innerHTML=h; _bindPlanPricePH();};
+  $("#mPlan").innerHTML=h; _bindPlanPricePH(); regStepDone("rst-plan",null);};
 // tregon çmimin global si placeholder kur zgjidhet produkti (nëse s'ke vendosur çmim veç)
 function _bindPlanPricePH(){
   document.querySelectorAll("#mPlan .plan-row").forEach(row=>{
@@ -2041,6 +2060,8 @@ function mResetEdit(){
   window._mMachGal=[];window._mPlaceGal=[];if($("#mMachGal"))renderGal();
   window._mLat=window._mLng=null;window._mParkLat=window._mParkLng=null;window._mPhoto="";
   $("#mGeoInfo").textContent="pa lokacion";$("#mParkInfo").textContent="pa lokacion";$("#mPhotoPrev").style.display="none";
+  // pastro shenjat e hapave (🟢) për aparatin e ri
+  ["rst-park","rst-geo","rst-photo","rst-data","rst-plan"].forEach(id=>{const e=document.getElementById(id);if(e){e.classList.remove("done");const ok=e.querySelector(".rok");if(ok)ok.style.display="none";}});
   $("#mAdd").textContent="＋ Shto aparatin";
   $("#mGoStock").classList.add("hidden");   // fshihet kur s'je duke redaktuar aparat ekzistues
 }
@@ -2082,11 +2103,20 @@ $("#mAdd").onclick=()=>{ensureReg();const code=$("#mCode").value.trim();if(!code
   save(K_CAT,CAT);mResetEdit();renderReg();};
 
 /* GPS + foto e aparatit (në tablet) */
+// shënon një hap si të kryer (🟢) dhe theksohet i radhësi — na udhëheq automatik
+function regStepDone(id,nextId){
+  const el=document.getElementById(id); if(el){el.classList.add("done");const ok=el.querySelector(".rok");if(ok)ok.style.display="inline";}
+  if(nextId){const nx=document.getElementById(nextId);
+    if(nx){nx.style.transition="background .4s";nx.style.background="var(--warn,#B26A16)22";
+      setTimeout(()=>nx.scrollIntoView({behavior:"smooth",block:"center"}),350);
+      setTimeout(()=>{nx.style.background="";},2000);}}
+}
 $("#mGeo").onclick=()=>{
   if(!navigator.geolocation){$("#mGeoInfo").textContent="pa GPS — shkruaj manual";return;}
   $("#mGeoInfo").textContent="duke marrë…";
   const ok=p=>{window._mLat=+p.coords.latitude.toFixed(6);window._mLng=+p.coords.longitude.toFixed(6);
-    $("#mGeoInfo").textContent="📍 "+window._mLat+", "+window._mLng+" (±"+Math.round(p.coords.accuracy)+"m)";};
+    $("#mGeoInfo").textContent="📍 "+window._mLat+", "+window._mLng+" (±"+Math.round(p.coords.accuracy)+"m)";
+    regStepDone("rst-geo","rst-photo");};
   const denied=()=>{$("#mGeoInfo").textContent="leje e bllokuar";
     alert("Lokacioni është i BLLOKUAR. Rregulloje kështu:\n\n1) Hap Chrome → ⋮ → Settings\n2) Site settings → Location\n3) Gjej luqa25.github.io → shtyp → Allow\n4) Sigurohu: tablet Settings → Location → ON\n5) Rihape app-in → shtyp 📍\n\n(Ose shkruaj koordinatat nga Google Maps te fusha poshtë.)");};
   const tryLow=()=>navigator.geolocation.getCurrentPosition(ok,e=>{
@@ -2102,7 +2132,8 @@ $("#mPark").onclick=()=>{
   if(!navigator.geolocation){info.textContent="pa GPS — shkruaj manual";return;}
   info.textContent="duke marrë…";
   const ok=p=>{window._mParkLat=+p.coords.latitude.toFixed(6);window._mParkLng=+p.coords.longitude.toFixed(6);
-    info.textContent="🅿️ "+window._mParkLat+", "+window._mParkLng+" (±"+Math.round(p.coords.accuracy)+"m)";};
+    info.textContent="🅿️ "+window._mParkLat+", "+window._mParkLng+" (±"+Math.round(p.coords.accuracy)+"m)";
+    regStepDone("rst-park","rst-geo");};
   const denied=()=>{info.textContent="leje e bllokuar";
     alert("Lokacioni është i BLLOKUAR. Rregulloje: Chrome → Settings → Site settings → Location → luqa25.github.io → Allow. Ose shkruaj koordinatat manual.");};
   const tryLow=()=>navigator.geolocation.getCurrentPosition(ok,e=>{
@@ -2180,8 +2211,8 @@ $("#mCity").addEventListener("blur",_syncPlaceGalFromKey);
 $("#mPlace").addEventListener("blur",_syncPlaceGalFromKey);
 $("#mAddMachPhoto").onclick=()=>$("#mMachPhotoIn").click();
 $("#mAddPlacePhoto").onclick=()=>$("#mPlacePhotoIn").click();
-$("#mMachPhotoIn").onchange=async(ev)=>{try{const d=await resizePhoto(ev.target.files[0]);window._mMachGal.push(d);renderGal();_persistGalIfEditing();}catch(e){}ev.target.value="";};
-$("#mPlacePhotoIn").onchange=async(ev)=>{try{const d=await resizePhoto(ev.target.files[0]);window._mPlaceGal.push(d);renderGal();_persistGalIfEditing();}catch(e){}ev.target.value="";};
+$("#mMachPhotoIn").onchange=async(ev)=>{try{const d=await resizePhoto(ev.target.files[0]);window._mMachGal.push(d);renderGal();_persistGalIfEditing();regStepDone("rst-photo","rst-data");}catch(e){}ev.target.value="";};
+$("#mPlacePhotoIn").onchange=async(ev)=>{try{const d=await resizePhoto(ev.target.files[0]);window._mPlaceGal.push(d);renderGal();_persistGalIfEditing();regStepDone("rst-photo","rst-data");}catch(e){}ev.target.value="";};
 $("#whAdd").onclick=()=>{ensureReg();const pid=parseInt($("#whProd").value)||0,q=parseInt($("#whQty").value||0)||0;
   if(!pid||!q){alert("Zgjidh produktin dhe sasinë.");return;}regSnapshot();stockBump(CAT.warehouse,pid,pName(pid),q);save(K_CAT,CAT);$("#whQty").value="";renderReg();};
 $("#vnLoad").onclick=()=>{ensureReg();const pid=parseInt($("#vnProd").value)||0,q=parseInt($("#vnQty").value||0)||0;
