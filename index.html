@@ -136,13 +136,33 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   </div>
 
   <details class="card" id="cashBox">
-    <summary>💶 Numëro cash-in (sipas prerjeve)</summary>
-    <div class="sec-t" style="margin-top:8px">Numëruar në aparat</div>
-    <div id="denCounted"></div>
-    <div class="tot"><span>Numëruar</span><span id="totCounted">0.00 €</span></div>
-    <div class="sec-t" style="margin-top:12px">Kusur i lënë (për kthim)</div>
-    <div id="denFloat"></div>
-    <div class="tot"><span>Kusur</span><span id="totFloat">0.00 €</span></div>
+    <summary>💶 Cash-i</summary>
+    <!-- MËNYRA E CASH-IT: e shpejtë / bosh / e plotë -->
+    <div class="row" style="gap:5px;margin-top:8px;flex-wrap:wrap">
+      <button class="sec cashmode" id="cmFull" style="flex:1;min-width:90px">🔢 Numëro plot</button>
+      <button class="sec cashmode" id="cmQuick" style="flex:1;min-width:90px">⚡ Shumë e shpejtë</button>
+      <button class="sec cashmode" id="cmLater" style="flex:1;min-width:90px">⏳ Më vonë</button>
+    </div>
+    <p class="note" id="cashModeHint" style="margin:6px 0 0"></p>
+
+    <!-- Shuma e shpejtë (totale, me sy) -->
+    <div id="quickCashWrap" style="display:none;margin-top:10px">
+      <div class="row" style="align-items:center;gap:8px">
+        <span class="note" style="white-space:nowrap">💶 Cash total (afërsisht)</span>
+        <input id="quickCash" type="number" inputmode="decimal" step="0.5" placeholder="p.sh. 45" class="grow">
+      </div>
+      <p class="note" style="margin:4px 0 0">Fut shumën me sy tani, vazhdo rrugën. Numëro saktë më vonë (te ⏳ Pret numërim).</p>
+    </div>
+
+    <!-- Numërimi i plotë sipas prerjeve -->
+    <div id="fullCashWrap" style="display:none">
+      <div class="sec-t" style="margin-top:10px">Numëruar në aparat</div>
+      <div id="denCounted"></div>
+      <div class="tot"><span>Numëruar</span><span id="totCounted">0.00 €</span></div>
+      <div class="sec-t" style="margin-top:12px">Kusur i lënë (për kthim)</div>
+      <div id="denFloat"></div>
+      <div class="tot"><span>Kusur</span><span id="totFloat">0.00 €</span></div>
+    </div>
   </details>
 
   <div class="card recon">
@@ -271,7 +291,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li>Te lista, <b>filtro qytetin</b> (dropdown) — sheh vetëm aparatet e tij.</li>
       <li>Ngjyrat: <b>🟢 kryer sot</b> · <b>🟡 pret vizitë</b> · <b>🔧 në defekt</b> (kuq) · <b>⛔ jashtë pune</b> (gri). Lart: progresi <b>X/Y sot</b>.</li>
       <li>Zgjidh aparatin → te <b>“Tani”</b> fut sa pako gjete → <b>Shitur</b> del vetë.</li>
-      <li><b>💶 Numëro cash-in</b> sipas prerjeve + <b>kusurin e lënë</b>.</li>
+      <li><b>💶 Cash-i — tri mënyra:</b> <b>🔢 Numëro plot</b> (sipas prerjeve, saktë) · <b>⚡ Shumë e shpejtë</b> (fut totalin me sy, numëro saktë më vonë) · <b>⏳ Më vonë</b> (lëre bosh, pret numërim). Vizitat pezull shkojnë te ☰ → <b>⏳ Pret numërim cash</b> — i numëron kur ke kohë (në makinë, në fund të ditës).</li>
       <li><b>📥 Merr nga kombi:</b> sa pako të marrësh me një kuti; 🔴 = mungon në komb.</li>
       <li><b>💾 Ruaj</b> → del karta <b>➡️ Aparati tjetër</b> (të nis te i radhësi) + 🧭 navigim.</li>
     </ol>
@@ -530,6 +550,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <button class="pri" id="btnGoInv" style="width:100%;margin-top:8px">📊 Paneli i inventarit (aparatet)</button>
     <button class="pri" id="btnGoOwners" style="width:100%;margin-top:8px">💼 Pronarët e lokaleve (komisioni)</button>
     <button class="pri" id="btnGoDep" style="width:100%;margin-top:8px">🏦 Dorëzim cash-i · 💸 emergjent</button>
+    <button class="pri" id="btnGoPending" style="width:100%;margin-top:8px;background:#B26A16">⏳ Pret numërim cash (<span id="pendCashN">0</span>)</button>
     <button class="pri" id="btnGoReport" style="width:100%;margin-top:8px;background:#0C6675">📋 Raporti ditor (pronarit)</button>
     <button class="sec" id="btnGoBackup" style="width:100%;margin-top:8px">🛟 Backup i të dhënave (me datë)</button>
     <button class="sec" id="btnGoHistory" style="width:100%;margin-top:8px">🕐 Historiku (gjendja në një datë)</button>
@@ -594,6 +615,35 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   <div class="card">
     <b>🗄️ Arkivi i raporteve</b>
     <div id="repArchive" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- PRET NUMËRIM CASH -->
+<div class="wrap screen hidden" id="scrPending">
+  <div class="row" style="margin-bottom:8px"><b class="grow">⏳ Pret numërim cash</b><button class="sec" id="pendBack">←</button></div>
+  <div class="card">
+    <p class="note">Vizitat ku e le cash-in për më vonë (ose fute me sy). Hape secilën dhe numëro saktë kur ke kohë.</p>
+    <div id="pendList" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- NUMËRO CASH-IN E NJË VIZITE TË RUAJTUR -->
+<div class="wrap screen hidden" id="scrCountLater">
+  <div class="row" style="margin-bottom:8px"><b class="grow" id="clTitle">💶 Numëro cash-in</b><button class="sec" id="clBack">←</button></div>
+  <div class="card">
+    <div class="recon" style="margin-bottom:8px">
+      <div><span>Cash i pritur (nga shitja)</span><b id="clExp">0.00 €</b></div>
+    </div>
+    <div class="sec-t">Numëruar në aparat</div>
+    <div id="clDenCounted"></div>
+    <div class="tot"><span>Numëruar</span><span id="clTotCounted">0.00 €</span></div>
+    <div class="sec-t" style="margin-top:12px">Kusur i lënë</div>
+    <div id="clDenFloat"></div>
+    <div class="tot"><span>Kusur</span><span id="clTotFloat">0.00 €</span></div>
+    <div class="recon" style="margin-top:10px">
+      <div><span>Mospërputhja</span><b id="clDisc">0.00 €</b></div>
+    </div>
+    <button class="pri" id="clSave" style="width:100%;margin-top:10px">💾 Ruaj numërimin</button>
   </div>
 </div>
 
@@ -672,7 +722,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v65";  // rritet me çdo version të ri
+const APP_VER="v66";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -741,9 +791,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v65")){
+  if(!localStorage.getItem("apar_cleaned_v66")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v65","1");
+    localStorage.setItem("apar_cleaned_v66","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -752,6 +802,7 @@ function boot(){
     wd.onchange=renderWorkDateBar; }
   const wt=$("#workDateToday"); if(wt)wt.onclick=()=>{ $("#workDate").value=_todayStr(); renderWorkDateBar(); };
   renderWorkDateBar();
+  if(typeof updatePendCashBadge==="function")updatePendCashBadge();
   // backup automatik ditor (një herë në ditë, kur ka të dhëna reale në LIVE)
   try{
     const today=new Date().toISOString().slice(0,10);
@@ -1033,8 +1084,29 @@ function openVisit(m){
   buildDen("#denCounted",counted,()=>{sumDen();recalc();});
   buildDen("#denFloat",flt,()=>{sumDen();recalc();});
   $("#vNote").value="";
+  $("#quickCash").value="";
+  setCashMode("full");   // parazgjedhje: numërim i plotë
   sumDen(); recalc(); show("#scrVisit");
 }
+/* ── MËNYRA E CASH-IT: full / quick / later ── */
+let _cashMode="full";
+function setCashMode(m){
+  _cashMode=m;
+  $("#fullCashWrap").style.display=(m==="full")?"block":"none";
+  $("#quickCashWrap").style.display=(m==="quick")?"block":"none";
+  const hints={full:"Numërim i saktë sipas prerjeve (5€, 2€, 1€…).",
+               quick:"Fut vetëm shumën totale me sy tani; numëro saktë më vonë.",
+               later:"⏳ Lëre bosh — vizita ruhet 'pret numërim'. Numëroje kur ke kohë."};
+  $("#cashModeHint").textContent=hints[m];
+  [["cmFull","full"],["cmQuick","quick"],["cmLater","later"]].forEach(([id,mm])=>{
+    const btn=$("#"+id); if(btn){btn.style.background=(mm===m)?"var(--accent,#0C6675)":"";btn.style.color=(mm===m)?"#fff":"";}
+  });
+  recalc();
+}
+$("#cmFull").onclick=()=>setCashMode("full");
+$("#cmQuick").onclick=()=>setCashMode("quick");
+$("#cmLater").onclick=()=>setCashMode("later");
+$("#quickCash").addEventListener("input",recalc);
 $("#btnFillMax").onclick=()=>{document.querySelectorAll("#chTable .aft").forEach((i,idx)=>{const cap=CAT.machines.find(x=>x.id===cur.id).planogram[idx].capacity;i.value=cap;});recalc();};
 $("#btnBack").onclick=()=>{renderList();show("#scrList");};
 
@@ -1071,19 +1143,26 @@ function recalc(){
   const tc=window._tc||0, tf=window._tf||0;
   const pay=(cur&&cur.pay)||{};
   const locked=!!pay.flock, noChange=(pay.change===false)||pay.exact;
-  const counted_e=tc/100, disc=counted_e-exp;
-  // kuti kusuri e mbrojtur → tërhiqet e gjithë arka; përndryshe counted − kusur
-  const wd=locked?counted_e:(tc-tf)/100;
+  // cash i numëruar sipas mënyrës: full=prerjet, quick=shuma totale, later=0 (pret)
+  let counted_e;
+  if(_cashMode==="quick") counted_e=parseFloat($("#quickCash").value||0)||0;
+  else if(_cashMode==="later") counted_e=0;
+  else counted_e=tc/100;
+  const disc=counted_e-exp;
+  const wd=(_cashMode==="later")?0:(locked?counted_e:(counted_e-tf/100));
   $("#rSold").textContent=sold;
   $("#rExp").textContent=exp.toFixed(2)+" €";
-  $("#rCounted").textContent=counted_e.toFixed(2)+" €";
-  $("#rFloat").textContent=locked?"🔒 e mbrojtur":(tf/100).toFixed(2)+" €";
-  $("#rWith").textContent=wd.toFixed(2)+" €";
+  $("#rCounted").textContent=(_cashMode==="later")?"⏳ pret":counted_e.toFixed(2)+" €";
+  $("#rFloat").textContent=(_cashMode!=="full")?"—":(locked?"🔒 e mbrojtur":(tf/100).toFixed(2)+" €");
+  $("#rWith").textContent=(_cashMode==="later")?"⏳ pret":wd.toFixed(2)+" €";
   const dEl=$("#rDisc");
-  let flag=Math.abs(disc)>0.5;
-  if(noChange && disc>0){ flag=false; dEl.textContent="+"+disc.toFixed(2)+" € (mbipagesë)"; }
-  else dEl.textContent=(disc>=0?"+":"")+disc.toFixed(2)+" €";
-  dEl.className=flag?"neg":"pos";
+  if(_cashMode==="later"){ dEl.textContent="⏳ do numërohet më vonë"; dEl.className="pos"; }
+  else{
+    let flag=Math.abs(disc)>0.5;
+    if(noChange && disc>0){ flag=false; dEl.textContent="+"+disc.toFixed(2)+" € (mbipagesë)"; }
+    else dEl.textContent=(disc>=0?"+":"")+disc.toFixed(2)+" €";
+    dEl.className=flag?"neg":"pos";
+  }
   window._sold=sold; window._exp=exp; window._disc=disc; window._counted=counted_e;
   renderPickList();
 }
@@ -1127,13 +1206,17 @@ $("#btnSaveVisit").onclick=()=>{
   DENOMS.forEach(([c])=>{if(counted[c])cJson[c]=counted[c];if(flt[c])fJson[c]=flt[c];});
   const locked=!!(cur.pay&&cur.pay.flock);
   const tf=window._tf||0;
-  const withdrawn=+(locked?window._counted:(window._counted-tf/100)).toFixed(2);
+  // cash_pending = ende s'është numëruar saktë (later, ose quick=shumë me sy)
+  const cashPending=(_cashMode==="later")||(_cashMode==="quick");
+  const withdrawn=(_cashMode==="later")?0:+(locked?window._counted:(window._counted-tf/100)).toFixed(2);
   const v={machine_id:cur.id,machine_code:cur.code||("#"+cur.id),date:workDateISO(),
     lines:lines,sold_total:window._sold,expected_cash:+window._exp.toFixed(2),
     counted_cash:+window._counted.toFixed(2),discrepancy:+window._disc.toFixed(2),
     counted_json:cJson,float_json:fJson,new_baseline:newbase,float_locked:locked,withdrawn:withdrawn,
+    cash_mode:_cashMode,cash_pending:cashPending,
     notes:$("#vNote").value.trim(),_synced:false};
   VIS.push(v); save(K_VIS,VIS);
+  updatePendCashBadge();
   cloudSync().then(updateSyncBadge);   // dërgo te cloud (nëse ka internet)
   // përditëso baseline+float lokalisht për vizitën tjetër
   const mm=CAT.machines.find(x=>x.id===cur.id); mm.baseline=newbase; mm.float=fJson; save(K_CAT,CAT);
@@ -1441,6 +1524,68 @@ function renderRepArchive(){
   el.querySelectorAll("[data-repview]").forEach(b=>b.onclick=()=>{const r=REPORTS[+b.dataset.repview];$("#repDate").value=r.day;$("#repPreview").textContent=reportText(r);window._curReport=r;});
   el.querySelectorAll("[data-repdel]").forEach(b=>b.onclick=()=>{if(confirm("Fshi këtë raport nga arkivi?")){REPORTS.splice(+b.dataset.repdel,1);save(K_REP,REPORTS);renderRepArchive();}});
 }
+/* ═══════════ PRET NUMËRIM CASH ═══════════ */
+function pendingCashList(){ return (VIS||[]).filter(v=>v.cash_pending); }
+function updatePendCashBadge(){ const el=$("#pendCashN"); if(el)el.textContent=pendingCashList().length; }
+function renderPending(){
+  const list=pendingCashList();
+  const el=$("#pendList");
+  if(!list.length){el.innerHTML='<p class="note">Asnjë vizitë s\'pret numërim ✓</p>';return;}
+  el.innerHTML=list.map((v,i)=>{
+    const gi=VIS.indexOf(v);
+    const nm=(CAT.machines||[]).find(m=>m.id===v.machine_id);
+    const dt=(v.date||"").slice(0,10);
+    const cur=v.cash_mode==="quick"?("me sy: "+(+v.counted_cash||0).toFixed(2)+"€"):"pa numëruar";
+    return `<div style="display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
+      <span class="grow"><b>${nm?(nm.code||'#'+v.machine_id):('#'+v.machine_id)}</b> · ${dt}<div class="note">shitur ${v.sold_total||0} pako · pritet ${(+v.expected_cash||0).toFixed(2)}€ · <b>${cur}</b></div></span>
+      <button class="pri" data-countvis="${gi}" style="padding:6px 10px">💶 Numëro</button></div>`;
+  }).join("");
+  el.querySelectorAll("[data-countvis]").forEach(b=>b.onclick=()=>openCountLater(+b.dataset.countvis));
+}
+$("#btnGoPending").onclick=()=>{ renderPending(); show("#scrPending"); };
+$("#pendBack").onclick=()=>show("#scrMenu");
+
+/* Numëro cash-in e një vizite të ruajtur */
+let _clIdx=-1, _clCounted={}, _clFlt={};
+function openCountLater(gi){
+  const v=VIS[gi]; if(!v)return; _clIdx=gi;
+  _clCounted=Object.assign({},v.counted_json||{}); _clFlt=Object.assign({},v.float_json||{});
+  const nm=(CAT.machines||[]).find(m=>m.id===v.machine_id);
+  $("#clTitle").textContent="💶 "+(nm?(nm.code||'#'+v.machine_id):('#'+v.machine_id));
+  $("#clExp").textContent=(+v.expected_cash||0).toFixed(2)+" €";
+  buildDen("#clDenCounted",_clCounted,()=>clSum());
+  buildDen("#clDenFloat",_clFlt,()=>clSum());
+  clSum(); show("#scrCountLater");
+}
+function clSum(){
+  let tc=0,tf=0;
+  DENOMS.forEach(([c])=>{tc+=c*(_clCounted[c]||0);tf+=c*(_clFlt[c]||0);});
+  window._clTc=tc; window._clTf=tf;
+  $("#clTotCounted").textContent=(tc/100).toFixed(2)+" €";
+  $("#clTotFloat").textContent=(tf/100).toFixed(2)+" €";
+  const v=VIS[_clIdx]||{};
+  const disc=(tc/100)-(+v.expected_cash||0);
+  const d=$("#clDisc"); d.textContent=(disc>=0?"+":"")+disc.toFixed(2)+" €"; d.className=Math.abs(disc)>0.5?"neg":"pos";
+}
+$("#clBack").onclick=()=>show("#scrPending");
+$("#clSave").onclick=()=>{
+  const v=VIS[_clIdx]; if(!v)return;
+  const tc=window._clTc||0, tf=window._clTf||0;
+  const cJson={},fJson={};
+  DENOMS.forEach(([c])=>{if(_clCounted[c])cJson[c]=_clCounted[c];if(_clFlt[c])fJson[c]=_clFlt[c];});
+  v.counted_cash=+(tc/100).toFixed(2);
+  v.counted_json=cJson; v.float_json=fJson;
+  v.discrepancy=+((tc/100)-(+v.expected_cash||0)).toFixed(2);
+  const locked=!!v.float_locked;
+  v.withdrawn=+(locked?(tc/100):((tc-tf)/100)).toFixed(2);
+  v.cash_pending=false; v.cash_mode="full";
+  v._synced=false;   // ndryshoi → ridërgohet
+  save(K_VIS,VIS);
+  updatePendCashBadge(); cloudSync().then(updateSyncBadge); updateSettle();
+  alert("✓ Cash-i u numërua saktë: "+(tc/100).toFixed(2)+" €");
+  renderPending(); show("#scrPending");
+};
+
 $("#btnGoReport").onclick=()=>{ $("#repDate").value=new Date().toISOString().slice(0,10); renderReport(); show("#scrReport"); };
 $("#repBack").onclick=()=>show("#scrMenu");
 
