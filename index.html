@@ -66,6 +66,12 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   <button class="sec" id="btnHelp" style="padding:7px 11px">❓</button>
   <button class="sec" id="btnHome" style="padding:7px 11px">☰</button>
 </header>
+<!-- SHIRITI I DATËS SË PUNËS: kur regjistron me datë tjetër nga sot -->
+<div id="workDateBar" style="display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--elev);border-bottom:1px solid var(--line);font-size:13px">
+  <span style="white-space:nowrap">📅 Regjistrim për:</span>
+  <input id="workDate" type="date" style="flex:1;padding:4px 8px;font-size:13px">
+  <button class="sec" id="workDateToday" style="padding:4px 9px;font-size:12px;white-space:nowrap">Sot</button>
+</div>
 
 <!-- IMPORT KATALOGU -->
 <div class="wrap screen" id="scrImport">
@@ -245,6 +251,12 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 
     <h3>🟢 LIVE vs 🎓 DEMO</h3>
     <p>Lart ke <b>shiritin</b>: 🟢 jeshil = <b>LIVE</b> (të dhëna reale), 🎓 i kuq = <b>DEMO</b> (praktikë). Prek shiritin për të kaluar. Të dhënat e dy modave janë <b>krejt të ndara</b>; në DEMO sync-u është i fikur.</p>
+
+    <h3>📅 Data e regjistrimit</h3>
+    <p>Lart ke shiritin <b>«📅 Regjistrim për:»</b> — parazgjedhur <b>sot</b>. Nëse harrove diçka nga një ditë e kaluar, zgjidh atë datë dhe regjistro (vizitë, cash, depozitë) — do të ruhet me atë datë. Shiriti bëhet <b>portokalli</b> kur s'je te sot; shtyp <b>Sot</b> për t'u kthyer. S'lejohet datë në të ardhmen. <b>Asgjë s'fshihet</b> — thjesht data është e kaluar.</p>
+
+    <h3>🕐 Historiku (gjendja në një datë)</h3>
+    <p>☰ → <b>🕐 Historiku</b>: zgjidh një datë dhe sheh si dukej gjendja deri atëherë — sa vizita, sa cash, sa kesh në dorë. Vetëm shikim, s'ndryshon asgjë.</p>
 
     <h3>🔄 Rrjedha e vizitës</h3>
     <ol style="padding-left:18px">
@@ -484,6 +496,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <button class="pri" id="btnGoDep" style="width:100%;margin-top:8px">🏦 Dorëzim cash-i · 💸 emergjent</button>
     <button class="pri" id="btnGoReport" style="width:100%;margin-top:8px;background:#0C6675">📋 Raporti ditor (pronarit)</button>
     <button class="sec" id="btnGoBackup" style="width:100%;margin-top:8px">🛟 Backup i të dhënave (me datë)</button>
+    <button class="sec" id="btnGoHistory" style="width:100%;margin-top:8px">🕐 Historiku (gjendja në një datë)</button>
     <button class="sec" id="btnGoStock" style="width:100%;margin-top:8px">📦 Stoku i automjetit</button>
     <button class="sec" id="btnGoList" style="width:100%;margin-top:8px">← Kthehu te aparatet</button>
     <button class="sec" id="btnReimport2" style="width:100%;margin-top:8px">📥 Ngarko katalog të ri</button>
@@ -561,6 +574,23 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   </div>
 </div>
 
+<!-- HISTORIKU -->
+<div class="wrap screen hidden" id="scrHistory">
+  <div class="row" style="margin-bottom:8px"><b class="grow">🕐 Historiku</b><button class="sec" id="hisBack">←</button></div>
+  <div class="card">
+    <p class="note">Si dukej gjendja deri në një datë — vetëm shikim, s'ndryshon asgjë.</p>
+    <div class="row" style="align-items:center;gap:8px;margin-top:8px">
+      <span class="note" style="white-space:nowrap">📅 Deri më</span>
+      <input id="hisDate" type="date" class="grow">
+    </div>
+    <div class="recon" id="hisSum" style="margin-top:10px"></div>
+  </div>
+  <div class="card">
+    <b>📟 Vizitat deri në atë datë</b>
+    <div id="hisVisits" style="margin-top:8px"></div>
+  </div>
+</div>
+
 <!-- LIGHTBOX: foto e plotë -->
 <div id="photoModal" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:1000;align-items:center;justify-content:center;padding:16px">
   <img id="photoModalImg" style="max-width:100%;max-height:100%;border-radius:10px;object-fit:contain">
@@ -585,8 +615,28 @@ function parseCoords(t){
 let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
+
+/* ── DATA E PUNËS: regjistrimet marrin këtë datë (parazgjedhur sot) ── */
+function _todayStr(){return new Date().toISOString().slice(0,10);}
+// kthen ISO timestamp për datën e zgjedhur (ora e tanishme nëse është sot; 12:00 nëse datë tjetër)
+function workDateISO(){
+  const el=document.getElementById("workDate");
+  const d=(el&&el.value)?el.value:_todayStr();
+  if(d===_todayStr()) return new Date().toISOString();
+  return d+"T12:00:00.000Z";   // datë e kaluar → orë mesditë
+}
+function workIsToday(){ const el=document.getElementById("workDate"); return !el||!el.value||el.value===_todayStr(); }
+function renderWorkDateBar(){
+  const el=document.getElementById("workDate"); if(!el)return;
+  if(!el.value)el.value=_todayStr();
+  const bar=document.getElementById("workDateBar");
+  if(workIsToday()){ bar.style.background="var(--elev)"; el.style.color="var(--text)";
+    document.getElementById("workDateToday").style.display="none"; }
+  else{ bar.style.background="var(--warn,#B26A16)"; el.style.color="#fff";
+    document.getElementById("workDateToday").style.display="inline-block"; }
+}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v60";  // rritet me çdo version të ri
+const APP_VER="v61";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -655,12 +705,17 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v60")){
+  if(!localStorage.getItem("apar_cleaned_v61")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v60","1");
+    localStorage.setItem("apar_cleaned_v61","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
+  // shiriti i datës së punës
+  const wd=$("#workDate"); if(wd){ wd.value=_todayStr(); wd.max=_todayStr(); // s'lejohet e ardhmja
+    wd.onchange=renderWorkDateBar; }
+  const wt=$("#workDateToday"); if(wt)wt.onclick=()=>{ $("#workDate").value=_todayStr(); renderWorkDateBar(); };
+  renderWorkDateBar();
   // backup automatik ditor (një herë në ditë, kur ka të dhëna reale në LIVE)
   try{
     const today=new Date().toISOString().slice(0,10);
@@ -1035,7 +1090,7 @@ $("#btnSaveVisit").onclick=()=>{
   const locked=!!(cur.pay&&cur.pay.flock);
   const tf=window._tf||0;
   const withdrawn=+(locked?window._counted:(window._counted-tf/100)).toFixed(2);
-  const v={machine_id:cur.id,machine_code:cur.code||("#"+cur.id),date:new Date().toISOString(),
+  const v={machine_id:cur.id,machine_code:cur.code||("#"+cur.id),date:workDateISO(),
     lines:lines,sold_total:window._sold,expected_cash:+window._exp.toFixed(2),
     counted_cash:+window._counted.toFixed(2),discrepancy:+window._disc.toFixed(2),
     counted_json:cJson,float_json:fJson,new_baseline:newbase,float_locked:locked,withdrawn:withdrawn,
@@ -1265,7 +1320,7 @@ function renderOwners(){
     const s=prompt("Sa i paguan "+owner+"? (borxhi: "+bal.toFixed(2)+" €)", Math.max(0,bal).toFixed(2));
     if(s==null)return; const amt=parseFloat(s); if(!(amt>0))return;
     if(!CAT.ownerPayments)CAT.ownerPayments=[];
-    CAT.ownerPayments.push({owner:owner,date:new Date().toISOString(),amount:+amt.toFixed(2),note:""});
+    CAT.ownerPayments.push({owner:owner,date:workDateISO(),amount:+amt.toFixed(2),note:""});
     save(K_CAT,CAT); renderOwners();
     alert("✓ Pagesa "+amt.toFixed(2)+" € për "+owner+" u regjistrua sot.");
   });
@@ -1408,6 +1463,37 @@ function downloadBackup(idx){
 $("#btnGoBackup").onclick=()=>{ renderBackups(); show("#scrBackup"); };
 $("#bkBack").onclick=()=>show("#scrMenu");
 $("#bkNow").onclick=()=>{ if(makeBackup("me_dore")){renderBackups();alert("✅ Backup u ruajt me datën e sotme.");} };
+
+/* ═══════════ HISTORIKU — gjendja deri në një datë (vetëm shikim) ═══════════ */
+function renderHistory(){
+  const day=$("#hisDate").value||_todayStr();
+  // vizitat DERI në atë datë (përfshirë)
+  const vs=(VIS||[]).filter(v=>(v.date||"").slice(0,10)<=day);
+  let collected=0,sold=0;
+  vs.forEach(v=>{ collected+=visitWithdrawn(v); sold+=(+v.sold_total||0); });
+  let inBank=0,toOwner=0;
+  (DEPQ||[]).filter(d=>(d.date||"").slice(0,10)<=day).forEach(d=>{ if(d.dest==="owner")toOwner+=(+d.amount||0); else inBank+=(+d.amount||0); });
+  const advOut=(ADVE||[]).filter(e=>(e.date||"").slice(0,10)<=day).reduce((s,e)=>s+((e.kind==="repay"?-1:1)*(+e.amount||0)),0);
+  const onhand=collected-inBank-toOwner-Math.max(0,advOut);
+  const dd=new Date(day+"T00:00:00").toLocaleDateString("sq-AL",{day:"2-digit",month:"long",year:"numeric"});
+  $("#hisSum").innerHTML=
+    `<div><span>Deri më</span><b>${dd}</b></div>`+
+    `<div><span>Vizita gjithsej</span><b>${vs.length}</b></div>`+
+    `<div><span>Pako të shitura</span><b>${sold}</b></div>`+
+    `<div><span>Cash i mbledhur</span><b>${collected.toFixed(2)} €</b></div>`+
+    `<div><span>Dorëzuar (bankë+pronar)</span><b>${(inBank+toOwner).toFixed(2)} €</b></div>`+
+    `<div style="border-top:1px solid var(--line);margin-top:4px;padding-top:4px"><span><b>Kesh në dorë atë ditë</b></span><b>${onhand.toFixed(2)} €</b></div>`;
+  // lista e vizitave (më e reja e para)
+  const rows=vs.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")).slice(0,50);
+  $("#hisVisits").innerHTML=rows.length?rows.map(v=>{
+    const dt=(v.date||"").slice(0,10);
+    const nm=(CAT.machines||[]).find(m=>m.id===v.machine_id);
+    return `<div style="display:flex;gap:8px;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line)"><span class="grow"><b>${dt}</b> · ${nm?(nm.code||'#'+v.machine_id):('#'+v.machine_id)}</span><span>${v.sold_total||0} pako · ${visitWithdrawn(v).toFixed(2)}€</span></div>`;
+  }).join(""):'<p class="note">Asnjë vizitë deri në atë datë.</p>';
+}
+$("#btnGoHistory").onclick=()=>{ $("#hisDate").value=_todayStr(); $("#hisDate").max=_todayStr(); renderHistory(); show("#scrHistory"); };
+$("#hisBack").onclick=()=>show("#scrMenu");
+$("#hisDate").onchange=renderHistory;
 $("#repDate").onchange=renderReport;
 $("#repViber").onclick=async()=>{
   const txt=reportText(window._curReport||buildReport($("#repDate").value));
@@ -1587,7 +1673,7 @@ $("#depSave").onclick=async()=>{
   if(dest==="owner"&&!owner){alert("Shkruaj emrin e pronarit/menaxherit.");return;}
   let la=_depLat,ln=_depLng;
   if(la==null){const c=parseCoords($("#depGeoManual").value);if(c){la=c.lat;ln=c.lng;}}
-  const d={date:new Date().toISOString(),dest:dest,bank:dest==="bank"?$("#depBank").value:"",owner:owner,
+  const d={date:workDateISO(),dest:dest,bank:dest==="bank"?$("#depBank").value:"",owner:owner,
     amount:amt,reference:$("#depRef").value.trim(),lat:la,lng:ln,notes:"",_synced:false};
   DEPQ.push(d);save(K_DEP,DEPQ);
   let ok=false;try{ok=await depPush(d);if(ok)d._synced=true;save(K_DEP,DEPQ);}catch(e){}
@@ -1609,7 +1695,7 @@ function _uid(){return "ip-"+Date.now().toString(36)+Math.random().toString(36).
 $("#advSave").onclick=()=>{
   const amt=parseNum($("#advAmt").value);if(amt<=0){alert("Fut shumën.");return;}
   const reason=$("#advReason").value.trim();
-  ADVE.push({uid:_uid(),kind:"take",date:new Date().toISOString(),amount:amt,reason:reason,source:"iphone",_pushed:false});
+  ADVE.push({uid:_uid(),kind:"take",date:workDateISO(),amount:amt,reason:reason,source:"iphone",_pushed:false});
   save(K_ADV,ADVE); $("#advAmt").value="";$("#advReason").value="";
   renderAdvances(); updateSettle(); advSync();
   alert("💸 Tërheqja "+amt.toFixed(2)+" € u regjistrua (të hua, e kthyeshme).");
@@ -1640,7 +1726,7 @@ function renderAdvances(){
     const left=parseFloat(b.dataset.left);
     const s=prompt("Sa po kthen? (mbetet "+left.toFixed(2)+" €)",left.toFixed(2));
     if(s==null)return;const v=parseFloat(s);if(!(v>0))return;
-    ADVE.push({uid:_uid(),kind:"repay",date:new Date().toISOString(),amount:v,reason:"kthim",source:"iphone",_pushed:false});
+    ADVE.push({uid:_uid(),kind:"repay",date:workDateISO(),amount:v,reason:"kthim",source:"iphone",_pushed:false});
     save(K_ADV,ADVE);renderAdvances();updateSettle();advSync();
   });
 }
