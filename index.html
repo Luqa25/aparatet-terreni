@@ -399,21 +399,22 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <!-- HAPI 4: TË DHËNAT -->
     <div class="regstep" id="rst-data"><span class="rn">4</span><b>🏷️ Të dhënat e aparatit</b><span class="rok" style="display:none">🟢</span></div>
     <div class="row" style="margin-top:4px"><input id="mCode" placeholder="Kodi (APR-01)" class="grow"><input id="mVo" type="number" inputmode="numeric" placeholder="rend" style="width:70px"></div>
-    <div class="row" style="margin-top:6px">
-      <input id="mCity" placeholder="Qyteti (zgjidh ose shkruaj)" class="grow" list="ksCities" autocomplete="off">
-      <input id="mPlace" placeholder="Lokali (bar/kiosk)" class="grow">
-    </div>
-    <datalist id="ksCities">
-      <option value="Prishtinë"></option><option value="Prizren"></option><option value="Pejë"></option>
-      <option value="Gjakovë"></option><option value="Gjilan"></option><option value="Mitrovicë"></option>
-      <option value="Ferizaj"></option><option value="Vushtrri"></option><option value="Podujevë"></option>
-      <option value="Suharekë"></option><option value="Rahovec"></option><option value="Drenas"></option>
-      <option value="Lipjan"></option><option value="Malishevë"></option><option value="Kamenicë"></option>
-      <option value="Viti"></option><option value="Deçan"></option><option value="Istog"></option>
-      <option value="Klinë"></option><option value="Skenderaj"></option><option value="Fushë Kosovë"></option>
-      <option value="Obiliq"></option><option value="Dragash"></option><option value="Shtime"></option>
-      <option value="Kaçanik"></option><option value="Junik"></option><option value="Hani i Elezit"></option>
-    </datalist>
+    <div style="font-size:11px;font-weight:700;color:var(--accent);margin-top:6px;margin-bottom:3px">🏙️ Qyteti</div>
+    <select id="mCitySel" style="width:100%">
+      <option value="">— zgjidh qytetin —</option>
+      <option>Prishtinë</option><option>Prizren</option><option>Pejë</option>
+      <option>Gjakovë</option><option>Gjilan</option><option>Mitrovicë</option>
+      <option>Ferizaj</option><option>Vushtrri</option><option>Podujevë</option>
+      <option>Suharekë</option><option>Rahovec</option><option>Drenas</option>
+      <option>Lipjan</option><option>Malishevë</option><option>Kamenicë</option>
+      <option>Viti</option><option>Deçan</option><option>Istog</option>
+      <option>Klinë</option><option>Skenderaj</option><option>Fushë Kosovë</option>
+      <option>Obiliq</option><option>Dragash</option><option>Shtime</option>
+      <option>Kaçanik</option><option>Junik</option><option>Hani i Elezit</option>
+      <option value="__other__">➕ Tjetër (shkruaj vetë)…</option>
+    </select>
+    <input id="mCity" placeholder="Shkruaj qytetin/fshatin" class="grow" style="margin-top:6px;width:100%;display:none">
+    <input id="mPlace" placeholder="Lokali (bar/kiosk)" class="grow" style="margin-top:6px;width:100%">
 
     <!-- HAPI 5: PLANOGRAMI -->
     <div class="regstep" id="rst-plan"><span class="rn">5</span><b>🔢 Rendet & planogrami</b><span class="rok" style="display:none">🟢</span></div>
@@ -671,7 +672,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v64";  // rritet me çdo version të ri
+const APP_VER="v65";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -740,9 +741,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v64")){
+  if(!localStorage.getItem("apar_cleaned_v65")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v64","1");
+    localStorage.setItem("apar_cleaned_v65","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -2020,7 +2021,7 @@ function showMachineHistory(){
 function editMachine(id){
   const m=(CAT.machines||[]).find(x=>x.id===id); if(!m)return;
   _mEdit=id;
-  $("#mCode").value=m.code||""; $("#mCity").value=m.city||"";
+  $("#mCode").value=m.code||""; _setCityUI(m.city||"");
   // "place" ruhet si "Qytet · Lokal" → nxjerr vetëm lokalin
   const loc=(m.place||"").indexOf(" · ")>=0?(m.place||"").split(" · ").slice(1).join(" · "):(m.place||"");
   $("#mPlace").value=loc;
@@ -2068,7 +2069,7 @@ $("#mGoStock").onclick=()=>{
 function mResetEdit(){
   _mEdit=null;
   ["#mCode","#mCity","#mPlace","#mVo","#mCh","#mCap","#mGeoManual","#mParkManual","#mStatNote","#mPcmin","#mPcmax","#mOwner","#mCval","#mCstart","#mCclause"].forEach(s=>$(s).value="");
-  $("#mCtype").value="";
+  $("#mCtype").value=""; if($("#mCitySel")){$("#mCitySel").value="";$("#mCity").style.display="none";}
   $("#mPlan").innerHTML="";
   $("#mStatus").value="ok";$("#mPnotes").checked=true;$("#mPchange").checked=true;$("#mPexact").checked=false;$("#mPflock").checked=false;
   window._mMachGal=[];window._mPlaceGal=[];if($("#mMachGal"))renderGal();
@@ -2222,6 +2223,21 @@ function _syncPlaceGalFromKey(){ if(_mEdit!=null)return;
   const k=_placeKey(); const ex=(CAT.placePhotos||{})[k];
   if(ex && !window._mPlaceGal.length){window._mPlaceGal=ex.slice();renderGal();} }
 $("#mCity").addEventListener("blur",_syncPlaceGalFromKey);
+// dropdown i qytetit → ushqen fushën e vërtetë #mCity; "Tjetër" hap shkrimin manual
+$("#mCitySel").onchange=()=>{
+  const v=$("#mCitySel").value;
+  if(v==="__other__"){ $("#mCity").style.display="block"; $("#mCity").value=""; $("#mCity").focus(); }
+  else{ $("#mCity").style.display="none"; $("#mCity").value=v; _syncPlaceGalFromKey(); }
+};
+// kur ngarkon një aparat ekzistues, vendos dropdown-in sipas qytetit të tij
+function _setCityUI(city){
+  const sel=$("#mCitySel"); if(!sel)return;
+  const opts=[...sel.options].map(o=>o.value);
+  if(city && opts.includes(city)){ sel.value=city; $("#mCity").style.display="none"; }
+  else if(city){ sel.value="__other__"; $("#mCity").style.display="block"; }
+  else{ sel.value=""; $("#mCity").style.display="none"; }
+  $("#mCity").value=city||"";
+}
 $("#mPlace").addEventListener("blur",_syncPlaceGalFromKey);
 $("#mAddMachPhoto").onclick=()=>$("#mMachPhotoIn").click();
 $("#mAddPlacePhoto").onclick=()=>$("#mPlacePhotoIn").click();
