@@ -418,7 +418,11 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 
     <!-- HAPI 4: TË DHËNAT -->
     <div class="regstep" id="rst-data"><span class="rn">4</span><b>🏷️ Të dhënat e aparatit</b><span class="rok" style="display:none">🟢</span></div>
-    <div class="row" style="margin-top:4px"><input id="mCode" placeholder="Kodi (APR-01)" class="grow"><input id="mVo" type="number" inputmode="numeric" placeholder="rend" style="width:70px"></div>
+    <input id="mCode" placeholder="Kodi (APR-01)" style="width:100%;margin-top:4px">
+    <div class="row" style="margin-top:6px;align-items:center;gap:8px">
+      <input id="mVo" type="number" inputmode="numeric" placeholder="opsionale" style="width:90px">
+      <span class="note">🔢 Rendi i vizitës në qytet (lëre bosh → e rendit vetë 🧭)</span>
+    </div>
     <div style="font-size:11px;font-weight:700;color:var(--accent);margin-top:6px;margin-bottom:3px">🏙️ Qyteti</div>
     <select id="mCitySel" style="width:100%">
       <option value="">— zgjidh qytetin —</option>
@@ -722,7 +726,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v66";  // rritet me çdo version të ri
+const APP_VER="v67";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -791,9 +795,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v66")){
+  if(!localStorage.getItem("apar_cleaned_v67")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v66","1");
+    localStorage.setItem("apar_cleaned_v67","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
