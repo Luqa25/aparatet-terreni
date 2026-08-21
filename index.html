@@ -269,7 +269,8 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li>Te lista: <b>✏️</b> redakton · <b>📦</b> puno me stokun · <b>🔄 Zëvendëso</b> (aparati fizik ndërrohet: i vjetri arkivohet, ruhet historiku) · <b>📜 Historiku</b>.</li>
       <li><b>Magazina/Kombi:</b> pranim → ngarko. Klik për ndryshim. <b>↶ Undo / ↷ Redo</b>.</li>
       <li><b>🏭 Furnitorët:</b> Buçaj, Tobacco Holding Group, PRIMA Tobacco — me GPS të depove për furnizim (🧭 navigo).</li>
-      <li><b>🧹 Fillim i pastër (LIVE):</b> te Regjistrimi lart — fshin gjithçka dhe vendos duhanet (çmime të modifikueshme) + furnitorët. Për të nisur nga zero. S'prek DEMO; të paralajmëron nëse ke punë të pa dërguar.</li>
+      <li><b>🧹 Fillim i pastër (LIVE):</b> te Regjistrimi lart — fshin gjithçka dhe vendos duhanet (çmime të modifikueshme) + furnitorët. Për të nisur nga zero. S'prek DEMO; të paralajmëron nëse ke punë të pa dërguar; <b>bën backup automatik para fshirjes</b>.</li>
+      <li><b>🛟 Backup (me datë+orë):</b> te ☰ → <b>🛟 Backup</b>. Kopje e plotë e të dhënave — bëhet vetë çdo ditë dhe para çdo fshirjeje. Nëse fshin gabimisht → <b>↩️ Rikthe</b>. Shkarko një backup (⬇️) për ta ruajtur edhe jashtë telefonit. Të dhënat janë edhe te cloud (PC-ja i ka) — mbrojtje e trefishtë.</li>
     </ul>
 
     <h3>📊 Paneli i inventarit</h3>
@@ -482,6 +483,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <button class="pri" id="btnGoOwners" style="width:100%;margin-top:8px">💼 Pronarët e lokaleve (komisioni)</button>
     <button class="pri" id="btnGoDep" style="width:100%;margin-top:8px">🏦 Dorëzim cash-i · 💸 emergjent</button>
     <button class="pri" id="btnGoReport" style="width:100%;margin-top:8px;background:#0C6675">📋 Raporti ditor (pronarit)</button>
+    <button class="sec" id="btnGoBackup" style="width:100%;margin-top:8px">🛟 Backup i të dhënave (me datë)</button>
     <button class="sec" id="btnGoStock" style="width:100%;margin-top:8px">📦 Stoku i automjetit</button>
     <button class="sec" id="btnGoList" style="width:100%;margin-top:8px">← Kthehu te aparatet</button>
     <button class="sec" id="btnReimport2" style="width:100%;margin-top:8px">📥 Ngarko katalog të ri</button>
@@ -546,6 +548,19 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   </div>
 </div>
 
+<!-- BACKUP -->
+<div class="wrap screen hidden" id="scrBackup">
+  <div class="row" style="margin-bottom:8px"><b class="grow">🛟 Backup i të dhënave</b><button class="sec" id="bkBack">←</button></div>
+  <div class="card">
+    <p class="note">Kopje e plotë e të dhënave (aparate, vizita, cash, foto) me <b>datë+orë</b>. Bëhet vetë çdo ditë dhe para çdo fshirjeje. Nëse fshin gabimisht → <b>Rikthe</b>.</p>
+    <button class="pri" id="bkNow" style="width:100%;margin-top:8px">💾 Bëj backup tani</button>
+    <div id="bkList" style="margin-top:10px"></div>
+  </div>
+  <div class="card">
+    <p class="note">Backup-et ruhen te telefoni (ke hapësirë). Ki gjithashtu një kopje jashtë telefonit: shtyp <b>⬇️ Shkarko skedar</b> te një backup për ta ruajtur në Files/Drive.</p>
+  </div>
+</div>
+
 <!-- LIGHTBOX: foto e plotë -->
 <div id="photoModal" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:1000;align-items:center;justify-content:center;padding:16px">
   <img id="photoModalImg" style="max-width:100%;max-height:100%;border-radius:10px;object-fit:contain">
@@ -571,7 +586,7 @@ let MODE=localStorage.getItem("apar_mode")||"live";
 const K_CAT=()=>"apar_"+MODE+"_catalog", K_VIS=()=>"apar_"+MODE+"_visits";
 function isDemo(){return MODE==="demo";}
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v59";  // rritet me çdo version të ri
+const APP_VER="v60";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -640,12 +655,19 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v59")){
+  if(!localStorage.getItem("apar_cleaned_v60")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v59","1");
+    localStorage.setItem("apar_cleaned_v60","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
+  // backup automatik ditor (një herë në ditë, kur ka të dhëna reale në LIVE)
+  try{
+    const today=new Date().toISOString().slice(0,10);
+    if(!isDemo() && localStorage.getItem("apar_last_backup_day")!==today && load(K_CAT)){
+      if(typeof makeBackup==="function"){makeBackup("nisje");localStorage.setItem("apar_last_backup_day",today);}
+    }
+  }catch(e){}
   // në DEMO: nëse s'ka katalog, mbushe
   if(isDemo() && !load(K_CAT)){CAT=JSON.parse(JSON.stringify(DEMO_CATALOG));save(K_CAT,CAT);VIS=demoVisitsToday();save(K_VIS,VIS);}
   $("#hsub").textContent="— terreni "+APP_VER;
@@ -1328,6 +1350,64 @@ function renderRepArchive(){
 }
 $("#btnGoReport").onclick=()=>{ $("#repDate").value=new Date().toISOString().slice(0,10); renderReport(); show("#scrReport"); };
 $("#repBack").onclick=()=>show("#scrMenu");
+
+/* ═══════════ BACKUP I PLOTË (me datë+orë) ═══════════ */
+const K_BKLIST=()=>"apar_"+MODE+"_backups";
+// çelësat që përbëjnë të dhënat e kësaj mode (gjithçka e vlefshme)
+function _modeKeys(){ return ["catalog","visits","deposits","adv_events","reports"].map(s=>"apar_"+MODE+"_"+s); }
+function makeBackup(reason){
+  try{
+    const snap={};
+    _modeKeys().forEach(k=>{ const v=localStorage.getItem(k); if(v!=null)snap[k]=v; });
+    const rec={t:Date.now(),when:new Date().toISOString(),reason:reason||"",mode:MODE,snap:snap};
+    const list=load(K_BKLIST)||[];
+    list.push(rec);
+    // mbaj 40 backup-et më të fundit
+    while(list.length>40)list.shift();
+    save(K_BKLIST,list);
+    return true;
+  }catch(e){return false;}
+}
+function renderBackups(){
+  const el=$("#bkList"); if(!el)return;
+  const list=(load(K_BKLIST)||[]).slice().reverse();
+  if(!list.length){el.innerHTML='<p class="note">Ende s\'ka backup. Shtyp «💾 Bëj backup tani».</p>';return;}
+  el.innerHTML=list.map((b,ri)=>{
+    const idx=(load(K_BKLIST)||[]).length-1-ri;
+    const d=new Date(b.when).toLocaleString("sq-AL",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+    const sz=Math.round((JSON.stringify(b.snap).length/1024));
+    const rz=b.reason?(" · "+b.reason):"";
+    return `<div style="display:flex;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)">
+      <span class="grow"><b>${d}</b><div class="note">${sz} KB${rz}</div></span>
+      <button class="pri" data-bkrest="${idx}" style="padding:4px 8px">↩️ Rikthe</button>
+      <button class="sec" data-bkdl="${idx}" style="padding:4px 8px">⬇️</button>
+      <button class="sec" data-bkdel="${idx}" style="padding:4px 8px">✕</button></div>`;
+  }).join("");
+  el.querySelectorAll("[data-bkrest]").forEach(b=>b.onclick=()=>restoreBackup(+b.dataset.bkrest));
+  el.querySelectorAll("[data-bkdl]").forEach(b=>b.onclick=()=>downloadBackup(+b.dataset.bkdl));
+  el.querySelectorAll("[data-bkdel]").forEach(b=>b.onclick=()=>{
+    if(confirm("Fshi këtë backup?")){const l=load(K_BKLIST)||[];l.splice(+b.dataset.bkdel,1);save(K_BKLIST,l);renderBackups();}
+  });
+}
+function restoreBackup(idx){
+  const list=load(K_BKLIST)||[]; const b=list[idx]; if(!b)return;
+  const d=new Date(b.when).toLocaleString("sq-AL");
+  if(!confirm("Të rikthehet backup-i i "+d+"?\n\nGjendja e tanishme ruhet automatik para rikthimit (s'humb).")) return;
+  makeBackup("para_rikthimit");   // ruaj gjendjen aktuale
+  // rikthe çelësat
+  Object.entries(b.snap).forEach(([k,v])=>localStorage.setItem(k,v));
+  alert("✅ Të dhënat u rikthyen nga backup-i i "+d+".\nAplikacioni do rifreskohet.");
+  location.reload();
+}
+function downloadBackup(idx){
+  const list=load(K_BKLIST)||[]; const b=list[idx]; if(!b)return;
+  const blob=new Blob([JSON.stringify(b)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="aparatet_backup_"+b.when.slice(0,19).replace(/[:T]/g,"-")+".json"; a.click();
+}
+$("#btnGoBackup").onclick=()=>{ renderBackups(); show("#scrBackup"); };
+$("#bkBack").onclick=()=>show("#scrMenu");
+$("#bkNow").onclick=()=>{ if(makeBackup("me_dore")){renderBackups();alert("✅ Backup u ruajt me datën e sotme.");} };
 $("#repDate").onchange=renderReport;
 $("#repViber").onclick=async()=>{
   const txt=reportText(window._curReport||buildReport($("#repDate").value));
@@ -1695,8 +1775,9 @@ $("#btnFreshStart").onclick=()=>{
   if(isDemo()){alert("Je në DEMO. «Fillim i pastër» vlen për LIVE. Kalo në LIVE së pari.");return;}
   const pend=pendingFieldWork();
   const warn=pend>0?("\n\n⚠️ Ke "+pend+" njësi pune TË PA DËRGUARA — dërgoji te cloud PARA se të fshish (☁️ Sinkronizo)."):"";
-  if(!confirm("🧹 FILLIM I PASTËR (LIVE)\n\nFshihen: aparatet, vizitat, magazina, kombi, depozitat, tërheqjet.\nVendosen: duhanet me çmime + furnitorët kryesorë.\n\nS'preket DEMO."+warn+"\n\nTë vazhdohet?"))return;
+  if(!confirm("🧹 FILLIM I PASTËR (LIVE)\n\nFshihen: aparatet, vizitat, magazina, kombi, depozitat, tërheqjet.\nVendosen: duhanet me çmime + furnitorët kryesorë.\n\n✅ Bëhet BACKUP automatik — mund të rikthehet nga «🛟 Backup».\nS'preket DEMO."+warn+"\n\nTë vazhdohet?"))return;
   if(pend>0 && !confirm("Konfirmo përsëri: ke punë TË PA DËRGUAR që do HUMBASË. Vazhdo prapë?"))return;
+  makeBackup("para_fillimit");   // ruaj gjendjen aktuale para se ta fshish
   // seed produktet nga KS_BRANDS (çmime të modifikueshme)
   const products=KS_BRANDS.map(([nm,pr],i)=>({id:i+1,name:nm,price:pr,photo:"",provisional:true}));
   const machines=[];
