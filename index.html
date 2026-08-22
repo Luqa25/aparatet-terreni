@@ -514,8 +514,10 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <div class="reglist" id="vnList"></div>
   </details>
 
-  <button class="pri" id="regExport" style="width:100%;margin:6px 0 4px">📤 Eksporto GJITHÇKA për PC</button>
-  <p class="note">Ky skedar përmban produktet, aparatet, magazinën, kombin dhe vizitat. Importoje në PC (📥 Vizita) → llogaritjet e thella.</p>
+  <button class="pri" id="regSendPC" style="width:100%;margin:6px 0 4px;background:#0C6675">☁️ Dërgo aparatet te PC (cloud)</button>
+  <p class="note">Dërgon aparatet e regjistruar (me GPS) te PC përmes internetit. Në PC → «☁️ Tërhiq» → i plotëson me produktet nga fotot. (Kërkon internet.)</p>
+  <button class="pri" id="regExport" style="width:100%;margin:6px 0 4px">📤 Eksporto GJITHÇKA për PC (skedar)</button>
+  <p class="note">Ose me skedar: përmban produktet, aparatet, magazinën, kombin dhe vizitat. Importoje në PC (📥 Vizita).</p>
 </div>
 
 <!-- MENU / EXPORT -->
@@ -726,7 +728,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v68";  // rritet me çdo version të ri
+const APP_VER="v69";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -795,9 +797,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v68")){
+  if(!localStorage.getItem("apar_cleaned_v69")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v68","1");
+    localStorage.setItem("apar_cleaned_v69","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -2410,6 +2412,26 @@ $("#regExport").onclick=()=>{ensureReg();
   const data={version:1,device:"tablet",fulldata:true,products:CAT.products,machines:CAT.machines,warehouse:CAT.warehouse,van:CAT.van,visits:VIS};
   const b=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");
   a.href=URL.createObjectURL(b);a.download="aparatet_"+new Date().toISOString().slice(0,10)+".json";a.click();};
+
+// DËRGO aparatet/regjistrimet e telefonit te PC përmes cloud (iPhone → PC)
+document.getElementById("regSendPC")&&(document.getElementById("regSendPC").onclick=sendCatalogToPC);
+async function sendCatalogToPC(){
+  if(isDemo()){alert("Je në DEMO. Kalo në LIVE për të dërguar te PC.");return;}
+  ensureReg();
+  const data={products:CAT.products||[],machines:(CAT.machines||[]).filter(m=>!m.archived),
+    warehouse:CAT.warehouse||[],van:CAT.van||[],placePhotos:CAT.placePhotos||{}};
+  try{
+    const r=await fetchRetry(SUPA_URL+"/rest/v1/phone_catalog",{method:"POST",
+      headers:{..._sh(),"Prefer":"return=minimal"},body:JSON.stringify({device:"iphone",data:JSON.stringify(data)})});
+    if(r.ok||r.status===201){
+      alert("✅ U dërguan "+data.machines.length+" aparate + "+data.products.length+" produkte te PC.\n\nNë PC shtyp «☁️ Tërhiq» për t'i marrë e plotësuar.");
+    }else{
+      const t=await r.text();
+      if(t.indexOf("phone_catalog")>=0) alert("⚠️ Tabela 'phone_catalog' s'ekziston te Supabase ende. Duhet ekzekutuar SQL-i njëherë.");
+      else alert("S'u dërgua: "+t.slice(0,100));
+    }
+  }catch(e){alert("S'u dërgua — pa internet? Provo prapë kur ke sinjal.");}
+}
 
 /* ---- SYNC ME CLOUD (Supabase) ---- */
 const SUPA_URL="https://tzjoldrtnnvfwlkjkewg.supabase.co";
