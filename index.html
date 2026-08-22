@@ -726,7 +726,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v67";  // rritet me çdo version të ri
+const APP_VER="v68";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -795,9 +795,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v67")){
+  if(!localStorage.getItem("apar_cleaned_v68")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v67","1");
+    localStorage.setItem("apar_cleaned_v68","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -2477,11 +2477,12 @@ async function syncImportantPhotos(){ // ngarko fotot e pikës + të aparateve n
   return n;
 }
 async function cloudPush(v){
+  // dërgo VETËM kolonat që ekzistojnë te tabela 'visits' (fushat e reja si cash_mode rrinë lokale)
   const body={machine_code:v.machine_code,date:v.date,lines:v.lines,sold_total:v.sold_total,
     expected_cash:v.expected_cash,counted_cash:v.counted_cash,discrepancy:v.discrepancy,
     counted_json:v.counted_json,float_json:v.float_json,new_baseline:v.new_baseline,notes:v.notes};
-  const r=await fetch(SUPA_URL+"/rest/v1/visits",{method:"POST",headers:{..._sh(),"Prefer":"return=minimal"},body:JSON.stringify(body)});
-  return r.ok;
+  const r=await fetchRetry(SUPA_URL+"/rest/v1/visits",{method:"POST",headers:{..._sh(),"Prefer":"return=minimal"},body:JSON.stringify(body)});
+  return r.ok||r.status===201;
 }
 async function cloudSync(){
   if(isDemo())return {sent:0,fail:0};   // në DEMO sync-u është i çaktivizuar
