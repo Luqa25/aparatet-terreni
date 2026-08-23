@@ -51,6 +51,8 @@ th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:center}
 th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 td.prod{text-align:left;font-weight:600}
 .qty{width:60px;text-align:center;padding:7px 4px}
+.prodSel{min-width:130px;max-width:170px;padding:6px 4px;font-size:13px}
+.rechk{width:20px;height:20px}
 .pos{color:var(--good);font-weight:700}.neg{color:var(--bad);font-weight:700}
 .den{display:grid;grid-template-columns:1fr 70px 84px;gap:6px;align-items:center;margin-bottom:5px}
 .den .v{text-align:right;color:var(--muted)}
@@ -306,7 +308,8 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li><b>Produktet:</b> markat + çmimi. Klik mbi një produkt për ta <b>ndryshuar</b>. Çmim fillestar 🔴 → i vendosur 🟢.</li>
       <li><b>Aparatet:</b> kod, qytet, lokal → dy kutitë e qarta: <b>🔢 Sa rende</b> + <b>📦 Sa pako zë çdo rend</b> → <b>Ndërto</b> → cakto produktin e çdo rendi.</li>
       <li><b>💶 Çmim per-aparat (opsional):</b> te ndërtimi i kanaleve, kolona <b>Çmim</b>. Lëre bosh (<i>global</i>) → çmimi bazë i produktit; vendos vetëm nëse ky aparat e ka ndryshe.</li>
-      <li><b>❓ Rimerr kanalin:</b> kolona <b>❓</b> te planogrami — shëno kanalet ku produktin s'e dallove nga fotoja. Ata dalin <b>❓ RIMERR</b> te vizita që t'i shohësh realisht herën tjetër. Regjistro tani ata që dallon, shëno ata që s'i dallon.</li>
+      <li><b>Cakto produktin te vizita:</b> te tabela e vizitës, kolona <b>Produkti</b> është <b>dropdown</b> — zgjidh duhanin që sheh në foto pikërisht aty. Ndryshimi ruhet te pasaporta e aparatit.</li>
+      <li><b>❓ Rimerr kanalin:</b> kolona <b>❓</b> — shëno kanalin ku produktin s'e dallove nga fotoja. Ai del <b>❓ RIMERR</b> herën tjetër që ta shohësh realisht. Cakto ata që dallon, shëno ❓ ata që s'i dallon; kur cakton produktin, shenja hiqet vetë.</li>
       <li><b>📝 Raporti i vizitës:</b> te vizita, poshtë — përshkrim i lirë, <b>⚠️ foto e paqartë</b>, dhe <b>📌 info për pikën</b> (mbetet e dukshme).</li>
       <li><b>⭐ Produkt i dyfishtë:</b> produkti që shitet shumë vëre në <b>dy rende</b> (i njëjti produkt) — sistemi i mbledh vetë (50 pako, shitje e përbashkët).</li>
       <li><b>🔧 Statusi:</b> 🟢 Punon / 🔧 Në defekt / ⛔ Jashtë pune + shënim — aparatet prishen herë-pas-here; statusi ruhet.</li>
@@ -735,7 +738,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v70";  // rritet me çdo version të ri
+const APP_VER="v71";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -804,9 +807,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v70")){
+  if(!localStorage.getItem("apar_cleaned_v71")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v70","1");
+    localStorage.setItem("apar_cleaned_v71","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1077,8 +1080,11 @@ function openVisit(m){
   const last=(VIS.filter(v=>v.machine_id===m.id).slice(-1)[0]);
   $("#vHist").textContent=last?("fundit: "+last.counted_cash.toFixed(2)+"€"):"vizita e parë";
   const t=$("#chTable");
-  t.innerHTML="<tr><th>Kanali</th><th class='prod' style='text-align:left'>Produkti</th><th>Para</th><th>Tani</th><th>Shitur</th><th>Pas</th></tr>";
+  // Produkti tani i ndryshueshëm KËTU (nga fotoja) + kolona ❓ (rimerr)
+  t.innerHTML="<tr><th>Kanali</th><th class='prod' style='text-align:left'>Produkti</th><th>❓</th><th>Para</th><th>Tani</th><th>Shitur</th><th>Pas</th></tr>";
   const prods=Object.fromEntries(CAT.products.map(p=>[p.id,p]));
+  const opts='<option value="">— zgjidh —</option>'+
+    CAT.products.map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
   (m.planogram||[]).forEach(ln=>{
     const base=(m.baseline||{})[ln.channel];
     const p=prods[ln.product_id]||{};
@@ -1086,16 +1092,19 @@ function openVisit(m){
     // çmimi per-kanal (ln.price) ka përparësi; përndryshe çmimi global i produktit
     const chPrice=(ln.price!=null&&ln.price!=="")?(+ln.price):(+p.price||0);
     tr.dataset.price=chPrice; tr.dataset.base=(base==null?"":base);
-    const prodTxt=p.name||(ln.recheck?'❓ RIMERR — s\'u dallua':'—');
-    const prodStyle=ln.recheck&&!p.name?' style="color:var(--warn,#B26A16);font-weight:600"':'';
-    tr.innerHTML=`<td>${ln.channel}</td><td class="prod"${prodStyle}>${prodTxt}</td>
+    tr.dataset.override=(ln.price!=null&&ln.price!=="")?"1":"";
+    tr.innerHTML=`<td>${ln.channel}</td>
+      <td class="prod"><select class="prodSel">${opts}</select></td>
+      <td style="text-align:center"><input class="rechk" type="checkbox"${ln.recheck?" checked":""}></td>
       <td>${base==null?'—':base}</td>
       <td><input class="qty now" type="number" inputmode="numeric" min="0" value="${base==null?0:base}"></td>
       <td class="sold">0</td>
       <td><input class="qty aft" type="number" inputmode="numeric" min="0" value="${ln.capacity||m.capacity||0}"></td>`;
+    tr.querySelector(".prodSel").value=ln.product_id||"";
     t.appendChild(tr);
   });
   t.querySelectorAll(".now,.aft").forEach(i=>i.addEventListener("input",recalc));
+  t.querySelectorAll(".prodSel").forEach(s=>s.addEventListener("change",onProdChange));
   buildDen("#denCounted",counted,()=>{sumDen();recalc();});
   buildDen("#denFloat",flt,()=>{sumDen();recalc();});
   $("#vNote").value="";
@@ -1105,6 +1114,15 @@ function openVisit(m){
   $("#quickCash").value="";
   setCashMode("full");   // parazgjedhje: numërim i plotë
   sumDen(); recalc(); show("#scrVisit");
+}
+function onProdChange(e){
+  const sel=e.target, tr=sel.closest("tr");
+  const pid=sel.value?parseInt(sel.value):null;
+  tr.dataset.pid=pid||"";
+  const p=CAT.products.find(x=>x.id===pid)||{};
+  // ruaj çmimin per-kanal nëse aparati e ka override; ndryshe çmimi global i produktit të ri
+  if(!tr.dataset.override) tr.dataset.price=(+p.price||0);
+  recalc();
 }
 /* ── MËNYRA E CASH-IT: full / quick / later ── */
 let _cashMode="full";
@@ -1239,6 +1257,18 @@ $("#btnSaveVisit").onclick=()=>{
   // përditëso baseline+float + info pike/verifiko lokalisht
   const mm=CAT.machines.find(x=>x.id===cur.id); mm.baseline=newbase; mm.float=fJson;
   mm.place_note=$("#vPlaceNote").value.trim(); mm.needs_check=$("#vNeedsCheck").checked;
+  // shkruaj prapa te planogrami produktin/❓ Rimerr të caktuar te vizita
+  const byCh={}; (mm.planogram||[]).forEach(l=>byCh[l.channel]=l);
+  document.querySelectorAll("#chTable tr[data-ch]").forEach(tr=>{
+    const ch=parseInt(tr.dataset.ch); let ln=byCh[ch];
+    if(!ln){ln={channel:ch}; mm.planogram=mm.planogram||[]; mm.planogram.push(ln); byCh[ch]=ln;}
+    const pid=tr.dataset.pid?parseInt(tr.dataset.pid):null;
+    ln.product_id=pid;
+    if(tr.dataset.override) ln.price=parseFloat(tr.dataset.price||0); else delete ln.price;
+    // ❓ Rimerr — mbaje shenjën vetëm nëse ende s'u dallua; hiqe kur u caktua produkti
+    const rc=tr.querySelector(".rechk").checked;
+    if(rc && !pid) ln.recheck=true; else delete ln.recheck;
+  });
   save(K_CAT,CAT);
   showNextMachine(cur);   // ✓ ruajtur → propozon aparatin tjetër (rrugë pa mendim)
 };
