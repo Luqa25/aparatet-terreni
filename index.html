@@ -31,15 +31,16 @@ button{font:inherit;border:none;border-radius:10px;padding:11px 14px;font-weight
 input,textarea,select{font:inherit;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:9px}
 .reglist div{display:flex;justify-content:space-between;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line);font-size:13px}
 .reglist button{background:transparent;color:var(--bad);padding:4px 8px;font-size:16px}
-.plan-row{display:grid;grid-template-columns:30px 1fr 52px 60px;gap:5px;align-items:center;margin-bottom:5px}
+.plan-row{display:grid;grid-template-columns:24px 1fr 42px 50px 28px;gap:4px;align-items:center;margin-bottom:5px}
 .plan-row .ch{text-align:center;color:var(--muted);font-weight:700}
-.plan-row input{padding:6px 5px;font-size:13px}
+.plan-row input{padding:6px 4px;font-size:13px}
+.plan-row .pl-rechk{width:22px;height:22px;justify-self:center}
 .regstep{display:flex;align-items:center;gap:10px;margin:16px 0 4px;padding-top:12px;border-top:1px solid var(--line)}
 .regstep .rn{width:24px;height:24px;border-radius:7px;background:var(--accent,#0C6675);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
 .regstep b{flex:1;font-size:15px}
 .regstep.done .rn{background:var(--good,#2C8256)}
 .regstep .rok{font-size:15px}
-.plan-hd{display:grid;grid-template-columns:30px 1fr 52px 60px;gap:5px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px;padding:0 2px}
+.plan-hd{display:grid;grid-template-columns:24px 1fr 42px 50px 28px;gap:4px;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;margin-bottom:3px;padding:0 2px}
 .plan-hd span{text-align:center}
 textarea{width:100%;min-height:120px;font-family:ui-monospace,monospace;font-size:12px}
 .mlist button{width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);color:var(--text);margin-bottom:8px;display:flex;gap:10px;align-items:center}
@@ -172,7 +173,11 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <div><span>Kusur i lënë</span><b id="rFloat">0.00 €</b></div>
     <div><span>Tërhequr</span><b id="rWith">0.00 €</b></div>
     <div><span>Mospërputhja</span><b id="rDisc">0.00 €</b></div>
-    <input id="vNote" placeholder="shënim (opsional)" style="width:100%;margin-top:8px">
+    <div class="sec-t" style="margin-top:10px">📝 Përshkrimi i vizitës</div>
+    <textarea id="vNote" placeholder="Çka pe/bëre te kjo pikë (opsionale)…" style="width:100%;min-height:50px"></textarea>
+    <label class="pchk" style="margin-top:6px"><input type="checkbox" id="vNeedsCheck"> ⚠️ Foto e paqartë / të dhëna të mangëta — verifiko herën tjetër</label>
+    <div class="sec-t" style="margin-top:8px">📌 Info për pikën (mbetet e dukshme)</div>
+    <textarea id="vPlaceNote" placeholder="p.sh. pronari kërkon më shumë Winston; hyrja nga prapa…" style="width:100%;min-height:44px"></textarea>
   </div>
   <div class="foot">
     <button class="sec" id="btnBack">← Prapa</button>
@@ -728,7 +733,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v69";  // rritet me çdo version të ri
+const APP_VER="v70";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -797,9 +802,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v69")){
+  if(!localStorage.getItem("apar_cleaned_v70")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v69","1");
+    localStorage.setItem("apar_cleaned_v70","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1079,7 +1084,9 @@ function openVisit(m){
     // çmimi per-kanal (ln.price) ka përparësi; përndryshe çmimi global i produktit
     const chPrice=(ln.price!=null&&ln.price!=="")?(+ln.price):(+p.price||0);
     tr.dataset.price=chPrice; tr.dataset.base=(base==null?"":base);
-    tr.innerHTML=`<td>${ln.channel}</td><td class="prod">${p.name||'—'}</td>
+    const prodTxt=p.name||(ln.recheck?'❓ RIMERR — s\'u dallua':'—');
+    const prodStyle=ln.recheck&&!p.name?' style="color:var(--warn,#B26A16);font-weight:600"':'';
+    tr.innerHTML=`<td>${ln.channel}</td><td class="prod"${prodStyle}>${prodTxt}</td>
       <td>${base==null?'—':base}</td>
       <td><input class="qty now" type="number" inputmode="numeric" min="0" value="${base==null?0:base}"></td>
       <td class="sold">0</td>
@@ -1090,6 +1097,9 @@ function openVisit(m){
   buildDen("#denCounted",counted,()=>{sumDen();recalc();});
   buildDen("#denFloat",flt,()=>{sumDen();recalc();});
   $("#vNote").value="";
+  // raporti i vizitës: info e pikës + shenja verifiko (ruhen te vetë aparati/pika te CAT)
+  $("#vPlaceNote").value=(m.place_note||"");
+  $("#vNeedsCheck").checked=!!m.needs_check;
   $("#quickCash").value="";
   setCashMode("full");   // parazgjedhje: numërim i plotë
   sumDen(); recalc(); show("#scrVisit");
@@ -1224,8 +1234,10 @@ $("#btnSaveVisit").onclick=()=>{
   VIS.push(v); save(K_VIS,VIS);
   updatePendCashBadge();
   cloudSync().then(updateSyncBadge);   // dërgo te cloud (nëse ka internet)
-  // përditëso baseline+float lokalisht për vizitën tjetër
-  const mm=CAT.machines.find(x=>x.id===cur.id); mm.baseline=newbase; mm.float=fJson; save(K_CAT,CAT);
+  // përditëso baseline+float + info pike/verifiko lokalisht
+  const mm=CAT.machines.find(x=>x.id===cur.id); mm.baseline=newbase; mm.float=fJson;
+  mm.place_note=$("#vPlaceNote").value.trim(); mm.needs_check=$("#vNeedsCheck").checked;
+  save(K_CAT,CAT);
   showNextMachine(cur);   // ✓ ruajtur → propozon aparatin tjetër (rrugë pa mendim)
 };
 function nextUnvisited(afterM){
@@ -2125,8 +2137,8 @@ $("#mBuild").onclick=()=>{const ch=parseInt($("#mCh").value||0),cap=parseInt($("
   if(!ch){alert("Fut nr. e kanaleve.");return;}
   if(!(CAT.products||[]).length){alert("Shto produktet së pari.");return;}
   const opts=(CAT.products||[]).map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
-  let h='<div class="plan-hd"><span>#</span><span style="text-align:left">Produkti</span><span>Pako</span><span>Çmim €</span></div>';
-  for(let c=1;c<=ch;c++)h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" placeholder="pako" value="${cap||''}"><input class="pl-price" type="number" inputmode="decimal" step="0.1" placeholder="global"></div>`;
+  let h='<div class="plan-hd"><span>#</span><span style="text-align:left">Produkti</span><span>Pako</span><span>Çmim</span><span>❓</span></div>';
+  for(let c=1;c<=ch;c++)h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" placeholder="pako" value="${cap||''}"><input class="pl-price" type="number" inputmode="decimal" step="0.1" placeholder="global"><input class="pl-rechk" type="checkbox" title="Rimerr këtë kanal — s'u dallua nga fotoja"></div>`;
   $("#mPlan").innerHTML=h; _bindPlanPricePH(); regStepDone("rst-plan",null);};
 // tregon çmimin global si placeholder kur zgjidhet produkti (nëse s'ke vendosur çmim veç)
 function _bindPlanPricePH(){
@@ -2180,12 +2192,13 @@ function editMachine(id){
   // rindërto planogramin me produktet+kapacitetet e ruajtura
   const ch=(m.planogram||[]).length||m.channels||0;
   if(ch&&(CAT.products||[]).length){
-    let h='<div class="plan-hd"><span>#</span><span style="text-align:left">Produkti</span><span>Pako</span><span>Çmim €</span></div>';
+    let h='<div class="plan-hd"><span>#</span><span style="text-align:left">Produkti</span><span>Pako</span><span>Çmim</span><span>❓</span></div>';
     for(let c=1;c<=ch;c++){
       const pl=(m.planogram||[]).find(x=>x.channel===c)||{};
       const opts=(CAT.products||[]).map(p=>`<option value="${p.id}"${p.id===pl.product_id?' selected':''}>${p.name}</option>`).join("");
       const pv=(pl.price!=null&&pl.price!=="")?(+pl.price):"";
-      h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" value="${pl.capacity||m.capacity||''}"><input class="pl-price" type="number" inputmode="decimal" step="0.1" placeholder="global" value="${pv}"></div>`;
+      const rc=pl.recheck?" checked":"";
+      h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" value="${pl.capacity||m.capacity||''}"><input class="pl-price" type="number" inputmode="decimal" step="0.1" placeholder="global" value="${pv}"><input class="pl-rechk" type="checkbox"${rc} title="Rimerr — s'u dallua"></div>`;
     }
     $("#mPlan").innerHTML=h; _bindPlanPricePH();
   }
@@ -2235,7 +2248,9 @@ $("#mAdd").onclick=()=>{ensureReg();const code=$("#mCode").value.trim();if(!code
   const rows=document.querySelectorAll("#mPlan .plan-row");if(!rows.length){alert("Shtyp 'Ndërto' për kanalet.");return;}
   const plan=[];rows.forEach((r,i)=>{const pid=parseInt(r.querySelector(".pl-prod").value)||null;const cp=parseInt(r.querySelector(".pl-cap").value||0)||0;
     const prEl=r.querySelector(".pl-price");const prVal=prEl&&prEl.value!==""?parseFloat(prEl.value):null;
-    if(pid){const row={channel:i+1,product_id:pid,capacity:cp};if(prVal!=null&&!isNaN(prVal))row.price=prVal;plan.push(row);}});
+    const rcEl=r.querySelector(".pl-rechk");const rc=rcEl&&rcEl.checked;
+    // ruaj kanalin nëse ka produkt OSE nëse është shënuar për rimarrje
+    if(pid||rc){const row={channel:i+1,product_id:pid,capacity:cp};if(prVal!=null&&!isNaN(prVal))row.price=prVal;if(rc)row.recheck=true;plan.push(row);}});
   // lokacioni: GPS, ose shkrim manual "42.37, 21.16" ose link Maps
   let gLat=(window._mLat!=null?window._mLat:null), gLng=(window._mLng!=null?window._mLng:null);
   if(gLat==null){const c=parseCoords($("#mGeoManual").value);if(c){gLat=c.lat;gLng=c.lng;}}
