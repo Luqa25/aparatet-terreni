@@ -310,6 +310,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li><b>Aparatet:</b> kod, qytet, lokal → dy kutitë e qarta: <b>🔢 Sa rende</b> + <b>📦 Sa pako zë çdo rend</b> → <b>Ndërto</b> → cakto produktin e çdo rendi.</li>
       <li><b>💶 Çmim per-aparat (opsional):</b> te ndërtimi i kanaleve, kolona <b>Çmim</b>. Lëre bosh (<i>global</i>) → çmimi bazë i produktit; vendos vetëm nëse ky aparat e ka ndryshe.</li>
       <li><b>Cakto produktin te vizita:</b> te tabela e vizitës, kolona <b>Produkti</b> është <b>dropdown</b> — zgjidh duhanin që sheh në foto pikërisht aty. Ndryshimi ruhet te pasaporta e aparatit.</li>
+      <li><b>💶 Çmimi te vizita:</b> kolona <b>Çmim €</b> te vizita e tregon çmimin e çdo kanali dhe mund ta <b>ndryshosh aty</b> — ndryshimi bëhet çmim per-aparat dhe ruhet. Nëse e le sa çmimi global, mbetet global.</li>
       <li><b>❓ Rimerr kanalin:</b> kolona <b>❓</b> — shëno kanalin ku produktin s'e dallove nga fotoja. Ai del <b>❓ RIMERR</b> herën tjetër që ta shohësh realisht. Cakto ata që dallon, shëno ❓ ata që s'i dallon; kur cakton produktin, shenja hiqet vetë.</li>
       <li><b>🔗 Kanale-çift:</b> kur dy kanale (dy spirale) mbajnë <b>të njëjtin duhan</b> dhe në ekran duken si <b>një pozicion</b> (AZKOYEN column-pairing), te regjistrimi shkruaj te kolona <b>🔗</b> të kanalit numrin e kanalit partner (p.sh. te kanali 6 shkruaj «5»). Te vizita ata dalin si <b>një rresht «🔗 5+6»</b> — numëro/mbush <b>totalin</b>, programi e ndan vetë brenda dy kanaleve. Barazimi mbetet i saktë.</li>
       <li><b>📝 Raporti i vizitës:</b> te vizita, poshtë — përshkrim i lirë, <b>⚠️ foto e paqartë</b>, dhe <b>📌 info për pikën</b> (mbetet e dukshme).</li>
@@ -740,7 +741,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v72";  // rritet me çdo version të ri
+const APP_VER="v73";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -809,9 +810,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v72")){
+  if(!localStorage.getItem("apar_cleaned_v73")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v72","1");
+    localStorage.setItem("apar_cleaned_v73","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1083,7 +1084,7 @@ function openVisit(m){
   $("#vHist").textContent=last?("fundit: "+last.counted_cash.toFixed(2)+"€"):"vizita e parë";
   const t=$("#chTable");
   // Produkti tani i ndryshueshëm KËTU (nga fotoja) + kolona ❓ (rimerr)
-  t.innerHTML="<tr><th>Kanali</th><th class='prod' style='text-align:left'>Produkti</th><th>❓</th><th>Para</th><th>Tani</th><th>Shitur</th><th>Pas</th></tr>";
+  t.innerHTML="<tr><th>Kanali</th><th class='prod' style='text-align:left'>Produkti</th><th>❓</th><th>Çmim €</th><th>Para</th><th>Tani</th><th>Shitur</th><th>Pas</th></tr>";
   const prods=Object.fromEntries(CAT.products.map(p=>[p.id,p]));
   const opts='<option value="">— zgjidh —</option>'+
     CAT.products.map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
@@ -1119,6 +1120,7 @@ function openVisit(m){
     tr.innerHTML=`<td title="${partners.length?'🔗 Kanale-çift: numëro/mbush TOTALIN':''}">${chLbl}</td>
       <td class="prod"><select class="prodSel">${opts}</select></td>
       <td style="text-align:center"><input class="rechk" type="checkbox"${ln.recheck?" checked":""}></td>
+      <td><input class="qty prc" type="number" inputmode="decimal" step="0.1" min="0" value="${chPrice.toFixed(2)}" title="Çmimi i këtij kanali — ndryshoje → ruhet te ky aparat"></td>
       <td>${base==null?'—':base}</td>
       <td><input class="qty now" type="number" inputmode="numeric" min="0" value="${base==null?0:base}"></td>
       <td class="sold">0</td>
@@ -1128,6 +1130,7 @@ function openVisit(m){
   });
   t.querySelectorAll(".now,.aft").forEach(i=>i.addEventListener("input",recalc));
   t.querySelectorAll(".prodSel").forEach(s=>s.addEventListener("change",onProdChange));
+  t.querySelectorAll(".prc").forEach(i=>i.addEventListener("input",onPriceChange));
   buildDen("#denCounted",counted,()=>{sumDen();recalc();});
   buildDen("#denFloat",flt,()=>{sumDen();recalc();});
   $("#vNote").value="";
@@ -1144,7 +1147,16 @@ function onProdChange(e){
   tr.dataset.pid=pid||"";
   const p=CAT.products.find(x=>x.id===pid)||{};
   // ruaj çmimin per-kanal nëse aparati e ka override; ndryshe çmimi global i produktit të ri
-  if(!tr.dataset.override) tr.dataset.price=(+p.price||0);
+  if(!tr.dataset.override){ tr.dataset.price=(+p.price||0);
+    const prc=tr.querySelector(".prc"); if(prc) prc.value=(+p.price||0).toFixed(2); }
+  recalc();
+}
+function onPriceChange(e){
+  const inp=e.target, tr=inp.closest("tr");
+  const v=parseFloat(inp.value||0)||0;
+  tr.dataset.price=v;
+  // çdo ndryshim manual e bën çmimin per-aparat (override); 0 → kthehet te global
+  tr.dataset.override=v>0?"1":"";
   recalc();
 }
 /* ── MËNYRA E CASH-IT: full / quick / later ── */
