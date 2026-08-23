@@ -31,16 +31,17 @@ button{font:inherit;border:none;border-radius:10px;padding:11px 14px;font-weight
 input,textarea,select{font:inherit;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:9px}
 .reglist div{display:flex;justify-content:space-between;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line);font-size:13px}
 .reglist button{background:transparent;color:var(--bad);padding:4px 8px;font-size:16px}
-.plan-row{display:grid;grid-template-columns:24px 1fr 42px 50px 28px;gap:4px;align-items:center;margin-bottom:5px}
+.plan-row{display:grid;grid-template-columns:24px 1fr 42px 50px 38px 28px;gap:4px;align-items:center;margin-bottom:5px}
 .plan-row .ch{text-align:center;color:var(--muted);font-weight:700}
 .plan-row input{padding:6px 4px;font-size:13px}
+.plan-row .pl-pair{width:38px;text-align:center}
 .plan-row .pl-rechk{width:22px;height:22px;justify-self:center}
 .regstep{display:flex;align-items:center;gap:10px;margin:16px 0 4px;padding-top:12px;border-top:1px solid var(--line)}
 .regstep .rn{width:24px;height:24px;border-radius:7px;background:var(--accent,#0C6675);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
 .regstep b{flex:1;font-size:15px}
 .regstep.done .rn{background:var(--good,#2C8256)}
 .regstep .rok{font-size:15px}
-.plan-hd{display:grid;grid-template-columns:24px 1fr 42px 50px 28px;gap:4px;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;margin-bottom:3px;padding:0 2px}
+.plan-hd{display:grid;grid-template-columns:24px 1fr 42px 50px 38px 28px;gap:4px;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;margin-bottom:3px;padding:0 2px}
 .plan-hd span{text-align:center}
 textarea{width:100%;min-height:120px;font-family:ui-monospace,monospace;font-size:12px}
 .mlist button{width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);color:var(--text);margin-bottom:8px;display:flex;gap:10px;align-items:center}
@@ -310,6 +311,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li><b>💶 Çmim per-aparat (opsional):</b> te ndërtimi i kanaleve, kolona <b>Çmim</b>. Lëre bosh (<i>global</i>) → çmimi bazë i produktit; vendos vetëm nëse ky aparat e ka ndryshe.</li>
       <li><b>Cakto produktin te vizita:</b> te tabela e vizitës, kolona <b>Produkti</b> është <b>dropdown</b> — zgjidh duhanin që sheh në foto pikërisht aty. Ndryshimi ruhet te pasaporta e aparatit.</li>
       <li><b>❓ Rimerr kanalin:</b> kolona <b>❓</b> — shëno kanalin ku produktin s'e dallove nga fotoja. Ai del <b>❓ RIMERR</b> herën tjetër që ta shohësh realisht. Cakto ata që dallon, shëno ❓ ata që s'i dallon; kur cakton produktin, shenja hiqet vetë.</li>
+      <li><b>🔗 Kanale-çift:</b> kur dy kanale (dy spirale) mbajnë <b>të njëjtin duhan</b> dhe në ekran duken si <b>një pozicion</b> (AZKOYEN column-pairing), te regjistrimi shkruaj te kolona <b>🔗</b> të kanalit numrin e kanalit partner (p.sh. te kanali 6 shkruaj «5»). Te vizita ata dalin si <b>një rresht «🔗 5+6»</b> — numëro/mbush <b>totalin</b>, programi e ndan vetë brenda dy kanaleve. Barazimi mbetet i saktë.</li>
       <li><b>📝 Raporti i vizitës:</b> te vizita, poshtë — përshkrim i lirë, <b>⚠️ foto e paqartë</b>, dhe <b>📌 info për pikën</b> (mbetet e dukshme).</li>
       <li><b>⭐ Produkt i dyfishtë:</b> produkti që shitet shumë vëre në <b>dy rende</b> (i njëjti produkt) — sistemi i mbledh vetë (50 pako, shitje e përbashkët).</li>
       <li><b>🔧 Statusi:</b> 🟢 Punon / 🔧 Në defekt / ⛔ Jashtë pune + shënim — aparatet prishen herë-pas-here; statusi ruhet.</li>
@@ -738,7 +740,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v71";  // rritet me çdo version të ri
+const APP_VER="v72";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -807,9 +809,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v71")){
+  if(!localStorage.getItem("apar_cleaned_v72")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v71","1");
+    localStorage.setItem("apar_cleaned_v72","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1085,21 +1087,42 @@ function openVisit(m){
   const prods=Object.fromEntries(CAT.products.map(p=>[p.id,p]));
   const opts='<option value="">— zgjidh —</option>'+
     CAT.products.map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
-  (m.planogram||[]).forEach(ln=>{
-    const base=(m.baseline||{})[ln.channel];
+  // ── grupim i kanaleve-çift (🔗): dy spirale, një pozicion ──
+  const byCh={}; (m.planogram||[]).forEach(l=>byCh[l.channel]=l);
+  const secondary=new Set(), pairOf={};
+  (m.planogram||[]).forEach(l=>{
+    const pw=l.pair_with;
+    if(pw&&byCh[pw]){const pr=Math.min(l.channel,pw), ot=Math.max(l.channel,pw);
+      if(!secondary.has(ot)){(pairOf[pr]=pairOf[pr]||[]);if(pairOf[pr].indexOf(ot)<0)pairOf[pr].push(ot);secondary.add(ot);}}
+  });
+  const disp=(m.planogram||[]).filter(l=>!secondary.has(l.channel));
+  disp.forEach(ln=>{
+    const partners=pairOf[ln.channel]||[];
     const p=prods[ln.product_id]||{};
+    // baseline total = ky + partnerët
+    let base=(m.baseline||{})[ln.channel];
+    if(partners.length){
+      const bs=partners.map(q=>(m.baseline||{})[q]);
+      if(base==null && bs.every(b=>b==null)) base=null;
+      else base=(base||0)+bs.reduce((a,b)=>a+(b||0),0);
+    }
+    const capTot=(ln.capacity||m.capacity||0)+partners.reduce((a,q)=>a+((byCh[q]||{}).capacity||m.capacity||0),0);
     const tr=document.createElement("tr"); tr.dataset.ch=ln.channel; tr.dataset.pid=ln.product_id||"";
+    tr.dataset.partners=partners.join(","); tr.dataset.captot=capTot;
+    tr.dataset.caps=[ (ln.capacity||m.capacity||0) ].concat(partners.map(q=>((byCh[q]||{}).capacity||m.capacity||0))).join(",");
     // çmimi per-kanal (ln.price) ka përparësi; përndryshe çmimi global i produktit
     const chPrice=(ln.price!=null&&ln.price!=="")?(+ln.price):(+p.price||0);
     tr.dataset.price=chPrice; tr.dataset.base=(base==null?"":base);
     tr.dataset.override=(ln.price!=null&&ln.price!=="")?"1":"";
-    tr.innerHTML=`<td>${ln.channel}</td>
+    const chLbl=partners.length?("🔗 "+[ln.channel].concat(partners).join("+")):(""+ln.channel);
+    const aftDef=partners.length?capTot:(ln.capacity||m.capacity||0);
+    tr.innerHTML=`<td title="${partners.length?'🔗 Kanale-çift: numëro/mbush TOTALIN':''}">${chLbl}</td>
       <td class="prod"><select class="prodSel">${opts}</select></td>
       <td style="text-align:center"><input class="rechk" type="checkbox"${ln.recheck?" checked":""}></td>
       <td>${base==null?'—':base}</td>
       <td><input class="qty now" type="number" inputmode="numeric" min="0" value="${base==null?0:base}"></td>
       <td class="sold">0</td>
-      <td><input class="qty aft" type="number" inputmode="numeric" min="0" value="${ln.capacity||m.capacity||0}"></td>`;
+      <td><input class="qty aft" type="number" inputmode="numeric" min="0" value="${aftDef}"></td>`;
     tr.querySelector(".prodSel").value=ln.product_id||"";
     t.appendChild(tr);
   });
@@ -1143,7 +1166,7 @@ $("#cmFull").onclick=()=>setCashMode("full");
 $("#cmQuick").onclick=()=>setCashMode("quick");
 $("#cmLater").onclick=()=>setCashMode("later");
 $("#quickCash").addEventListener("input",recalc);
-$("#btnFillMax").onclick=()=>{document.querySelectorAll("#chTable .aft").forEach((i,idx)=>{const cap=CAT.machines.find(x=>x.id===cur.id).planogram[idx].capacity;i.value=cap;});recalc();};
+$("#btnFillMax").onclick=()=>{document.querySelectorAll("#chTable tr[data-ch]").forEach(tr=>{const aft=tr.querySelector(".aft");aft.value=parseInt(tr.dataset.captot||aft.value||0);});recalc();};
 $("#btnBack").onclick=()=>{renderList();show("#scrList");};
 
 function buildDen(sel,store,onch){
@@ -1229,14 +1252,26 @@ function renderPickList(){
       <span>${ok?'🟢':'🔴'} ${nm} <span class="pl">(komb: ${have})</span></span>${badge}</div>`;
   }).join("");
 }
+// ndaj një sasi totale nëpër kanalet-çift (mbush secilin deri në kap, mbetja te i fundit)
+function splitQty(total,caps){const out=[];let rem=parseInt(total||0);caps.forEach((c,k)=>{c=parseInt(c||0);if(k===caps.length-1){out.push(Math.max(0,rem));rem=0;}else{const t=Math.min(rem,c);out.push(t);rem-=t;}});return out;}
 $("#btnSaveVisit").onclick=()=>{
   const lines=[], newbase={};
   document.querySelectorAll("#chTable tr[data-ch]").forEach(tr=>{
     const ch=parseInt(tr.dataset.ch), base=tr.dataset.base===""?null:parseInt(tr.dataset.base);
     const now=parseInt(tr.querySelector(".now").value||0), aft=parseInt(tr.querySelector(".aft").value||0);
     const sold=base==null?0:Math.max(0,base-now);
-    lines.push({channel:ch,product_id:tr.dataset.pid?parseInt(tr.dataset.pid):null,before:base,now:now,sold:sold,after:aft,price:parseFloat(tr.dataset.price||0)});
-    newbase[ch]=aft;
+    const pid=tr.dataset.pid?parseInt(tr.dataset.pid):null;
+    const partners=tr.dataset.partners?tr.dataset.partners.split(",").filter(x=>x).map(Number):[];
+    if(partners.length){
+      const chans=[ch].concat(partners);
+      const caps=tr.dataset.caps.split(",").map(Number);
+      const parts=splitQty(aft,caps);
+      chans.forEach((c,k)=>newbase[c]=parts[k]);
+      lines.push({channel:ch,channels:chans,product_id:pid,before:base,now:now,sold:sold,after:aft,price:parseFloat(tr.dataset.price||0),paired:true});
+    }else{
+      lines.push({channel:ch,product_id:pid,before:base,now:now,sold:sold,after:aft,price:parseFloat(tr.dataset.price||0)});
+      newbase[ch]=aft;
+    }
   });
   const cJson={},fJson={};
   DENOMS.forEach(([c])=>{if(counted[c])cJson[c]=counted[c];if(flt[c])fJson[c]=flt[c];});
@@ -1260,14 +1295,19 @@ $("#btnSaveVisit").onclick=()=>{
   // shkruaj prapa te planogrami produktin/❓ Rimerr të caktuar te vizita
   const byCh={}; (mm.planogram||[]).forEach(l=>byCh[l.channel]=l);
   document.querySelectorAll("#chTable tr[data-ch]").forEach(tr=>{
-    const ch=parseInt(tr.dataset.ch); let ln=byCh[ch];
-    if(!ln){ln={channel:ch}; mm.planogram=mm.planogram||[]; mm.planogram.push(ln); byCh[ch]=ln;}
+    const ch=parseInt(tr.dataset.ch);
+    const partners=tr.dataset.partners?tr.dataset.partners.split(",").filter(x=>x).map(Number):[];
     const pid=tr.dataset.pid?parseInt(tr.dataset.pid):null;
-    ln.product_id=pid;
-    if(tr.dataset.override) ln.price=parseFloat(tr.dataset.price||0); else delete ln.price;
-    // ❓ Rimerr — mbaje shenjën vetëm nëse ende s'u dallua; hiqe kur u caktua produkti
     const rc=tr.querySelector(".rechk").checked;
-    if(rc && !pid) ln.recheck=true; else delete ln.recheck;
+    // apliko për primarin + partnerët (çifti mban të njëjtin produkt)
+    [ch].concat(partners).forEach(cc=>{
+      let ln=byCh[cc];
+      if(!ln){ln={channel:cc}; mm.planogram=mm.planogram||[]; mm.planogram.push(ln); byCh[cc]=ln;}
+      ln.product_id=pid;
+      // çmimin per-kanal te çiftet NUK e prekim (mbetet ai i planogramit); pa çift ndryshojmë si më parë
+      if(!partners.length){ if(tr.dataset.override) ln.price=parseFloat(tr.dataset.price||0); else delete ln.price; }
+      if(rc && !pid) ln.recheck=true; else delete ln.recheck;
+    });
   });
   save(K_CAT,CAT);
   showNextMachine(cur);   // ✓ ruajtur → propozon aparatin tjetër (rrugë pa mendim)
@@ -2169,8 +2209,8 @@ $("#mBuild").onclick=()=>{const ch=parseInt($("#mCh").value||0),cap=parseInt($("
   if(!ch){alert("Fut nr. e kanaleve.");return;}
   if(!(CAT.products||[]).length){alert("Shto produktet së pari.");return;}
   const opts=(CAT.products||[]).map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
-  let h='<div class="plan-hd"><span>#</span><span style="text-align:left">Produkti</span><span>Pako</span><span>Çmim</span><span>❓</span></div>';
-  for(let c=1;c<=ch;c++)h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" placeholder="pako" value="${cap||''}"><input class="pl-price" type="number" inputmode="decimal" step="0.1" placeholder="global"><input class="pl-rechk" type="checkbox" title="Rimerr këtë kanal — s'u dallua nga fotoja"></div>`;
+  let h='<div class="plan-hd"><span>#</span><span style="text-align:left">Produkti</span><span>Pako</span><span>Çmim</span><span>🔗</span><span>❓</span></div>';
+  for(let c=1;c<=ch;c++)h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" placeholder="pako" value="${cap||''}"><input class="pl-price" type="number" inputmode="decimal" step="0.1" placeholder="global"><input class="pl-pair" type="number" inputmode="numeric" placeholder="—" title="🔗 Çift me kanalin nr. (i njëjti produkt, një pozicion)"><input class="pl-rechk" type="checkbox" title="Rimerr këtë kanal — s'u dallua nga fotoja"></div>`;
   $("#mPlan").innerHTML=h; _bindPlanPricePH(); regStepDone("rst-plan",null);};
 // tregon çmimin global si placeholder kur zgjidhet produkti (nëse s'ke vendosur çmim veç)
 function _bindPlanPricePH(){
@@ -2224,13 +2264,14 @@ function editMachine(id){
   // rindërto planogramin me produktet+kapacitetet e ruajtura
   const ch=(m.planogram||[]).length||m.channels||0;
   if(ch&&(CAT.products||[]).length){
-    let h='<div class="plan-hd"><span>#</span><span style="text-align:left">Produkti</span><span>Pako</span><span>Çmim</span><span>❓</span></div>';
+    let h='<div class="plan-hd"><span>#</span><span style="text-align:left">Produkti</span><span>Pako</span><span>Çmim</span><span>🔗</span><span>❓</span></div>';
     for(let c=1;c<=ch;c++){
       const pl=(m.planogram||[]).find(x=>x.channel===c)||{};
       const opts=(CAT.products||[]).map(p=>`<option value="${p.id}"${p.id===pl.product_id?' selected':''}>${p.name}</option>`).join("");
       const pv=(pl.price!=null&&pl.price!=="")?(+pl.price):"";
       const rc=pl.recheck?" checked":"";
-      h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" value="${pl.capacity||m.capacity||''}"><input class="pl-price" type="number" inputmode="decimal" step="0.1" placeholder="global" value="${pv}"><input class="pl-rechk" type="checkbox"${rc} title="Rimerr — s'u dallua"></div>`;
+      const pw=(pl.pair_with!=null&&pl.pair_with!=="")?pl.pair_with:"";
+      h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" value="${pl.capacity||m.capacity||''}"><input class="pl-price" type="number" inputmode="decimal" step="0.1" placeholder="global" value="${pv}"><input class="pl-pair" type="number" inputmode="numeric" placeholder="—" value="${pw}" title="🔗 Çift me kanalin nr."><input class="pl-rechk" type="checkbox"${rc} title="Rimerr — s'u dallua"></div>`;
     }
     $("#mPlan").innerHTML=h; _bindPlanPricePH();
   }
@@ -2281,8 +2322,9 @@ $("#mAdd").onclick=()=>{ensureReg();const code=$("#mCode").value.trim();if(!code
   const plan=[];rows.forEach((r,i)=>{const pid=parseInt(r.querySelector(".pl-prod").value)||null;const cp=parseInt(r.querySelector(".pl-cap").value||0)||0;
     const prEl=r.querySelector(".pl-price");const prVal=prEl&&prEl.value!==""?parseFloat(prEl.value):null;
     const rcEl=r.querySelector(".pl-rechk");const rc=rcEl&&rcEl.checked;
-    // ruaj kanalin nëse ka produkt OSE nëse është shënuar për rimarrje
-    if(pid||rc){const row={channel:i+1,product_id:pid,capacity:cp};if(prVal!=null&&!isNaN(prVal))row.price=prVal;if(rc)row.recheck=true;plan.push(row);}});
+    const pwEl=r.querySelector(".pl-pair");const pw=pwEl&&pwEl.value!==""?parseInt(pwEl.value):null;
+    // ruaj kanalin nëse ka produkt OSE shënim rimarrjeje OSE lidhje çifti
+    if(pid||rc||pw){const row={channel:i+1,product_id:pid,capacity:cp};if(prVal!=null&&!isNaN(prVal))row.price=prVal;if(rc)row.recheck=true;if(pw&&pw!==i+1)row.pair_with=pw;plan.push(row);}});
   // lokacioni: GPS, ose shkrim manual "42.37, 21.16" ose link Maps
   let gLat=(window._mLat!=null?window._mLat:null), gLng=(window._mLng!=null?window._mLng:null);
   if(gLat==null){const c=parseCoords($("#mGeoManual").value);if(c){gLat=c.lat;gLng=c.lng;}}

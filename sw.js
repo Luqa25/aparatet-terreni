@@ -1,5 +1,5 @@
 // sw.js — service worker: cache i app-shell-it për punë offline.
-const CACHE = "aparatet-v71";
+const CACHE = "aparatet-v72";
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "icon.svg"];
 
 self.addEventListener("install", e => {
