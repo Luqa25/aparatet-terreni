@@ -112,6 +112,15 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <button class="sec" id="btnOptRoute" title="Optimizo rrugën">🧭</button>
     <button class="sec" id="btnReimport" title="Katalog">📥</button>
   </div>
+  <div class="row" style="margin-bottom:8px">
+    <select id="statusFilter" class="grow">
+      <option value="__all__">🔎 Të gjitha</option>
+      <option value="withprod">✅ Me produkte (regjistruar)</option>
+      <option value="noprod">📍 Vetëm GPS (pa produkte)</option>
+      <option value="visited">✓ Vizituar sot</option>
+      <option value="pending">⏳ Pret vizitë</option>
+    </select>
+  </div>
   <div class="row" style="margin-bottom:10px">
     <span class="pill" id="listInfo"></span>
     <span class="grow"></span>
@@ -311,6 +320,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li><b>💶 Çmim per-aparat (opsional):</b> te ndërtimi i kanaleve, kolona <b>Çmim</b>. Lëre bosh (<i>global</i>) → çmimi bazë i produktit; vendos vetëm nëse ky aparat e ka ndryshe.</li>
       <li><b>Cakto produktin te vizita:</b> te tabela e vizitës, kolona <b>Produkti</b> është <b>dropdown</b> — zgjidh duhanin që sheh në foto pikërisht aty. Ndryshimi ruhet te pasaporta e aparatit.</li>
       <li><b>💶 Çmimi te vizita:</b> kolona <b>Çmim €</b> te vizita e tregon çmimin e çdo kanali dhe mund ta <b>ndryshosh aty</b> — ndryshimi bëhet çmim per-aparat dhe ruhet. Nëse e le sa çmimi global, mbetet global.</li>
+      <li><b>✅ Me produkte / 📍 Vetëm GPS:</b> te lista e aparateve, filtri i dytë lart (<b>🔎</b>) tregon cilat pika janë regjistruar me produkte dhe cilat janë vetëm me GPS. Çdo rresht ka shenjën <b>✅ me produkte</b> ose <b>📍 vetëm GPS</b>, dhe lart shkruan sa nga totali janë me produkte.</li>
       <li><b>❓ Rimerr kanalin:</b> kolona <b>❓</b> — shëno kanalin ku produktin s'e dallove nga fotoja. Ai del <b>❓ RIMERR</b> herën tjetër që ta shohësh realisht. Cakto ata që dallon, shëno ❓ ata që s'i dallon; kur cakton produktin, shenja hiqet vetë.</li>
       <li><b>🔗 Kanale-çift:</b> kur dy kanale (dy spirale) mbajnë <b>të njëjtin duhan</b> dhe në ekran duken si <b>një pozicion</b> (AZKOYEN column-pairing), te regjistrimi shkruaj te kolona <b>🔗</b> të kanalit numrin e kanalit partner (p.sh. te kanali 6 shkruaj «5»). Te vizita ata dalin si <b>një rresht «🔗 5+6»</b> — numëro/mbush <b>totalin</b>, programi e ndan vetë brenda dy kanaleve. Barazimi mbetet i saktë.</li>
       <li><b>📝 Raporti i vizitës:</b> te vizita, poshtë — përshkrim i lirë, <b>⚠️ foto e paqartë</b>, dhe <b>📌 info për pikën</b> (mbetet e dukshme).</li>
@@ -741,7 +751,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v73";  // rritet me çdo version të ri
+const APP_VER="v74";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -810,9 +820,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v73")){
+  if(!localStorage.getItem("apar_cleaned_v74")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v73","1");
+    localStorage.setItem("apar_cleaned_v74","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -991,15 +1001,26 @@ function fillCityFilter(){
     cities.map(c=>{const n=act.filter(m=>(m.city||"—")===c).length;return `<option value="${c}">📍 ${c} (${n})</option>`;}).join("");
   if(cur&&[...s.options].some(o=>o.value===cur))s.value=cur;
   s.onchange=renderList;
+  const sf=$("#statusFilter"); if(sf&&!sf._bound){sf._bound=true;sf.onchange=renderList;}
 }
 function activeMachines(){return (CAT.machines||[]).filter(m=>!m.archived);}
+// aparati ka të paktën një kanal me produkt të caktuar = "regjistruar me produkte"
+function hasProducts(m){return (m.planogram||[]).some(l=>l.product_id!=null&&l.product_id!=="");}
+function _statusFilterValue(){const s=$("#statusFilter");return s&&s.value?s.value:"__all__";}
 function renderList(){
   fillCityFilter();
   const el=$("#machineList"); el.innerHTML="";
   const fc=_cityFilterValue();
   let ms=[...activeMachines()].sort((a,b)=>(a.city||"").localeCompare(b.city||"")||((a.visit_order||0)-(b.visit_order||0)));
   if(fc!=="__all__")ms=ms.filter(m=>(m.city||"—")===fc);
-  $("#listInfo").textContent=ms.length+" aparate";
+  const sf=_statusFilterValue();
+  if(sf==="withprod")ms=ms.filter(hasProducts);
+  else if(sf==="noprod")ms=ms.filter(m=>!hasProducts(m));
+  else if(sf==="visited")ms=ms.filter(m=>_visitedToday(m.id));
+  else if(sf==="pending")ms=ms.filter(m=>!_visitedToday(m.id));
+  // përmbledhje: sa janë regjistruar me produkte nga totali i pamjes
+  const nprod=ms.filter(hasProducts).length;
+  $("#listInfo").textContent=ms.length+" aparate · ✅ "+nprod+" me produkte";
   // progresi i ditës për këtë pamje
   const done=ms.filter(m=>_visitedToday(m.id)).length;
   const pb=$("#progBadge");
@@ -1029,7 +1050,11 @@ function renderList(){
     else tag=visited?'<span style="color:#2E8F55;font-weight:800">✓ kryer sot</span>'
                     :'<span style="color:#C07A16;font-weight:700">⏳ pret vizitë</span>';
     const note=(status!=="ok"&&m.status_note)?` · <span style="color:#C6463C">${m.status_note}</span>`:"";
-    b.innerHTML=`<span class="code">${m.code||('#'+m.id)}</span><span class="grow"><div>${m.place||'—'}</div><div class="pl">rend ${m.visit_order||'—'} · ${m.channels||0} kanale · ${tag}${note}</div></span>`;
+    // shenja: a është regjistruar me produkte apo vetëm GPS
+    const hp=hasProducts(m);
+    const prodTag=hp?'<span style="color:#2E8F55;font-weight:700">✅ me produkte</span>'
+                    :'<span style="color:#C07A16;font-weight:700">📍 vetëm GPS</span>';
+    b.innerHTML=`<span class="code">${m.code||('#'+m.id)}</span><span class="grow"><div>${m.place||'—'}</div><div class="pl">rend ${m.visit_order||'—'} · ${m.channels||0} kanale · ${prodTag} · ${tag}${note}</div></span>`;
     b.onclick=()=>openVisit(m);
     wrap.appendChild(b);
     if(m.park_lat!=null&&m.park_lng!=null){
