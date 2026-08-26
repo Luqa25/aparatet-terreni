@@ -53,8 +53,8 @@ th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04
 td.prod{text-align:left;font-weight:600}
 .qty{width:60px;text-align:center;padding:7px 4px}
 .qty.pred{background:rgba(140,110,10,.14);border-color:#C0921680}
-.qty.prc.glob{color:#3A6B9A;background:rgba(58,107,154,.12);border-color:#3A6B9A55;font-weight:600}
-.qty.prc.ovr{font-weight:800}
+.qty.prc.glob,.qty.oc-prc.glob{color:#3A6B9A;background:rgba(58,107,154,.12);border-color:#3A6B9A55;font-weight:600}
+.qty.prc.ovr,.qty.oc-prc.ovr{font-weight:800}
 .prodSel{min-width:130px;max-width:170px;padding:6px 4px;font-size:13px}
 .pchip{display:inline-flex;align-items:center;justify-content:center;width:34px;height:22px;border-radius:4px;color:#fff;font-weight:800;font-size:10px;vertical-align:middle;margin-right:5px;object-fit:cover;flex:none}
 .rechk{width:20px;height:20px}
@@ -359,6 +359,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 
     <h3>🎯 Inventari fillestar</h3>
     <p>☰ → <b>🎯 Inventari fillestar</b>: <b>(1)</b> numëro aparatet qytet-pas-qyteti (Prizren i pari) → 🟢. <b>(2)</b> numëro magazinën. <b>(3)</b> <b>Llogarit</b> → kombi = Blerë − Aparate − Depo.</p>
+    <p>Te numërimi i një aparati, çdo kanal ka tani <b>butonin e zgjedhjes së shpejtë të produktit</b> (kërkim + më të shiturat), <b>sasinë</b> dhe <b>çmimin</b> — pra e cakton produktin dhe çmimin pikërisht aty, jo vetëm sasinë. Ndryshimet ruhen te pasaporta e aparatit.</p>
 
     <h3>🏦 Dorëzim cash-i · 💸 Cash emergjent</h3>
     <p>☰ → <b>🏦 Dorëzim cash-i</b>: zgjidh ku shkon paraja — <b>🏦 në bankë</b> (me lokacion bankomati) ose <b>👤 te pronari i kompanisë/menaxheri</b> (me emër). Të dyja zbriten nga «kesh në dorë» te barazimi lart.</p>
@@ -770,7 +771,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v81";  // rritet me çdo version të ri
+const APP_VER="v82";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -839,9 +840,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v81")){
+  if(!localStorage.getItem("apar_cleaned_v82")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v81","1");
+    localStorage.setItem("apar_cleaned_v82","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1291,9 +1292,9 @@ function onProdChange(e){
   recalc();
 }
 // ── zgjedhje e shpejtë e produktit (bottom-sheet me kërkim, grupim, më të shiturat lart) ──
-let _ppRow=null;
+let _ppRow=null, _ppRowOC=null;
 function openProductPicker(tr){
-  _ppRow=tr;
+  _ppRow=tr; _ppRowOC=null;
   const curPid=tr.dataset.pid?parseInt(tr.dataset.pid):null;
   const cur=CAT.products.find(x=>x.id===curPid);
   $("#ppTitle").textContent="Kanali "+(tr.dataset.ch||"")+(cur?(" · "+cur.name):"");
@@ -1328,8 +1329,19 @@ function bindPickerItems(){
     const pid=b.dataset.pid?parseInt(b.dataset.pid):null;
     if(_ppRow){ const sel=_ppRow.querySelector(".prodSel"); sel.value=pid||"";
       sel.dispatchEvent(new Event("change")); }
+    else if(_ppRowOC){ ocSetProduct(_ppRowOC,pid); }
     $("#prodPicker").style.display="none";
   });
+}
+// cakto produktin te një rresht i inventarit fillestar (përditëso etiketën, emrin, çmimin global)
+function ocSetProduct(row,pid){
+  const p=CAT.products.find(x=>x.id===pid)||{};
+  row.dataset.pid=pid||"";
+  const host=row.querySelector(".chipHost"); if(host)host.innerHTML=pid?prodChip(p):"";
+  const nm=row.querySelector(".ppName"); if(nm)nm.textContent=pid?(p.name||('#'+pid)):'— zgjidh —';
+  // nëse s'ka override, çmimi ndjek produktin e ri
+  if(!row.dataset.override){ row.dataset.price=(+p.price||0);
+    const prc=row.querySelector(".oc-prc"); if(prc){prc.value=(+p.price||0).toFixed(2);prc.classList.add("glob");prc.classList.remove("ovr");} }
 }
 $("#ppClose").onclick=()=>{$("#prodPicker").style.display="none";};
 $("#prodPicker").addEventListener("click",e=>{if(e.target.id==="prodPicker")$("#prodPicker").style.display="none";});
@@ -2033,17 +2045,61 @@ function renderOpening(){
 function openCount(m){
   _ocMachine=m; $("#ocTitle").textContent="Numëro: "+m.code;
   const plan=m.planogram&&m.planogram.length?m.planogram:Object.keys(m.baseline||{}).map(c=>({channel:+c}));
-  const pn={}; (CAT.products||[]).forEach(p=>pn[p.id]=p.name);
+  const prods=Object.fromEntries((CAT.products||[]).map(p=>[p.id,p]));
   $("#ocChannels").innerHTML=plan.map(r=>{
     const ch=r.channel, val=(m.baseline&&m.baseline[ch])||0;
-    return `<div class="den"><span>Kanali ${ch} · ${pn[r.product_id]||"—"}</span>
-      <input class="qty oc-in" data-ch="${ch}" type="number" inputmode="numeric" value="${val}"><span></span></div>`;
+    const p=prods[r.product_id];
+    // çmimi efektiv i kanalit (per-aparat ka përparësi mbi global)
+    const chPrice=(r.price!=null&&r.price!=="")?(+r.price):(+(p||{}).price||0);
+    const ovr=(r.price!=null&&r.price!=="");
+    return `<div class="ocrow" data-ch="${ch}" data-pid="${r.product_id||''}" data-price="${chPrice}" data-override="${ovr?'1':''}" style="border-bottom:1px solid var(--line);padding:8px 0">
+      <div class="row" style="gap:6px;align-items:center">
+        <span style="flex:none;width:30px;color:var(--muted);font-weight:700">${ch}.</span>
+        <button type="button" class="ocPick" style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;text-align:left;padding:6px;background:var(--elev);border:1px solid var(--line);border-radius:8px">
+          <span class="chipHost" style="flex:none">${prodChip(p)}</span>
+          <span class="ppName" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(p||{}).name||'— zgjidh —'}</span><span style="color:var(--muted)">▾</span></button>
+      </div>
+      <div class="row" style="gap:6px;align-items:center;margin-top:5px">
+        <span class="note" style="flex:none;width:30px"></span>
+        <span class="note" style="flex:none">Sasia:</span>
+        <input class="qty oc-in" type="number" inputmode="numeric" value="${val}" style="width:70px">
+        <span class="note" style="flex:none">Çmimi:</span>
+        <input class="qty oc-prc ${ovr?'ovr':'glob'}" type="number" inputmode="decimal" step="0.1" min="0" value="${chPrice.toFixed(2)}" style="width:74px">
+      </div>
+    </div>`;
   }).join("");
+  // lidh butonat e zgjedhjes + çmimet
+  document.querySelectorAll("#ocChannels .ocPick").forEach(b=>b.onclick=()=>openProductPickerOC(b.closest(".ocrow")));
+  document.querySelectorAll("#ocChannels .oc-prc").forEach(inp=>inp.onchange=()=>{
+    const row=inp.closest(".ocrow"), v=parseFloat(inp.value||0)||0;
+    row.dataset.price=v; row.dataset.override=v>0?"1":"";
+    inp.classList.toggle("ovr",v>0); inp.classList.toggle("glob",!(v>0));
+  });
   show("#scrOpenCount");
 }
+// zgjedhja e shpejtë e produktit te inventari fillestar (ripërdor panelin e njëjtë)
+function openProductPickerOC(row){
+  _ppRow=null; _ppRowOC=row;
+  const curPid=row.dataset.pid?parseInt(row.dataset.pid):null;
+  const cur=CAT.products.find(x=>x.id===curPid);
+  $("#ppTitle").textContent="Kanali "+(row.dataset.ch||"")+(cur?(" · "+cur.name):"");
+  $("#ppSearch").value=""; renderPickerList(""); $("#prodPicker").style.display="block";
+  setTimeout(()=>$("#ppSearch").focus(),50);
+}
 $("#ocSave").onclick=()=>{
-  const bl={}; document.querySelectorAll(".oc-in").forEach(i=>bl[i.dataset.ch]=+i.value||0);
-  _ocMachine.baseline=bl; _ocMachine._opened=true; save(K_CAT,CAT);
+  const bl={}, plan=[];
+  document.querySelectorAll("#ocChannels .ocrow").forEach(row=>{
+    const ch=parseInt(row.dataset.ch);
+    bl[ch]=+row.querySelector(".oc-in").value||0;
+    const pid=row.dataset.pid?parseInt(row.dataset.pid):null;
+    const ln={channel:ch,product_id:pid};
+    if(row.dataset.override) ln.price=parseFloat(row.dataset.price||0);
+    // ruaj kapacitetin ekzistues nëse e ka planogrami
+    const ex=(_ocMachine.planogram||[]).find(x=>x.channel===ch);
+    if(ex){ if(ex.capacity!=null)ln.capacity=ex.capacity; if(ex.pair_with!=null)ln.pair_with=ex.pair_with; }
+    plan.push(ln);
+  });
+  _ocMachine.baseline=bl; _ocMachine.planogram=plan; _ocMachine._opened=true; save(K_CAT,CAT);
   renderOpening(); show("#scrOpening");
 };
 $("#btnOpenDepo").onclick=()=>{
