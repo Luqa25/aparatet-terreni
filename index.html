@@ -756,7 +756,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v76";  // rritet me çdo version të ri
+const APP_VER="v77";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -825,9 +825,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v76")){
+  if(!localStorage.getItem("apar_cleaned_v77")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v76","1");
+    localStorage.setItem("apar_cleaned_v77","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1106,6 +1106,38 @@ function renderStock(){
   });
 }
 
+// shitjet e grumbulluara per produkt (pako + të ardhura) nga vizitat
+function productSalesPWA(){
+  const s={};
+  (VIS||[]).forEach(v=>(v.lines||[]).forEach(ln=>{
+    if(ln.product_id==null)return;
+    const d=s[ln.product_id]||(s[ln.product_id]={sold:0,rev:0});
+    d.sold+=(+ln.sold||0); d.rev+=(+ln.sold||0)*(+ln.price||0);
+  }));
+  return s;
+}
+// dropdown i produkteve: i grupuar sipas kompanisë, brenda grupit sipas të ardhurave (shitur×çmim)
+function productOptions(){
+  const sales=productSalesPWA();
+  const rev=p=>{const s=sales[p.id]||{};return [s.rev||0,s.sold||0,+p.price||0];};
+  const cmp=(a,b)=>{const ra=rev(a),rb=rev(b);return rb[0]-ra[0]||rb[1]-ra[1]||rb[2]-ra[2]||(a.name||"").localeCompare(b.name||"");};
+  const byBrand={};
+  (CAT.products||[]).forEach(p=>{const b=(p.brand||"").trim()||"— pa kompani —";(byBrand[b]=byBrand[b]||[]).push(p);});
+  // rendit grupet sipas të ardhurave totale të grupit (kompania më e fortë lart)
+  const groupRev=b=>byBrand[b].reduce((a,p)=>a+(sales[p.id]?sales[p.id].rev:0),0);
+  const order=["PMI","BAT","JTI","Imperial"].filter(b=>byBrand[b])
+    .concat(Object.keys(byBrand).filter(b=>["PMI","BAT","JTI","Imperial"].indexOf(b)<0)
+      .sort((a,b)=>groupRev(b)-groupRev(a)));
+  let h='<option value="">— zgjidh —</option>';
+  order.forEach(b=>{
+    const items=byBrand[b].slice().sort(cmp);
+    h+=`<optgroup label="${b}">`+items.map(p=>{
+      const s=sales[p.id]; const tag=s&&s.sold?` 🔥${s.sold}`:"";
+      return `<option value="${p.id}">${p.name}${tag}</option>`;
+    }).join("")+"</optgroup>";
+  });
+  return h;
+}
 // parashiko "Tani" për çdo kanal nga ritmi mesatar i shitjes (baseline − shitje×ditë)
 function predictNow(m){
   const vs=VIS.filter(v=>v.machine_id===m.id && v.date).sort((a,b)=>(a.date<b.date?-1:1));
@@ -1141,8 +1173,7 @@ function openVisit(m){
   // Produkti tani i ndryshueshëm KËTU (nga fotoja) + kolona ❓ (rimerr)
   t.innerHTML="<tr><th>Kanali</th><th class='prod' style='text-align:left'>Produkti</th><th>❓</th><th>Çmim €</th><th>Para</th><th>Tani</th><th>Shitur</th><th>Pas</th></tr>";
   const prods=Object.fromEntries(CAT.products.map(p=>[p.id,p]));
-  const opts='<option value="">— zgjidh —</option>'+
-    CAT.products.map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
+  const opts=productOptions();
   const pred=predictNow(m);   // 🔮 parashikimi i "Tani" nga ritmi i shitjes
   window._hasPred=Object.keys(pred).length>0;
   // ── grupim i kanaleve-çift (🔗): dy spirale, një pozicion ──
@@ -2287,7 +2318,7 @@ $("#mCode").addEventListener("blur",()=>{ if($("#mCode").value.trim())regStepDon
 $("#mBuild").onclick=()=>{const ch=parseInt($("#mCh").value||0),cap=parseInt($("#mCap").value||0);
   if(!ch){alert("Fut nr. e kanaleve.");return;}
   if(!(CAT.products||[]).length){alert("Shto produktet së pari.");return;}
-  const opts=(CAT.products||[]).map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
+  const opts=productOptions();
   let h='<div class="plan-hd"><span>#</span><span style="text-align:left">Produkti</span><span>Pako</span><span>Çmim</span><span>🔗</span><span>❓</span></div>';
   for(let c=1;c<=ch;c++)h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" placeholder="pako" value="${cap||''}"><input class="pl-price" type="number" inputmode="decimal" step="0.1" placeholder="global"><input class="pl-pair" type="number" inputmode="numeric" placeholder="—" title="🔗 Çift me kanalin nr. (i njëjti produkt, një pozicion)"><input class="pl-rechk" type="checkbox" title="Rimerr këtë kanal — s'u dallua nga fotoja"></div>`;
   $("#mPlan").innerHTML=h; _bindPlanPricePH(); regStepDone("rst-plan",null);};
@@ -2344,15 +2375,17 @@ function editMachine(id){
   const ch=(m.planogram||[]).length||m.channels||0;
   if(ch&&(CAT.products||[]).length){
     let h='<div class="plan-hd"><span>#</span><span style="text-align:left">Produkti</span><span>Pako</span><span>Çmim</span><span>🔗</span><span>❓</span></div>';
+    const opts=productOptions();
     for(let c=1;c<=ch;c++){
       const pl=(m.planogram||[]).find(x=>x.channel===c)||{};
-      const opts=(CAT.products||[]).map(p=>`<option value="${p.id}"${p.id===pl.product_id?' selected':''}>${p.name}</option>`).join("");
       const pv=(pl.price!=null&&pl.price!=="")?(+pl.price):"";
       const rc=pl.recheck?" checked":"";
       const pw=(pl.pair_with!=null&&pl.pair_with!=="")?pl.pair_with:"";
-      h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" value="${pl.capacity||m.capacity||''}"><input class="pl-price" type="number" inputmode="decimal" step="0.1" placeholder="global" value="${pv}"><input class="pl-pair" type="number" inputmode="numeric" placeholder="—" value="${pw}" title="🔗 Çift me kanalin nr."><input class="pl-rechk" type="checkbox"${rc} title="Rimerr — s'u dallua"></div>`;
+      h+=`<div class="plan-row"><span class="ch">${c}</span><select class="pl-prod" data-sel="${pl.product_id||''}">${opts}</select><input class="pl-cap" type="number" inputmode="numeric" value="${pl.capacity||m.capacity||''}"><input class="pl-price" type="number" inputmode="decimal" step="0.1" placeholder="global" value="${pv}"><input class="pl-pair" type="number" inputmode="numeric" placeholder="—" value="${pw}" title="🔗 Çift me kanalin nr."><input class="pl-rechk" type="checkbox"${rc} title="Rimerr — s'u dallua"></div>`;
     }
-    $("#mPlan").innerHTML=h; _bindPlanPricePH();
+    $("#mPlan").innerHTML=h;
+    document.querySelectorAll("#mPlan .pl-prod[data-sel]").forEach(s=>{if(s.dataset.sel)s.value=s.dataset.sel;});
+    _bindPlanPricePH();
   }
   // lokacionet ekzistuese
   window._mLat=(m.lat!=null?m.lat:null); window._mLng=(m.lng!=null?m.lng:null);
