@@ -320,7 +320,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 
     <h3>🗂️ Regjistrimi (te ☰)</h3>
     <ul style="padding-left:18px">
-      <li><b>Produktet:</b> markat + çmimi. Klik mbi një produkt për ta <b>ndryshuar</b>. Çmim fillestar 🔴 → i vendosur 🟢.</li>
+      <li><b>Produktet:</b> lista tregon çdo produkt me <b>etiketë me ngjyra ose foton reale</b>, kompaninë, dhe sa u shitën (🔥). <b>Çmimin e ndryshon po aty</b> te kutia e çmimit (i ruhet menjëherë). Butoni <b>📷</b> shton foto reale (nga kamera/galeria) që zëvendëson etiketën dhe sinkronizohet me PC. Renditur sipas të ardhurave (më fitimprurësit lart).</li>
       <li><b>Aparatet:</b> kod, qytet, lokal → dy kutitë e qarta: <b>🔢 Sa rende</b> + <b>📦 Sa pako zë çdo rend</b> → <b>Ndërto</b> → cakto produktin e çdo rendi.</li>
       <li><b>💶 Çmim per-aparat (opsional):</b> te ndërtimi i kanaleve, kolona <b>Çmim</b>. Lëre bosh (<i>global</i>) → çmimi bazë i produktit; vendos vetëm nëse ky aparat e ka ndryshe.</li>
       <li><b>Cakto produktin te vizita:</b> te tabela e vizitës, kolona <b>Produkti</b> është <b>dropdown</b> — zgjidh duhanin që sheh në foto pikërisht aty. Ndryshimi ruhet te pasaporta e aparatit.</li>
@@ -758,7 +758,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v78";  // rritet me çdo version të ri
+const APP_VER="v79";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -827,9 +827,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v78")){
+  if(!localStorage.getItem("apar_cleaned_v79")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v78","1");
+    localStorage.setItem("apar_cleaned_v79","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1126,7 +1126,7 @@ function prodInitials(name){const ps=(name||"").replace("&"," ").split(/\s+/).fi
 function prodChip(p){
   if(!p)return "";
   const nm=p.name||"", br=p.brand||"";
-  if(p.photo && String(p.photo).startsWith("http"))
+  if(p.photo && (String(p.photo).startsWith("http")||String(p.photo).startsWith("data:")))
     return `<img class="pchip" src="${p.photo}" alt="${nm}">`;
   const c=variantColor(nm), t=brandTint(br);
   return `<span class="pchip" style="background:${c};border-bottom:4px solid ${t}" title="${nm}${br?' · '+br:''}">${prodInitials(nm)}</span>`;
@@ -2210,12 +2210,28 @@ function captureParking(mid){
 }
 function renderReg(){
   ensureReg(); fillProdSelects(); renderSuppliers();
-  $("#pList").innerHTML=(CAT.products||[]).map(p=>{
+  // renditur sipas kompanisë + popullaritetit (si te PC), me foto/etiketë + çmim i modifikueshëm inline
+  const _plist=(CAT.products||[]).slice();
+  const _psales=productSalesPWA();
+  const _prev=p=>{const s=_psales[p.id]||{};return [s.rev||0,s.sold||0,+p.price||0];};
+  _plist.sort((a,b)=>{const ra=_prev(a),rb=_prev(b);return rb[0]-ra[0]||rb[1]-ra[1]||rb[2]-ra[2]||(a.name||"").localeCompare(b.name||"");});
+  $("#pList").innerHTML=_plist.map(p=>{
     const prov=p.provisional; const col=prov?"var(--bad)":"var(--good)";
-    const tag=prov?" <span class='pill' style='background:var(--bad);color:#fff'>çmim fillestar — vendose</span>":" <span class='pill' style='background:var(--good);color:#fff'>çmim i vendosur ✓</span>";
-    return `<div><span data-edit="${p.id}" style="flex:1;cursor:pointer">${p.id===_pEdit?'✏️ ':''}${p.name} — <b style="color:${col}">${(+p.price||0).toFixed(2)} €</b>${tag}</span><button data-del="p" data-id="${p.id}">✕</button></div>`;
+    const s=_psales[p.id]; const soldTag=s&&s.sold?`<span class="pill" style="background:var(--elev);color:var(--muted)">🔥 ${s.sold}</span>`:"";
+    const brandTag=p.brand?`<span class="pill" style="background:${brandTint(p.brand)};color:#fff">${p.brand}</span>`:"";
+    return `<div style="align-items:center">
+      <span class="chipHost" style="flex:none">${prodChip(p)}</span>
+      <span data-edit="${p.id}" style="flex:1;cursor:pointer;min-width:0">${p.id===_pEdit?'✏️ ':''}${p.name} ${brandTag} ${soldTag}</span>
+      <input class="plistprc" data-prc="${p.id}" type="number" inputmode="decimal" step="0.1" min="0" value="${(+p.price||0).toFixed(2)}" title="Ndryshoje çmimin këtu" style="width:74px;text-align:center;color:${col};font-weight:700">
+      <button data-photo="${p.id}" title="Foto reale për këtë produkt" style="color:var(--accent)">📷</button>
+      <button data-del="p" data-id="${p.id}">✕</button></div>`;
   }).join("");
   document.querySelectorAll('#pList [data-edit]').forEach(s=>s.onclick=()=>editProduct(parseInt(s.dataset.edit)));
+  document.querySelectorAll('#pList [data-prc]').forEach(inp=>inp.onchange=()=>{
+    const p=CAT.products.find(x=>x.id===parseInt(inp.dataset.prc)); if(!p)return;
+    regSnapshot(); p.price=parseNum(inp.value); p.provisional=false; save(K_CAT,CAT); renderReg();
+  });
+  document.querySelectorAll('#pList [data-photo]').forEach(b=>b.onclick=()=>pickProductPhoto(parseInt(b.dataset.photo)));
   renderCatalogPicker();
   $("#mList").innerHTML=(CAT.machines||[]).filter(m=>!m.archived).map(m=>`<div><span data-medit="${m.id}" style="flex:1;cursor:pointer">${m.id===_mEdit?'✏️ ':''}<b>${m.code}</b> · ${m.place||''} (${m.channels} kanale)${m.lat!=null?' 📍':''}${m.park_lat!=null?' 🅿️':''}${m.photo?' 📷':''}</span><span style="display:flex;gap:4px"><button data-repl="${m.id}" title="Zëvendëso aparatin (u ndërrua fizikisht)" style="color:var(--warn,#C07A16)">🔄</button><button data-park="${m.id}" title="Shto/ndrysho parkingun" style="color:var(--accent)">🅿️</button><button data-del="m" data-id="${m.id}">✕</button></span></div>`).join("");
   const nArch=(CAT.machines||[]).filter(m=>m.archived).length;
@@ -2305,6 +2321,20 @@ function editProduct(id){
   $("#pAdd").textContent="💾 Ruaj ndryshimin"; $("#pName").focus(); renderReg();
 }
 function pResetEdit(){_pEdit=null;$("#pName").value="";$("#pPrice").value="";$("#pAdd").textContent="＋ Shto produkt";}
+// foto reale për një produkt (nga kamera ose galeria) → ruhet, sinkronizohet te cloud si URL
+function pickProductPhoto(id){
+  const p=(CAT.products||[]).find(x=>x.id===id); if(!p)return;
+  const inp=document.createElement("input"); inp.type="file"; inp.accept="image/*"; inp.style.display="none";
+  document.body.appendChild(inp);
+  inp.onchange=async()=>{
+    const f=inp.files[0]; document.body.removeChild(inp); if(!f)return;
+    try{ const durl=await resizePhoto(f); regSnapshot(); p.photo=durl; save(K_CAT,CAT); renderReg();
+      // ngarko te cloud në sfond (bëhet URL publike) nëse ka internet
+      if(typeof uploadPhotoB64==="function"){ const u=await uploadPhotoB64(durl); if(u){p.photo=u; save(K_CAT,CAT); renderReg();} }
+    }catch(e){ alert("S'u lexua fotoja."); }
+  };
+  inp.click();
+}
 $("#pAdd").onclick=()=>{const n=$("#pName").value.trim();if(!n)return;ensureReg();
   const price=parseNum($("#pPrice").value);
   regSnapshot();
