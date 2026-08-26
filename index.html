@@ -53,6 +53,8 @@ th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04
 td.prod{text-align:left;font-weight:600}
 .qty{width:60px;text-align:center;padding:7px 4px}
 .qty.pred{background:rgba(140,110,10,.14);border-color:#C0921680}
+.qty.prc.glob{color:#3A6B9A;background:rgba(58,107,154,.12);border-color:#3A6B9A55;font-weight:600}
+.qty.prc.ovr{font-weight:800}
 .prodSel{min-width:130px;max-width:170px;padding:6px 4px;font-size:13px}
 .rechk{width:20px;height:20px}
 .pos{color:var(--good);font-weight:700}.neg{color:var(--bad);font-weight:700}
@@ -321,7 +323,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li><b>Aparatet:</b> kod, qytet, lokal → dy kutitë e qarta: <b>🔢 Sa rende</b> + <b>📦 Sa pako zë çdo rend</b> → <b>Ndërto</b> → cakto produktin e çdo rendi.</li>
       <li><b>💶 Çmim per-aparat (opsional):</b> te ndërtimi i kanaleve, kolona <b>Çmim</b>. Lëre bosh (<i>global</i>) → çmimi bazë i produktit; vendos vetëm nëse ky aparat e ka ndryshe.</li>
       <li><b>Cakto produktin te vizita:</b> te tabela e vizitës, kolona <b>Produkti</b> është <b>dropdown</b> — zgjidh duhanin që sheh në foto pikërisht aty. Ndryshimi ruhet te pasaporta e aparatit.</li>
-      <li><b>💶 Çmimi te vizita:</b> kolona <b>Çmim €</b> te vizita e tregon çmimin e çdo kanali dhe mund ta <b>ndryshosh aty</b> — ndryshimi bëhet çmim per-aparat dhe ruhet. Nëse e le sa çmimi global, mbetet global.</li>
+      <li><b>💶 Çmimi te vizita:</b> kolona <b>Çmim €</b> te vizita e tregon çmimin e çdo kanali dhe mund ta <b>ndryshosh aty</b> — ndryshimi bëhet çmim per-aparat dhe ruhet. Çmimet me <b>sfond blu</b> janë <b>globale</b> (s'i ke ndryshuar — ndjekin produktin); sapo e ndryshon, bëhet per-aparat (i theksuar, pa ngjyrë blu). Kështu dallon cilët po ndjekin produktin dhe cilët janë të veçantë.</li>
       <li><b>✅ Me produkte / 📍 Vetëm GPS:</b> te lista e aparateve, filtri i dytë lart (<b>🔎</b>) tregon cilat pika janë regjistruar me produkte dhe cilat janë vetëm me GPS. Çdo rresht ka shenjën <b>✅ me produkte</b> ose <b>📍 vetëm GPS</b>, dhe lart shkruan sa nga totali janë me produkte.</li>
       <li><b>🔮 Parashikimi i stokut (kursen kohë te aparati):</b> kur hap një aparat me histori, fusha <b>«Tani»</b> vjen e <b>parambushur</b> me parashikimin nga ritmi i shitjes (fusha e verdhë). Pranë aparatit <b>prek vetëm kanalet që ndryshojnë</b> — jo të gjitha nga zero. <b>Para se të dalësh:</b> sinkronizo (☁️) që historiku të jetë në telefon, dhe rendit rrugën (🧭). Parashikimin e bën programi vetë.</li>
       <li><b>❓ Rimerr kanalin:</b> kolona <b>❓</b> — shëno kanalin ku produktin s'e dallove nga fotoja. Ai del <b>❓ RIMERR</b> herën tjetër që ta shohësh realisht. Cakto ata që dallon, shëno ❓ ata që s'i dallon; kur cakton produktin, shenja hiqet vetë.</li>
@@ -754,7 +756,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v75";  // rritet me çdo version të ri
+const APP_VER="v76";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -823,9 +825,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v75")){
+  if(!localStorage.getItem("apar_cleaned_v76")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v75","1");
+    localStorage.setItem("apar_cleaned_v76","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1180,7 +1182,7 @@ function openVisit(m){
     tr.innerHTML=`<td title="${partners.length?'🔗 Kanale-çift: numëro/mbush TOTALIN':''}">${chLbl}</td>
       <td class="prod"><select class="prodSel">${opts}</select></td>
       <td style="text-align:center"><input class="rechk" type="checkbox"${ln.recheck?" checked":""}></td>
-      <td><input class="qty prc" type="number" inputmode="decimal" step="0.1" min="0" value="${chPrice.toFixed(2)}" title="Çmimi i këtij kanali — ndryshoje → ruhet te ky aparat"></td>
+      <td><input class="qty prc ${(ln.price!=null&&ln.price!=="")?'ovr':'glob'}" type="number" inputmode="decimal" step="0.1" min="0" value="${chPrice.toFixed(2)}" title="${(ln.price!=null&&ln.price!=="")?'Çmim per-aparat (override)':'🌐 Çmimi GLOBAL i produktit — s\'është ndryshuar për këtë aparat'} — ndryshoje → ruhet te ky aparat"></td>
       <td>${base==null?'—':base}</td>
       <td><input class="qty now${predNow!=null?' pred':''}" type="number" inputmode="numeric" min="0" value="${nowDef}" title="${predTitle}"></td>
       <td class="sold">0</td>
@@ -1211,7 +1213,8 @@ function onProdChange(e){
   const p=CAT.products.find(x=>x.id===pid)||{};
   // ruaj çmimin per-kanal nëse aparati e ka override; ndryshe çmimi global i produktit të ri
   if(!tr.dataset.override){ tr.dataset.price=(+p.price||0);
-    const prc=tr.querySelector(".prc"); if(prc) prc.value=(+p.price||0).toFixed(2); }
+    const prc=tr.querySelector(".prc"); if(prc){ prc.value=(+p.price||0).toFixed(2);
+      prc.classList.add("glob"); prc.classList.remove("ovr"); } }
   recalc();
 }
 function onPriceChange(e){
@@ -1220,6 +1223,7 @@ function onPriceChange(e){
   tr.dataset.price=v;
   // çdo ndryshim manual e bën çmimin per-aparat (override); 0 → kthehet te global
   tr.dataset.override=v>0?"1":"";
+  inp.classList.toggle("ovr",v>0); inp.classList.toggle("glob",!(v>0));
   recalc();
 }
 /* ── MËNYRA E CASH-IT: full / quick / later ── */
