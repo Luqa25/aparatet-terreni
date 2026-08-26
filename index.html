@@ -56,6 +56,7 @@ td.prod{text-align:left;font-weight:600}
 .qty.prc.glob{color:#3A6B9A;background:rgba(58,107,154,.12);border-color:#3A6B9A55;font-weight:600}
 .qty.prc.ovr{font-weight:800}
 .prodSel{min-width:130px;max-width:170px;padding:6px 4px;font-size:13px}
+.pchip{display:inline-flex;align-items:center;justify-content:center;width:34px;height:22px;border-radius:4px;color:#fff;font-weight:800;font-size:10px;vertical-align:middle;margin-right:5px;object-fit:cover;flex:none}
 .rechk{width:20px;height:20px}
 .pos{color:var(--good);font-weight:700}.neg{color:var(--bad);font-weight:700}
 .den{display:grid;grid-template-columns:1fr 70px 84px;gap:6px;align-items:center;margin-bottom:5px}
@@ -324,6 +325,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li><b>💶 Çmim per-aparat (opsional):</b> te ndërtimi i kanaleve, kolona <b>Çmim</b>. Lëre bosh (<i>global</i>) → çmimi bazë i produktit; vendos vetëm nëse ky aparat e ka ndryshe.</li>
       <li><b>Cakto produktin te vizita:</b> te tabela e vizitës, kolona <b>Produkti</b> është <b>dropdown</b> — zgjidh duhanin që sheh në foto pikërisht aty. Ndryshimi ruhet te pasaporta e aparatit.</li>
       <li><b>💶 Çmimi te vizita:</b> kolona <b>Çmim €</b> te vizita e tregon çmimin e çdo kanali dhe mund ta <b>ndryshosh aty</b> — ndryshimi bëhet çmim per-aparat dhe ruhet. Çmimet me <b>sfond blu</b> janë <b>globale</b> (s'i ke ndryshuar — ndjekin produktin); sapo e ndryshon, bëhet per-aparat (i theksuar, pa ngjyrë blu). Kështu dallon cilët po ndjekin produktin dhe cilët janë të veçantë.</li>
+      <li><b>🎨 Etiketa me ngjyra:</b> te vizita, para emrit të produktit shfaqet një etiketë e vogël me ngjyrë sipas variantit (Red=kuqe, Gold=artë, Blue=blu…) që ta dallosh shpejt. Kur ka foto reale, shfaqet fotoja në vend të etiketës.</li>
       <li><b>✅ Me produkte / 📍 Vetëm GPS:</b> te lista e aparateve, filtri i dytë lart (<b>🔎</b>) tregon cilat pika janë regjistruar me produkte dhe cilat janë vetëm me GPS. Çdo rresht ka shenjën <b>✅ me produkte</b> ose <b>📍 vetëm GPS</b>, dhe lart shkruan sa nga totali janë me produkte.</li>
       <li><b>🔮 Parashikimi i stokut (kursen kohë te aparati):</b> kur hap një aparat me histori, fusha <b>«Tani»</b> vjen e <b>parambushur</b> me parashikimin nga ritmi i shitjes (fusha e verdhë). Pranë aparatit <b>prek vetëm kanalet që ndryshojnë</b> — jo të gjitha nga zero. <b>Para se të dalësh:</b> sinkronizo (☁️) që historiku të jetë në telefon, dhe rendit rrugën (🧭). Parashikimin e bën programi vetë.</li>
       <li><b>❓ Rimerr kanalin:</b> kolona <b>❓</b> — shëno kanalin ku produktin s'e dallove nga fotoja. Ai del <b>❓ RIMERR</b> herën tjetër që ta shohësh realisht. Cakto ata që dallon, shëno ❓ ata që s'i dallon; kur cakton produktin, shenja hiqet vetë.</li>
@@ -756,7 +758,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v77";  // rritet me çdo version të ri
+const APP_VER="v78";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -825,9 +827,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v77")){
+  if(!localStorage.getItem("apar_cleaned_v78")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v77","1");
+    localStorage.setItem("apar_cleaned_v78","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1106,6 +1108,29 @@ function renderStock(){
   });
 }
 
+// ── Etiketa me ngjyra (fallback pa foto reale) — ngjyra sipas variantit të emrit ──
+const _VARIANT_COLORS=[
+  [["red","kuqe"],"#C6463C"],[["gold","yellow","amber","arte"],"#C79A2E"],
+  [["blue","blu"],"#2F6DB0"],[["silver","argjend","grey","gray"],"#8A8F98"],
+  [["green","gjelber","menthol"],"#2E8F55"],[["purple","vjoll"],"#7A52A3"],
+  [["black","blacks","zi"],"#333840"],[["touch","fine"],"#B0662C"],
+  [["turquoise","sienna"],"#2AA198"]];
+const _BRAND_TINT={PMI:"#C6463C",BAT:"#2F6DB0",JTI:"#2E8F55",Imperial:"#7A52A3","Tjetër":"#8A8F98"};
+function variantColor(name){const l=(name||"").toLowerCase();
+  for(const[keys,col]of _VARIANT_COLORS){if(keys.some(k=>l.indexOf(k)>=0))return col;}return "#5A6270";}
+function brandTint(b){return _BRAND_TINT[(b||"").trim()]||"#5A6270";}
+function prodInitials(name){const ps=(name||"").replace("&"," ").split(/\s+/).filter(x=>x);
+  if(!ps.length)return "?"; if(ps.length===1)return ps[0].slice(0,2).toUpperCase();
+  return (ps[0][0]+ps[ps.length-1][0]).toUpperCase();}
+// swatch i vogël: foto reale nëse ka, ndryshe etiketë me ngjyrë + inicialet
+function prodChip(p){
+  if(!p)return "";
+  const nm=p.name||"", br=p.brand||"";
+  if(p.photo && String(p.photo).startsWith("http"))
+    return `<img class="pchip" src="${p.photo}" alt="${nm}">`;
+  const c=variantColor(nm), t=brandTint(br);
+  return `<span class="pchip" style="background:${c};border-bottom:4px solid ${t}" title="${nm}${br?' · '+br:''}">${prodInitials(nm)}</span>`;
+}
 // shitjet e grumbulluara per produkt (pako + të ardhura) nga vizitat
 function productSalesPWA(){
   const s={};
@@ -1211,7 +1236,7 @@ function openVisit(m){
     const nowDef=(predNow!=null)?predNow:(base==null?0:base);
     const predTitle=(predNow!=null)?`🔮 Parashikim nga ritmi i shitjes: ${predNow}. Korrigjoje vetëm nëse ndryshon.`:"Sa pako gjete TANI në kanal.";
     tr.innerHTML=`<td title="${partners.length?'🔗 Kanale-çift: numëro/mbush TOTALIN':''}">${chLbl}</td>
-      <td class="prod"><select class="prodSel">${opts}</select></td>
+      <td class="prod"><span class="chipHost">${prodChip(prods[ln.product_id])}</span><select class="prodSel">${opts}</select></td>
       <td style="text-align:center"><input class="rechk" type="checkbox"${ln.recheck?" checked":""}></td>
       <td><input class="qty prc ${(ln.price!=null&&ln.price!=="")?'ovr':'glob'}" type="number" inputmode="decimal" step="0.1" min="0" value="${chPrice.toFixed(2)}" title="${(ln.price!=null&&ln.price!=="")?'Çmim per-aparat (override)':'🌐 Çmimi GLOBAL i produktit — s\'është ndryshuar për këtë aparat'} — ndryshoje → ruhet te ky aparat"></td>
       <td>${base==null?'—':base}</td>
@@ -1242,6 +1267,8 @@ function onProdChange(e){
   const pid=sel.value?parseInt(sel.value):null;
   tr.dataset.pid=pid||"";
   const p=CAT.products.find(x=>x.id===pid)||{};
+  // përditëso etiketën me ngjyra sipas produktit të ri
+  const host=tr.querySelector(".chipHost"); if(host)host.innerHTML=pid?prodChip(p):"";
   // ruaj çmimin per-kanal nëse aparati e ka override; ndryshe çmimi global i produktit të ri
   if(!tr.dataset.override){ tr.dataset.price=(+p.price||0);
     const prc=tr.querySelector(".prc"); if(prc){ prc.value=(+p.price||0).toFixed(2);
