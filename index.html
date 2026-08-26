@@ -758,7 +758,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v79";  // rritet me çdo version të ri
+const APP_VER="v80";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -827,9 +827,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v79")){
+  if(!localStorage.getItem("apar_cleaned_v80")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v79","1");
+    localStorage.setItem("apar_cleaned_v80","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -2215,11 +2215,14 @@ function renderReg(){
   const _psales=productSalesPWA();
   const _prev=p=>{const s=_psales[p.id]||{};return [s.rev||0,s.sold||0,+p.price||0];};
   _plist.sort((a,b)=>{const ra=_prev(a),rb=_prev(b);return rb[0]-ra[0]||rb[1]-ra[1]||rb[2]-ra[2]||(a.name||"").localeCompare(b.name||"");});
-  $("#pList").innerHTML=_plist.map(p=>{
+  const _pcount=_plist.length;
+  $("#pList").innerHTML=`<div class="note" style="margin:0 0 6px"><b>${_pcount}</b> produkte gjithsej</div>`+
+    _plist.map((p,idx)=>{
     const prov=p.provisional; const col=prov?"var(--bad)":"var(--good)";
     const s=_psales[p.id]; const soldTag=s&&s.sold?`<span class="pill" style="background:var(--elev);color:var(--muted)">🔥 ${s.sold}</span>`:"";
     const brandTag=p.brand?`<span class="pill" style="background:${brandTint(p.brand)};color:#fff">${p.brand}</span>`:"";
     return `<div style="align-items:center">
+      <span style="flex:none;width:24px;text-align:right;color:var(--muted);font-weight:700">${idx+1}.</span>
       <span class="chipHost" style="flex:none">${prodChip(p)}</span>
       <span data-edit="${p.id}" style="flex:1;cursor:pointer;min-width:0">${p.id===_pEdit?'✏️ ':''}${p.name} ${brandTag} ${soldTag}</span>
       <input class="plistprc" data-prc="${p.id}" type="number" inputmode="decimal" step="0.1" min="0" value="${(+p.price||0).toFixed(2)}" title="Ndryshoje çmimin këtu" style="width:74px;text-align:center;color:${col};font-weight:700">
