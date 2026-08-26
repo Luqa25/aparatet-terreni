@@ -52,6 +52,7 @@ th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:center}
 th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 td.prod{text-align:left;font-weight:600}
 .qty{width:60px;text-align:center;padding:7px 4px}
+.qty.pred{background:rgba(140,110,10,.14);border-color:#C0921680}
 .prodSel{min-width:130px;max-width:170px;padding:6px 4px;font-size:13px}
 .rechk{width:20px;height:20px}
 .pos{color:var(--good);font-weight:700}.neg{color:var(--bad);font-weight:700}
@@ -136,6 +137,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
   </div>
   <div class="card">
     <div class="sec-t">Kanalet — fut sa gjete TANI</div>
+    <p class="note" id="predHint" style="margin:0 0 6px;display:none">🔮 <b>«Tani»</b> vjen e parambushur me parashikimin nga ritmi i shitjes (fusha e verdhë). Prek vetëm ato që ndryshojnë.</p>
     <div style="overflow-x:auto"><table id="chTable"></table></div>
     <div class="row" style="margin-top:10px">
       <button class="sec grow" id="btnFillMax">🧮 Mbush në maksimum</button>
@@ -321,6 +323,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li><b>Cakto produktin te vizita:</b> te tabela e vizitës, kolona <b>Produkti</b> është <b>dropdown</b> — zgjidh duhanin që sheh në foto pikërisht aty. Ndryshimi ruhet te pasaporta e aparatit.</li>
       <li><b>💶 Çmimi te vizita:</b> kolona <b>Çmim €</b> te vizita e tregon çmimin e çdo kanali dhe mund ta <b>ndryshosh aty</b> — ndryshimi bëhet çmim per-aparat dhe ruhet. Nëse e le sa çmimi global, mbetet global.</li>
       <li><b>✅ Me produkte / 📍 Vetëm GPS:</b> te lista e aparateve, filtri i dytë lart (<b>🔎</b>) tregon cilat pika janë regjistruar me produkte dhe cilat janë vetëm me GPS. Çdo rresht ka shenjën <b>✅ me produkte</b> ose <b>📍 vetëm GPS</b>, dhe lart shkruan sa nga totali janë me produkte.</li>
+      <li><b>🔮 Parashikimi i stokut (kursen kohë te aparati):</b> kur hap një aparat me histori, fusha <b>«Tani»</b> vjen e <b>parambushur</b> me parashikimin nga ritmi i shitjes (fusha e verdhë). Pranë aparatit <b>prek vetëm kanalet që ndryshojnë</b> — jo të gjitha nga zero. <b>Para se të dalësh:</b> sinkronizo (☁️) që historiku të jetë në telefon, dhe rendit rrugën (🧭). Parashikimin e bën programi vetë.</li>
       <li><b>❓ Rimerr kanalin:</b> kolona <b>❓</b> — shëno kanalin ku produktin s'e dallove nga fotoja. Ai del <b>❓ RIMERR</b> herën tjetër që ta shohësh realisht. Cakto ata që dallon, shëno ❓ ata që s'i dallon; kur cakton produktin, shenja hiqet vetë.</li>
       <li><b>🔗 Kanale-çift:</b> kur dy kanale (dy spirale) mbajnë <b>të njëjtin duhan</b> dhe në ekran duken si <b>një pozicion</b> (AZKOYEN column-pairing), te regjistrimi shkruaj te kolona <b>🔗</b> të kanalit numrin e kanalit partner (p.sh. te kanali 6 shkruaj «5»). Te vizita ata dalin si <b>një rresht «🔗 5+6»</b> — numëro/mbush <b>totalin</b>, programi e ndan vetë brenda dy kanaleve. Barazimi mbetet i saktë.</li>
       <li><b>📝 Raporti i vizitës:</b> te vizita, poshtë — përshkrim i lirë, <b>⚠️ foto e paqartë</b>, dhe <b>📌 info për pikën</b> (mbetet e dukshme).</li>
@@ -751,7 +754,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v74";  // rritet me çdo version të ri
+const APP_VER="v75";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -820,9 +823,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v74")){
+  if(!localStorage.getItem("apar_cleaned_v75")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v74","1");
+    localStorage.setItem("apar_cleaned_v75","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -1101,6 +1104,31 @@ function renderStock(){
   });
 }
 
+// parashiko "Tani" për çdo kanal nga ritmi mesatar i shitjes (baseline − shitje×ditë)
+function predictNow(m){
+  const vs=VIS.filter(v=>v.machine_id===m.id && v.date).sort((a,b)=>(a.date<b.date?-1:1));
+  const out={};
+  // ditët nga vizita e fundit deri sot
+  const lastV=vs[vs.length-1];
+  if(!lastV) return out;
+  const daysSince=Math.max(0,(Date.now()-new Date(lastV.date).getTime())/86400000);
+  // ritmi/ditë për kanal = Σshitur / Σditë-mes-vizitave (nga historiku)
+  const soldByCh={}, spanByCh={};
+  for(let k=1;k<vs.length;k++){
+    const dts=Math.max(0.5,(new Date(vs[k].date).getTime()-new Date(vs[k-1].date).getTime())/86400000);
+    (vs[k].lines||[]).forEach(ln=>{const c=ln.channel;soldByCh[c]=(soldByCh[c]||0)+(+ln.sold||0);spanByCh[c]=(spanByCh[c]||0)+dts;});
+  }
+  // baseline aktual = "after" i vizitës së fundit për atë kanal
+  const lastAfter={};
+  (lastV.lines||[]).forEach(ln=>{lastAfter[ln.channel]=(ln.after!=null?ln.after:(m.baseline||{})[ln.channel]);});
+  Object.keys(lastAfter).forEach(c=>{
+    const base=lastAfter[c]; if(base==null)return;
+    const rate=(spanByCh[c]>0)?(soldByCh[c]/spanByCh[c]):0;
+    const pred=Math.round(base-rate*daysSince);
+    out[c]=Math.max(0,Math.min(base,pred));
+  });
+  return out;
+}
 // ---- vizita ----
 function openVisit(m){
   cur=m; counted={}; flt=Object.assign({}, m.float||{});
@@ -1113,6 +1141,8 @@ function openVisit(m){
   const prods=Object.fromEntries(CAT.products.map(p=>[p.id,p]));
   const opts='<option value="">— zgjidh —</option>'+
     CAT.products.map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
+  const pred=predictNow(m);   // 🔮 parashikimi i "Tani" nga ritmi i shitjes
+  window._hasPred=Object.keys(pred).length>0;
   // ── grupim i kanaleve-çift (🔗): dy spirale, një pozicion ──
   const byCh={}; (m.planogram||[]).forEach(l=>byCh[l.channel]=l);
   const secondary=new Set(), pairOf={};
@@ -1142,12 +1172,17 @@ function openVisit(m){
     tr.dataset.override=(ln.price!=null&&ln.price!=="")?"1":"";
     const chLbl=partners.length?("🔗 "+[ln.channel].concat(partners).join("+")):(""+ln.channel);
     const aftDef=partners.length?capTot:(ln.capacity||m.capacity||0);
+    // 🔮 parashikimi i "Tani": ky kanal + partnerët; nëse s'ka parashikim → baseline
+    let predNow=null;
+    if(pred[ln.channel]!=null){ predNow=pred[ln.channel]+partners.reduce((a,q)=>a+(pred[q]||0),0); }
+    const nowDef=(predNow!=null)?predNow:(base==null?0:base);
+    const predTitle=(predNow!=null)?`🔮 Parashikim nga ritmi i shitjes: ${predNow}. Korrigjoje vetëm nëse ndryshon.`:"Sa pako gjete TANI në kanal.";
     tr.innerHTML=`<td title="${partners.length?'🔗 Kanale-çift: numëro/mbush TOTALIN':''}">${chLbl}</td>
       <td class="prod"><select class="prodSel">${opts}</select></td>
       <td style="text-align:center"><input class="rechk" type="checkbox"${ln.recheck?" checked":""}></td>
       <td><input class="qty prc" type="number" inputmode="decimal" step="0.1" min="0" value="${chPrice.toFixed(2)}" title="Çmimi i këtij kanali — ndryshoje → ruhet te ky aparat"></td>
       <td>${base==null?'—':base}</td>
-      <td><input class="qty now" type="number" inputmode="numeric" min="0" value="${base==null?0:base}"></td>
+      <td><input class="qty now${predNow!=null?' pred':''}" type="number" inputmode="numeric" min="0" value="${nowDef}" title="${predTitle}"></td>
       <td class="sold">0</td>
       <td><input class="qty aft" type="number" inputmode="numeric" min="0" value="${aftDef}"></td>`;
     tr.querySelector(".prodSel").value=ln.product_id||"";
@@ -1156,6 +1191,9 @@ function openVisit(m){
   t.querySelectorAll(".now,.aft").forEach(i=>i.addEventListener("input",recalc));
   t.querySelectorAll(".prodSel").forEach(s=>s.addEventListener("change",onProdChange));
   t.querySelectorAll(".prc").forEach(i=>i.addEventListener("input",onPriceChange));
+  // fokusi/prekja e fushës së parashikuar → hiq theksin (u konfirmua nga përdoruesi)
+  t.querySelectorAll(".now.pred").forEach(i=>i.addEventListener("focus",()=>i.classList.remove("pred")));
+  const ph=$("#predHint"); if(ph)ph.style.display=window._hasPred?"block":"none";
   buildDen("#denCounted",counted,()=>{sumDen();recalc();});
   buildDen("#denFloat",flt,()=>{sumDen();recalc();});
   $("#vNote").value="";
