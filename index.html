@@ -55,6 +55,13 @@ td.prod{text-align:left;font-weight:600}
 .qty.pred{background:rgba(140,110,10,.14);border-color:#C0921680}
 .qty.prc.glob,.qty.oc-prc.glob{color:#3A6B9A;background:rgba(58,107,154,.12);border-color:#3A6B9A55;font-weight:600}
 .qty.prc.ovr,.qty.oc-prc.ovr{font-weight:800}
+/* rrjeta e kanaleve te inventari */
+.chgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:5px;margin-top:8px}
+.chcell{border-radius:6px;padding:5px 3px;text-align:center;color:#fff;font-size:10px;line-height:1.15;min-height:38px;display:flex;flex-direction:column;justify-content:center}
+.chcell .n{font-weight:800;font-size:11px}
+.chcell.empty{background:var(--elev);color:var(--muted);border:1px dashed var(--line)}
+.fillbar{height:8px;border-radius:5px;background:var(--elev);overflow:hidden;margin-top:6px}
+.fillbar>i{display:block;height:100%;border-radius:5px}
 .prodSel{min-width:130px;max-width:170px;padding:6px 4px;font-size:13px}
 .pchip{display:inline-flex;align-items:center;justify-content:center;width:34px;height:22px;border-radius:4px;color:#fff;font-weight:800;font-size:10px;vertical-align:middle;margin-right:5px;object-fit:cover;flex:none}
 .rechk{width:20px;height:20px}
@@ -113,6 +120,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
 <div class="wrap screen hidden" id="scrList">
   <div class="row" style="margin-bottom:8px">
     <select id="cityFilter" class="grow" style="font-weight:700"></select>
+    <button class="sec" id="btnSuggestOrder" title="Sugjero rendin nga terreni (sa shpejt zbrazen)">🔮</button>
     <button class="sec" id="btnOptRoute" title="Optimizo rrugën">🧭</button>
     <button class="sec" id="btnReimport" title="Katalog">📥</button>
   </div>
@@ -328,6 +336,8 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
       <li><b>🎨 Etiketa me ngjyra:</b> te vizita, para emrit të produktit shfaqet një etiketë e vogël me ngjyrë sipas variantit (Red=kuqe, Gold=artë, Blue=blu…) që ta dallosh shpejt. Kur ka foto reale, shfaqet fotoja në vend të etiketës.</li>
       <li><b>✅ Me produkte / 📍 Vetëm GPS:</b> te lista e aparateve, filtri i dytë lart (<b>🔎</b>) tregon cilat pika janë regjistruar me produkte dhe cilat janë vetëm me GPS. Çdo rresht ka shenjën <b>✅ me produkte</b> ose <b>📍 vetëm GPS</b>, dhe lart shkruan sa nga totali janë me produkte.</li>
       <li><b>🔮 Parashikimi i stokut (kursen kohë te aparati):</b> kur hap një aparat me histori, fusha <b>«Tani»</b> vjen e <b>parambushur</b> me parashikimin nga ritmi i shitjes (fusha e verdhë). Pranë aparatit <b>prek vetëm kanalet që ndryshojnë</b> — jo të gjitha nga zero. <b>Para se të dalësh:</b> sinkronizo (☁️) që historiku të jetë në telefon, dhe rendit rrugën (🧭). Parashikimin e bën programi vetë.</li>
+      <li><b>📊 Paneli i inventarit (pamje vizuale):</b> te ☰ → Paneli i inventarit, çdo aparat ka <b>shirit mbushjeje</b> (sa % kanale të përdorura, me ngjyrë) dhe status me ngjyrë anash. Prek kartën → shpaloset <b>rrjeta e kanaleve</b>: çdo kanal si kuti me ngjyrën e produktit + inicialet, si aparati fizik përpara. Kanalet bosh dalin me vijë të ndërprerë.</li>
+      <li><b>🔮 Sugjero rendin e vizitave (nga terreni):</b> te lista e aparateve, butoni <b>🔮</b> sugjeron rendin sipas <b>sa shpejt zbrazen</b> aparatet (ritmi i shitjes × ditët që kaluan) — të urgjentët të parët brenda çdo qyteti. Çdo rresht tregon <b>🔥/⏳ % bosh</b>. Pastaj mund ta ndreqësh sipas rrugës (🧭) ose me dorë (↑↓). Punon pas disa vizitave, kur programi ka mësuar ritmin.</li>
       <li><b>❓ Rimerr kanalin:</b> kolona <b>❓</b> — shëno kanalin ku produktin s'e dallove nga fotoja. Ai del <b>❓ RIMERR</b> herën tjetër që ta shohësh realisht. Cakto ata që dallon, shëno ❓ ata që s'i dallon; kur cakton produktin, shenja hiqet vetë.</li>
       <li><b>🔗 Kanale-çift:</b> kur dy kanale (dy spirale) mbajnë <b>të njëjtin duhan</b> dhe në ekran duken si <b>një pozicion</b> (AZKOYEN column-pairing), te regjistrimi shkruaj te kolona <b>🔗</b> të kanalit numrin e kanalit partner (p.sh. te kanali 6 shkruaj «5»). Te vizita ata dalin si <b>një rresht «🔗 5+6»</b> — numëro/mbush <b>totalin</b>, programi e ndan vetë brenda dy kanaleve. Barazimi mbetet i saktë.</li>
       <li><b>📝 Raporti i vizitës:</b> te vizita, poshtë — përshkrim i lirë, <b>⚠️ foto e paqartë</b>, dhe <b>📌 info për pikën</b> (mbetet e dukshme).</li>
@@ -771,7 +781,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v82";  // rritet me çdo version të ri
+const APP_VER="v83";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -840,9 +850,9 @@ function renderMode(){
 }
 function boot(){
   // pastrim njëherësh i çelësave të vjetër (komisioni global i hequr; barazimi tani me pronarin e kompanisë)
-  if(!localStorage.getItem("apar_cleaned_v82")){
+  if(!localStorage.getItem("apar_cleaned_v83")){
     ["apar_owner_comm"].forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem("apar_cleaned_v82","1");
+    localStorage.setItem("apar_cleaned_v83","1");
   }
   renderMode();
   const bm=$("#btnMode"); if(bm)bm.onclick=switchMode;
@@ -988,6 +998,63 @@ function optimizeRoute(startLat,startLng){
   save(K_CAT,CAT);
   return count;
 }
+// urgjenca e një aparati nga terreni: sa shpejt zbrazet (shitje/ditë) + sa kohë ka kaluar
+function machineUrgency(m){
+  const vs=VIS.filter(v=>v.machine_id===m.id && v.date).sort((a,b)=>(a.date<b.date?-1:1));
+  if(vs.length<1) return {rate:0, days:0, score:0, empty:0};
+  // ritmi total i shitjes/ditë (mbi të gjitha kanalet)
+  let sold=0, span=0;
+  for(let k=1;k<vs.length;k++){
+    const dts=Math.max(0.5,(new Date(vs[k].date)-new Date(vs[k-1].date))/86400000);
+    sold+=(+vs[k].sold_total||0); span+=dts;
+  }
+  const rate=span>0?sold/span:0;              // pako/ditë
+  const last=vs[vs.length-1];
+  const days=Math.max(0,(Date.now()-new Date(last.date))/86400000);
+  // sa afër zbrazjes: parashiko stokun total tani vs kapaciteti
+  const capTot=(m.planogram||[]).reduce((s,l)=>s+(+l.capacity||0),0)||1;
+  const baseTot=Object.values(m.baseline||{}).reduce((s,q)=>s+(+q||0),0);
+  const predLeft=Math.max(0, baseTot - rate*days);
+  const empty=1-(predLeft/capTot);            // 0=plot, 1=bosh
+  // score: sa afër bosh × ritmi (aparatet e ngarkuar që po zbrazen = urgjent)
+  const score=empty*100 + rate*days*2;
+  return {rate, days, score, empty:Math.round(empty*100)};
+}
+// rirenditje me dorë: shkëmben rendin me aparatin fqinj brenda të njëjtit qytet
+function moveVisitOrder(m,dir){
+  const city=m.city||"—";
+  const peers=(CAT.machines||[]).filter(x=>!x.archived&&(x.city||"—")===city)
+    .sort((a,b)=>(a.visit_order||999)-(b.visit_order||999));
+  const i=peers.findIndex(x=>x.id===m.id);
+  const j=i+dir;
+  if(i<0||j<0||j>=peers.length) return;
+  const a=peers[i], b=peers[j];
+  const t=a.visit_order; a.visit_order=b.visit_order; b.visit_order=t;
+  // sigurohu që të kenë rende të dallueshme nëse ishin bosh/të njëjtë
+  if(a.visit_order===b.visit_order){ peers.forEach((x,k)=>x.visit_order=k+1); }
+  save(K_CAT,CAT); renderList();
+}
+// sugjerim i renditjes: urgjenca (zbrazja) e kombinuar me rrugën brenda qytetit
+function suggestVisitOrder(){
+  const byCity={};
+  (CAT.machines||[]).forEach(m=>{const c=m.city||"—";(byCity[c]=byCity[c]||[]).push(m);});
+  let order=1, moved=0;
+  Object.keys(byCity).sort().forEach(c=>{
+    // brenda qytetit: rendit sipas urgjencës (më urgjentët të parët)
+    const list=byCity[c].slice().sort((a,b)=>machineUrgency(b).score-machineUrgency(a).score);
+    list.forEach(m=>{ const old=m.visit_order; m.visit_order=order++; if(old!==m.visit_order)moved++; });
+  });
+  save(K_CAT,CAT);
+  return moved;
+}
+$("#btnSuggestOrder").onclick=()=>{
+  if(!CAT||!CAT.machines.length){alert("S'ka aparate.");return;}
+  const anyVis=VIS.length>0;
+  if(!anyVis){alert("🔮 S'ka ende vizita për të mësuar ritmin. Pas disa vizitave, ky buton do të sugjerojë rendin sipas sa shpejt zbrazen aparatet.");return;}
+  if(!confirm("🔮 Të sugjerohet rendi i vizitave nga terreni?\n\nAparatet që po ZBRAZEN më shpejt (ritmi i shitjes × ditët që kaluan) renditen të parët brenda çdo qyteti.\n\nMund ta ndryshosh me dorë pas (↑↓ te secili aparat).")) return;
+  const moved=suggestVisitOrder(); renderList();
+  alert("✅ Rendi u sugjerua nga terreni.\n"+moved+" aparate u rirenditën sipas urgjencës (sa afër zbrazjes).\nPara nisjes, shtyp 🧭 nëse do ta ndreqësh sipas rrugës, ose rregulloji me dorë me ↑↓.");
+};
 $("#btnOptRoute").onclick=()=>{
   if(!CAT||!CAT.machines.length){alert("S'ka aparate.");return;}
   const withPt=CAT.machines.filter(m=>_pt(m)).length;
@@ -1074,7 +1141,11 @@ function renderList(){
     const hp=hasProducts(m);
     const prodTag=hp?'<span style="color:#2E8F55;font-weight:700">✅ me produkte</span>'
                     :'<span style="color:#C07A16;font-weight:700">📍 vetëm GPS</span>';
-    b.innerHTML=`<span class="code">${m.code||('#'+m.id)}</span><span class="grow"><div>${m.place||'—'}</div><div class="pl">rend ${m.visit_order||'—'} · ${m.channels||0} kanale · ${prodTag} · ${tag}${note}</div></span>`;
+    // shenjë urgjence: sa afër zbrazjes (nga terreni) — vetëm nëse ka histori
+    const ur=machineUrgency(m);
+    const urTag=ur.empty>=70?` · <span style="color:#C6463C;font-weight:700">🔥 ${ur.empty}% bosh</span>`
+               :ur.empty>=40?` · <span style="color:#C07A16">⏳ ${ur.empty}% bosh</span>`:"";
+    b.innerHTML=`<span class="code">${m.code||('#'+m.id)}</span><span class="grow"><div>${m.place||'—'}</div><div class="pl">rend ${m.visit_order||'—'} · ${m.channels||0} kanale · ${prodTag} · ${tag}${note}${urTag}</div></span>`;
     b.onclick=()=>openVisit(m);
     wrap.appendChild(b);
     if(m.park_lat!=null&&m.park_lng!=null){
@@ -1089,6 +1160,12 @@ function renderList(){
     ed.onclick=(e)=>{e.stopPropagation();ensureReg();updateUndoBadges();renderReg();editMachine(m.id);show("#scrReg");
       const det=$("#detMachines"); if(det)det.open=true; det&&det.scrollIntoView({behavior:"smooth",block:"start"});};
     wrap.appendChild(ed);
+    // rirenditje me dorë brenda qytetit (↑↓)
+    const upb=document.createElement("button"); upb.className="sec"; upb.textContent="↑"; upb.title="Lëviz lart në rend";
+    upb.onclick=(e)=>{e.stopPropagation();moveVisitOrder(m,-1);};
+    const dnb=document.createElement("button"); dnb.className="sec"; dnb.textContent="↓"; dnb.title="Lëviz poshtë në rend";
+    dnb.onclick=(e)=>{e.stopPropagation();moveVisitOrder(m,+1);};
+    wrap.appendChild(upb); wrap.appendChild(dnb);
     el.appendChild(wrap);
   });
 }
@@ -1609,6 +1686,22 @@ function machineProducts(m){ // grupon planogramin sipas produktit (dy kanale = 
   return Object.values(agg).map(a=>({...a,channels:a.channels.sort((x,y)=>x-y),
     n:a.channels.length,dbl:a.channels.length>1})).sort((x,y)=>x.channels[0]-y.channels[0]);
 }
+// rrjetë vizuale e kanaleve: çdo kanal me ngjyrën e produktit (si aparati fizik përpara)
+function buildChannelGrid(m){
+  const prods=Object.fromEntries((CAT.products||[]).map(p=>[p.id,p]));
+  const tot=m.channels||((m.planogram||[]).length)||0;
+  const byCh={}; (m.planogram||[]).forEach(l=>byCh[l.channel]=l);
+  let h="";
+  for(let c=1;c<=tot;c++){
+    const ln=byCh[c], p=ln?prods[ln.product_id]:null;
+    if(p){ const col=variantColor(p.name);
+      h+=`<div class="chcell" style="background:${col};border-bottom:4px solid ${brandTint(p.brand)}" title="Kanali ${c}: ${p.name}"><span class="n">${c}</span><span>${prodInitials(p.name)}</span></div>`;
+    }else{
+      h+=`<div class="chcell empty" title="Kanali ${c}: bosh"><span class="n">${c}</span><span>—</span></div>`;
+    }
+  }
+  return h;
+}
 function paySummary(pay){ pay=pay||{}; const p=[];
   p.push(pay.notes!==false?"💵 letra":"🚫 pa letra");
   if(pay.exact) p.push("🎯 vetëm para të sakta"); else if(pay.change===false) p.push("↩️ pa kusur"); else p.push("💱 kthen kusur");
@@ -1634,17 +1727,27 @@ function renderInv(){
     if(fFlt==="flock"&&!pay.flock) return;
     shown++;
     const used=prods.reduce((s,p)=>s+p.n,0), tot=m.channels||used, capTot=prods.reduce((s,p)=>s+p.cap,0);
-    const plist=prods.map(p=>`kanali ${p.channels.join(",")}: <b>${pName(p.pid)}</b> (${p.cap} pako)${p.dbl?" ⭐":""}`).join(" · ")||"<i>pa planogram</i>";
-    html+=`<div class="card" style="margin-bottom:10px">
+    const pct=tot?Math.round(used/tot*100):0;
+    const barCol=pct>=90?"#2E8F55":pct>=50?"#C09216":"#C6463C";
+    const stCol=status==="ok"?"#2E8F55":status==="defekt"?"#C6463C":"#8A8A8A";
+    html+=`<div class="card invcard" data-mid="${m.id}" style="margin-bottom:10px;border-left:5px solid ${stCol};cursor:pointer">
       <div class="row"><b class="grow">${m.code||('#'+m.id)}</b><span class="pill">${STATUS_LBL[status]||STATUS_LBL.ok}</span></div>
       <div class="note" style="margin-top:2px">${m.place||'—'}</div>
       ${status!=="ok"&&m.status_note?`<div style="color:var(--warn,#B26A16);font-size:13px;margin-top:2px">🔧 ${m.status_note}</div>`:""}
-      <div style="font-size:13px;margin-top:6px">📟 kanalet <b>${used}/${tot}</b> · 📦 ${capTot} pako</div>
-      <div style="font-size:13px;color:#3A6B7A;margin-top:2px">${paySummary(pay)}</div>
-      <div style="font-size:13px;margin-top:6px">${plist}</div>
+      <div class="row" style="justify-content:space-between;font-size:13px;margin-top:6px"><span>📟 kanale <b>${used}/${tot}</b> · 📦 ${capTot} pako${nDbl?` · 🔗 ${nDbl}`:""}</span><span class="note">${pct}% mbushur ▾</span></div>
+      <div class="fillbar"><i style="width:${pct}%;background:${barCol}"></i></div>
+      <div class="chgrid invgrid" style="display:none"></div>
+      <div class="note" style="margin-top:6px;color:#3A6B7A">${paySummary(pay)}</div>
     </div>`;
   });
   $("#invList").innerHTML=html||'<p class="note">Asnjë aparat me këtë filtër.</p>';
+  // prek kartën → shpalos rrjetën e kanaleve me ngjyra
+  document.querySelectorAll("#invList .invcard").forEach(card=>card.onclick=()=>{
+    const grid=card.querySelector(".invgrid");
+    if(grid.style.display!=="none"){grid.style.display="none";return;}
+    const mm=CAT.machines.find(x=>x.id===parseInt(card.dataset.mid));
+    grid.innerHTML=buildChannelGrid(mm); grid.style.display="grid";
+  });
   const faults=ms.filter(m=>(m.status||"ok")!=="ok").length;
   const dbls=ms.filter(m=>machineProducts(m).some(p=>p.dbl)).length;
   $("#invSum").textContent=`📟 ${shown}/${ms.length} aparate · 🔧 ${faults} defekt · ⭐ ${dbls} me dyfishtë`;
