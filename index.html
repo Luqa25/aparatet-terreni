@@ -781,7 +781,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v83";  // rritet me çdo version të ri
+const APP_VER="v84";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -974,29 +974,52 @@ function _pt(m){
   return null;
 }
 function optimizeRoute(startLat,startLng){
-  // grupo sipas qytetit; brenda qytetit rendit me nearest-neighbor (mbi parking/aparat)
-  const byCity={};
-  (CAT.machines||[]).forEach(m=>{const c=m.city||"—";(byCity[c]=byCity[c]||[]).push(m);});
-  // rendit qytetet sipas afërsisë së pikës së parë me pozitën e nisjes
-  const cities=Object.keys(byCity).sort((a,b)=>{
-    const pa=byCity[a].map(_pt).find(Boolean),pb=byCity[b].map(_pt).find(Boolean);
-    if(!pa)return 1; if(!pb)return -1;
-    return _dist(startLat,startLng,pa.lat,pa.lng)-_dist(startLat,startLng,pb.lat,pb.lng);
-  });
-  let order=1, curLat=startLat, curLng=startLng, count=0;
-  cities.forEach(c=>{
-    let rem=byCity[c].filter(m=>_pt(m));
-    while(rem.length){
-      let bi=0,bd=Infinity;
-      rem.forEach((m,i)=>{const p=_pt(m);const d=_dist(curLat,curLng,p.lat,p.lng);if(d<bd){bd=d;bi=i;}});
-      const nx=rem.splice(bi,1)[0];const p=_pt(nx);
-      nx.visit_order=order++; curLat=p.lat; curLng=p.lng; count++;
+  // NJË rrugë e vetme mbi TË GJITHA pikat — jo qytet-për-qytet.
+  // Grupimi sipas qytetit e detyronte rrugën ta mbaronte një qytet para se të
+  // niste tjetrin; kur ke nga një pikë në disa qytete kjo shton dhjetëra km.
+  const all=(CAT.machines||[]).filter(m=>_pt(m));
+  const none=(CAT.machines||[]).filter(m=>!_pt(m));
+  if(!all.length) return 0;
+
+  const D=(a,b)=>{const pa=_pt(a),pb=_pt(b);return _dist(pa.lat,pa.lng,pb.lat,pb.lng);};
+  function tot(seq){
+    const f=_pt(seq[0]), l=_pt(seq[seq.length-1]);
+    let d=_dist(startLat,startLng,f.lat,f.lng);
+    for(let i=0;i<seq.length-1;i++) d+=D(seq[i],seq[i+1]);
+    return d+_dist(l.lat,l.lng,startLat,startLng);   // + kthimi
+  }
+
+  // 1) nearest-neighbor
+  let rem=all.slice(), seq=[], bi=0, bd=Infinity;
+  rem.forEach((m,i)=>{const p=_pt(m);const d=_dist(startLat,startLng,p.lat,p.lng);
+                      if(d<bd){bd=d;bi=i;}});
+  let cur=rem.splice(bi,1)[0]; seq.push(cur);
+  while(rem.length){
+    bi=0; bd=Infinity;
+    rem.forEach((m,i)=>{const d=D(cur,m); if(d<bd){bd=d;bi=i;}});
+    cur=rem.splice(bi,1)[0]; seq.push(cur);
+  }
+
+  // 2) 2-opt — heq kryqëzimet; me kufi kohe qe telefoni te mos ngrije
+  const t0=Date.now();
+  let improved=true;
+  while(improved && Date.now()-t0<1500){
+    improved=false;
+    let base=tot(seq);
+    for(let i=0;i<seq.length-1 && Date.now()-t0<1500;i++){
+      for(let j=i+2;j<seq.length;j++){
+        const nw=seq.slice(0,i+1).concat(seq.slice(i+1,j+1).reverse(),seq.slice(j+1));
+        const nd=tot(nw);
+        if(nd<base-1e-9){ seq=nw; base=nd; improved=true; }
+      }
     }
-    // aparatet pa asnjë GPS (as parking as aparat) → në fund të qytetit
-    byCity[c].filter(m=>!_pt(m)).forEach(m=>{m.visit_order=order++;});
-  });
+  }
+
+  let order=1;
+  seq.forEach(m=>{ m.visit_order=order++; });
+  none.forEach(m=>{ m.visit_order=order++; });   // pa GPS → në fund
   save(K_CAT,CAT);
-  return count;
+  return seq.length;
 }
 // urgjenca e një aparati nga terreni: sa shpejt zbrazet (shitje/ditë) + sa kohë ka kaluar
 function machineUrgency(m){
