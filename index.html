@@ -122,6 +122,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <select id="cityFilter" class="grow" style="font-weight:700"></select>
     <button class="sec" id="btnSuggestOrder" title="Sugjero rendin nga terreni (sa shpejt zbrazen)">🔮</button>
     <button class="sec" id="btnOptRoute" title="Optimizo rrugën">🧭</button>
+    <button class="sec" id="btnDayPlan" title="Plani im i ditës (lista manuale)">🗒️</button>
     <button class="sec" id="btnReimport" title="Katalog">📥</button>
   </div>
   <div class="row" style="margin-bottom:8px">
@@ -781,7 +782,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v84";  // rritet me çdo version të ri
+const APP_VER="v85";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -1078,6 +1079,144 @@ $("#btnSuggestOrder").onclick=()=>{
   const moved=suggestVisitOrder(); renderList();
   alert("✅ Rendi u sugjerua nga terreni.\n"+moved+" aparate u rirenditën sipas urgjencës (sa afër zbrazjes).\nPara nisjes, shtyp 🧭 nëse do ta ndreqësh sipas rrugës, ose rregulloji me dorë me ↑↓.");
 };
+// ── PLANI I DITËS (manual) ────────────────────────────────────────────────
+// Opsioni i dytë pranë 🧭. Aty algoritmi vendos rendin; këtu e vendos TI.
+// Plani vjen nga PC-ja te CAT.dayPlans, por mund ta ndërtosh edhe nga telefoni.
+const K_PLAN="apar_dayplan";
+function planKey(){ return new Date().toISOString().slice(0,10); }
+function loadPlan(day){
+  const local=load(K_PLAN,{});
+  if(local[day]) return local[day];
+  // ndryshe merre nga katalogu i sinkronizuar nga PC-ja
+  const fromPC=(CAT&&CAT.dayPlans&&CAT.dayPlans[day])||null;
+  if(fromPC){
+    const conv=fromPC.map(r=>({pid:r.place_id, done:!!r.done, place:r.place}));
+    local[day]=conv; save(K_PLAN,local);
+    return conv;
+  }
+  return [];
+}
+function savePlan(day,list){ const a=load(K_PLAN,{}); a[day]=list; save(K_PLAN,a); }
+
+// nje "lokal" ne PWA identifikohet me tekstin "Qytet · Emri" (si te placePhotos)
+function machinesOfPlace(placeTxt){
+  return (CAT.machines||[]).filter(m=>(m.place||"")===placeTxt);
+}
+function planPoints(day){
+  const out=[];
+  loadPlan(day).forEach(r=>{
+    if(r.done) return;
+    const ms=machinesOfPlace(r.place).filter(m=>_pt(m));
+    if(ms.length) out.push({place:r.place, pt:_pt(ms[0])});
+  });
+  return out;
+}
+function planKm(day,sLat,sLng){
+  const pts=planPoints(day);
+  if(!pts.length) return 0;
+  let d=(sLat!=null)?_dist(sLat,sLng,pts[0].pt.lat,pts[0].pt.lng):0;
+  for(let i=0;i<pts.length-1;i++) d+=_dist(pts[i].pt.lat,pts[i].pt.lng,pts[i+1].pt.lat,pts[i+1].pt.lng);
+  if(sLat!=null) d+=_dist(pts[pts.length-1].pt.lat,pts[pts.length-1].pt.lng,sLat,sLng);
+  return d;
+}
+
+function openDayPlan(){
+  const day=planKey();
+  let list=loadPlan(day);
+  // të gjitha lokalet unike nga katalogu
+  const places=[...new Set((CAT.machines||[]).map(m=>m.place).filter(Boolean))].sort();
+  const inPlan=new Set(list.map(r=>r.place));
+
+  const sh=document.createElement("div");
+  sh.style.cssText="position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);"
+                  +"display:flex;align-items:flex-end";
+  sh.innerHTML=
+    '<div style="background:#111a2e;width:100%;max-height:92vh;overflow:auto;'
+    +'border-radius:16px 16px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom))">'
+    +'<div class="row" style="margin-bottom:8px"><b style="font-size:17px">🗒️ Plani im — '+day+'</b>'
+    +'<span style="flex:1"></span><button class="sec" id="dpClose">✕</button></div>'
+    +'<div id="dpKm" class="note" style="margin-bottom:8px"></div>'
+    +'<div id="dpList" style="max-height:44vh;overflow:auto;margin-bottom:10px"></div>'
+    +'<div class="row" style="margin-bottom:6px">'
+    +'<input id="dpFind" class="grow" placeholder="Kërko lokal për ta shtuar…">'
+    +'</div>'
+    +'<div id="dpAll" style="max-height:26vh;overflow:auto;margin-bottom:10px"></div>'
+    +'<div class="row">'
+    +'<button class="grow" id="dpMaps">🗺️ Hape rrugën</button>'
+    +'<button class="sec" id="dpClear">🗑</button>'
+    +'</div></div>';
+  document.body.appendChild(sh);
+
+  function drawPlan(){
+    const box=sh.querySelector("#dpList");
+    if(!list.length){ box.innerHTML='<div class="note">Ende bosh. Kërko poshtë dhe shto lokale.</div>'; }
+    else{
+      box.innerHTML=list.map((r,i)=>{
+        const n=machinesOfPlace(r.place).length;
+        const st=r.done?'opacity:.5;text-decoration:line-through':'';
+        return '<div class="row" style="padding:7px 0;border-bottom:1px solid #23304a;'+st+'">'
+          +'<b style="width:26px">'+(i+1)+'.</b>'
+          +'<span class="grow" style="font-size:14px">'+r.place+' <span class="note">['+n+']</span></span>'
+          +'<button class="sec dpUp" data-i="'+i+'">▲</button>'
+          +'<button class="sec dpDn" data-i="'+i+'">▼</button>'
+          +'<button class="sec dpOk" data-i="'+i+'">'+(r.done?'↺':'✓')+'</button>'
+          +'<button class="sec dpRm" data-i="'+i+'">✕</button></div>';
+      }).join("");
+    }
+    const km=planKm(day,null,null);
+    const done=list.filter(r=>r.done).length;
+    sh.querySelector("#dpKm").textContent=
+      list.length+" lokale · "+done+" kryer · ~"+km.toFixed(1)+" km";
+    box.querySelectorAll(".dpUp").forEach(b=>b.onclick=()=>{
+      const i=+b.dataset.i; if(i>0){ [list[i-1],list[i]]=[list[i],list[i-1]]; savePlan(day,list); drawPlan(); }});
+    box.querySelectorAll(".dpDn").forEach(b=>b.onclick=()=>{
+      const i=+b.dataset.i; if(i<list.length-1){ [list[i+1],list[i]]=[list[i],list[i+1]]; savePlan(day,list); drawPlan(); }});
+    box.querySelectorAll(".dpOk").forEach(b=>b.onclick=()=>{
+      const i=+b.dataset.i; list[i].done=!list[i].done; savePlan(day,list); drawPlan(); });
+    box.querySelectorAll(".dpRm").forEach(b=>b.onclick=()=>{
+      const i=+b.dataset.i; list.splice(i,1); savePlan(day,list); drawPlan(); drawAll(); });
+  }
+  function drawAll(){
+    const q=(sh.querySelector("#dpFind").value||"").toLowerCase().trim();
+    const cur=new Set(list.map(r=>r.place));
+    const box=sh.querySelector("#dpAll");
+    const shown=places.filter(p=>!cur.has(p) && (!q||p.toLowerCase().includes(q))).slice(0,40);
+    box.innerHTML=shown.length
+      ? shown.map(p=>'<div class="row dpAdd" data-p="'+p.split('"').join("&quot;")+'" '
+          +'style="padding:7px 0;border-bottom:1px solid #23304a">'
+          +'<span class="grow" style="font-size:14px">'+p+'</span><b>＋</b></div>').join("")
+      : '<div class="note">Asnjë lokal i lirë me këtë kërkim.</div>';
+    box.querySelectorAll(".dpAdd").forEach(d=>d.onclick=()=>{
+      list.push({place:d.dataset.p, done:false}); savePlan(day,list); drawPlan(); drawAll(); });
+  }
+  sh.querySelector("#dpFind").oninput=drawAll;
+  sh.querySelector("#dpClose").onclick=()=>sh.remove();
+  sh.querySelector("#dpClear").onclick=()=>{
+    if(confirm("Të fshihet plani i sotëm?")){ list=[]; savePlan(day,list); drawPlan(); drawAll(); }};
+  sh.querySelector("#dpMaps").onclick=()=>{
+    const pts=planPoints(day);
+    if(!pts.length){ alert("Asnjë lokal me GPS te plani (ose të gjitha janë kryer)."); return; }
+    const go=(sLat,sLng)=>{
+      const MAXW=10;
+      const seg=pts.slice(0,MAXW+1);
+      const o=(sLat!=null)?sLat+","+sLng:seg[0].pt.lat+","+seg[0].pt.lng;
+      const d=seg[seg.length-1].pt.lat+","+seg[seg.length-1].pt.lng;
+      const mids=seg.slice(sLat!=null?0:1,-1).map(p=>p.pt.lat+","+p.pt.lng).join("|");
+      let u="https://www.google.com/maps/dir/?api=1&origin="+o+"&destination="+d;
+      if(mids) u+="&waypoints="+encodeURIComponent(mids);
+      if(pts.length>MAXW+1) alert("Google Maps pranon 10 ndalesa — po hapen "+seg.length+" të parat.");
+      window.open(u,"_blank");
+    };
+    if(navigator.geolocation)
+      navigator.geolocation.getCurrentPosition(
+        p=>go(p.coords.latitude,p.coords.longitude),
+        ()=>go(null,null), {enableHighAccuracy:true,timeout:8000});
+    else go(null,null);
+  };
+  drawPlan(); drawAll();
+}
+$("#btnDayPlan").onclick=openDayPlan;
+
 $("#btnOptRoute").onclick=()=>{
   if(!CAT||!CAT.machines.length){alert("S'ka aparate.");return;}
   const withPt=CAT.machines.filter(m=>_pt(m)).length;
