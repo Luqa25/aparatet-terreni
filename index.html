@@ -576,6 +576,9 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
        padding:10px;margin:8px 0;border-radius:10px;background:#0f1524"></div>
   <button class="pri btn3d" id="regSendPC" style="width:100%;margin:6px 0 4px;background:#0C6675">☁️ DËRGO APARATET TE PC</button>
   <p class="note">Dërgon aparatet e regjistruar (me GPS) te PC përmes internetit. Në PC → «☁️ Tërhiq». (Kërkon internet.)</p>
+  <button class="pri btn3d" id="regToPC" style="width:100%;margin:10px 0 4px;background:#166534">📲 DËRGO DIREKT TE PC (Wi-Fi)</button>
+  <p class="note">Pa cloud, pa internet — vetëm i njëjti Wi-Fi. Në PC nis
+     «merr_nga_telefoni.bat», pastaj shtyp këtu. Adresa ruhet për herën tjetër.</p>
   <button class="pri btn3d" id="regRescue" style="width:100%;margin:10px 0 4px;background:#7f1d1d">🆘 RUAJ SKEDAR SIGURIE (pa internet)</button>
   <p class="note">Nxjerr GJITHÇKA si skedar që e dërgon me WhatsApp/email. Përdore kur
      dërgimi te PC dështon — kështu puna nuk humbet kurrë edhe pa internet.</p>
@@ -803,7 +806,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v86";  // rritet me çdo version të ri
+const APP_VER="v87";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -3111,6 +3114,49 @@ $("#regExport").onclick=()=>{ensureReg();
 // DËRGO aparatet/regjistrimet e telefonit te PC përmes cloud (iPhone → PC)
 document.getElementById("regSendPC")&&(document.getElementById("regSendPC").onclick=()=>sendCatalogToPC(false));
 document.getElementById("regRescue")&&(document.getElementById("regRescue").onclick=exportRescue);
+
+// DËRGIM DIREKT PC ← telefon përmes Wi-Fi, pa cloud.
+// KJO duhet të jetë brenda PWA-së: localStorage është i ndarë për çdo domen,
+// prandaj një faqe tjetër (p.sh. e servuar nga PC-ja) lexon kujtesë të zbrazët.
+document.getElementById("regToPC")&&(document.getElementById("regToPC").onclick=async function(){
+  const b=this;
+  let host=localStorage.getItem("apar_pc_host")||"";
+  host=prompt("Adresa e PC-së (shihet te dritarja e zezë kur nis merr_nga_telefoni.bat):",
+              host||"192.168.1.2:8080");
+  if(!host) return;
+  host=host.trim();
+  if(host.indexOf("://")>=0) host=host.split("://")[1];
+  while(host.slice(-1)==="/") host=host.slice(0,-1);
+  localStorage.setItem("apar_pc_host",host);
+
+  // mbledh GJITHÇKA që ka prefiksin apar_ — nga vetë kjo faqe
+  const keys={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.indexOf("apar_")===0) keys[k]=localStorage.getItem(k);
+  }
+  const nk=Object.keys(keys).length;
+  const nm=((CAT&&CAT.machines)||[]).filter(m=>!m.archived).length;
+  if(!nk){ alert("S'u gjet asnjë e dhënë në këtë faqe."); return; }
+
+  b.disabled=true; const old=b.textContent; b.textContent="DUKE DËRGUAR…";
+  try{
+    const r=await fetch("http://"+host+"/upload",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({keys:keys,n:nk})});
+    const j=await r.json();
+    alert(j.ok ? ("✅ U DËRGUAN "+nm+" aparate te PC.\n\n"+j.msg)
+               : ("⚠️ "+j.msg));
+  }catch(e){
+    alert("⚠️ S'u lidh me PC-në ("+host+").\n\n"
+      +"Kontrollo:\n"
+      +"• A punon «merr_nga_telefoni.bat» në PC?\n"
+      +"• A je në të njëjtin Wi-Fi?\n"
+      +"• A është adresa e saktë? (IP-ja ndryshon)\n\n"
+      +"Nëse s'ecën, përdor «🆘 RUAJ SKEDAR SIGURIE».\n\n"+e);
+  }
+  b.disabled=false; b.textContent=old;
+});
 
 // DËRGIM AUTOMATIK i aparateve — deri tani ishte VETËM manual, prandaj
 // regjistrimet e reja rrinin në telefon pa u vënë re. Provohet në hapje, kur
