@@ -25,6 +25,22 @@ header .sub{font-size:11px;color:var(--muted)}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
 button{font:inherit;border:none;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer}
 .pri{background:var(--accent);color:#fff}.pri:active{background:var(--accent2)}
+/* Buton 3D — për veprimet që NUK duhen humbur (shto aparat, dërgo te PC) */
+.btn3d{position:relative;font-weight:800;font-size:16px;letter-spacing:.5px;
+  padding:15px 18px!important;border:none;border-radius:13px;
+  box-shadow:0 5px 0 rgba(0,0,0,.42), 0 8px 16px rgba(0,0,0,.34),
+             inset 0 1px 0 rgba(255,255,255,.26);
+  transform:translateY(0);transition:transform .07s ease, box-shadow .07s ease;
+  text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.btn3d:active{transform:translateY(4px);
+  box-shadow:0 1px 0 rgba(0,0,0,.42), 0 2px 5px rgba(0,0,0,.3),
+             inset 0 1px 0 rgba(255,255,255,.16)}
+/* Konfirmimi që aparati u ruajt — nuk kalon pa u vënë re */
+@keyframes okpop{0%{transform:scale(.86);opacity:0}
+  55%{transform:scale(1.04);opacity:1}100%{transform:scale(1);opacity:1}}
+.okflash{animation:okpop .34s ease-out;background:#14532d;color:#86efac;
+  border:1px solid #22c55e;border-radius:12px;padding:13px;margin-top:10px;
+  font-weight:800;font-size:15px;text-align:center}
 .sec{background:var(--elev);color:var(--text);border:1px solid var(--line)}
 .row{display:flex;gap:8px;align-items:center}
 .grow{flex:1}
@@ -539,7 +555,7 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     </div>
     <textarea id="mCclause" placeholder="Klauzola / kushtet (për printim): afati, energjia, pastrimi, njoftimi për largim…" style="margin-top:6px;width:100%;min-height:52px"></textarea>
 
-    <button class="pri" id="mAdd" style="width:100%;margin-top:10px">＋ Shto aparatin</button>
+    <button class="pri btn3d" id="mAdd" style="width:100%;margin-top:12px">＋ SHTO APARATIN</button>
     <button class="sec hidden" id="mGoStock" style="width:100%;margin-top:8px">📦 Puno me stokun e këtij aparati (sot) →</button>
     <div class="reglist" id="mList"></div>
   </details>
@@ -556,8 +572,13 @@ summary{cursor:pointer;font-weight:700;padding:6px 0}
     <div class="reglist" id="vnList"></div>
   </details>
 
-  <button class="pri" id="regSendPC" style="width:100%;margin:6px 0 4px;background:#0C6675">☁️ Dërgo aparatet te PC (cloud)</button>
-  <p class="note">Dërgon aparatet e regjistruar (me GPS) te PC përmes internetit. Në PC → «☁️ Tërhiq» → i plotëson me produktet nga fotot. (Kërkon internet.)</p>
+  <div id="catBadge" style="display:none;font-weight:800;font-size:14px;text-align:center;
+       padding:10px;margin:8px 0;border-radius:10px;background:#0f1524"></div>
+  <button class="pri btn3d" id="regSendPC" style="width:100%;margin:6px 0 4px;background:#0C6675">☁️ DËRGO APARATET TE PC</button>
+  <p class="note">Dërgon aparatet e regjistruar (me GPS) te PC përmes internetit. Në PC → «☁️ Tërhiq». (Kërkon internet.)</p>
+  <button class="pri btn3d" id="regRescue" style="width:100%;margin:10px 0 4px;background:#7f1d1d">🆘 RUAJ SKEDAR SIGURIE (pa internet)</button>
+  <p class="note">Nxjerr GJITHÇKA si skedar që e dërgon me WhatsApp/email. Përdore kur
+     dërgimi te PC dështon — kështu puna nuk humbet kurrë edhe pa internet.</p>
   <button class="pri" id="regExport" style="width:100%;margin:6px 0 4px">📤 Eksporto GJITHÇKA për PC (skedar)</button>
   <p class="note">Ose me skedar: përmban produktet, aparatet, magazinën, kombin dhe vizitat. Importoje në PC (📥 Vizita).</p>
 </div>
@@ -782,7 +803,7 @@ function renderWorkDateBar(){
     document.getElementById("workDateToday").style.display="inline-block"; }
 }
 function setMode(m){MODE=m;localStorage.setItem("apar_mode",m);location.reload();}
-const APP_VER="v85";  // rritet me çdo version të ri
+const APP_VER="v86";  // rritet me çdo version të ri
 let CAT=load(K_CAT)||null, VIS=load(K_VIS)||[];
 let _pEdit=null, _mEdit=null;
 /* ── Undo/Redo për Regjistrimin ── */
@@ -2907,7 +2928,40 @@ $("#mAdd").onclick=()=>{ensureReg();const code=$("#mCode").value.trim();if(!code
   // fotot e pikës → ruhen sipas çelësit të pikës (mbeten kur ndërrohet aparati)
   if(!CAT.placePhotos)CAT.placePhotos={};
   CAT.placePhotos[pkey]=(window._mPlaceGal||[]).slice();
-  save(K_CAT,CAT);mResetEdit();renderReg();};
+  const wasEdit=(_mEdit!=null);
+  save(K_CAT,CAT);
+  // VERIFIKO që u ruajt vërtet — localStorage mund të jetë plot ose i bllokuar.
+  // Pa këtë kontroll, aparati "shtohej" në ekran por humbte në rihapje.
+  let ok=false, total=0;
+  try{
+    const chk=load(K_CAT);
+    total=((chk&&chk.machines)||[]).length;
+    ok = !!chk && total===((CAT.machines)||[]).length;
+  }catch(e){ ok=false; }
+  mResetEdit();renderReg();updateCatBadge();
+  if(ok) regConfirm((wasEdit?"✅ U RUAJT ndryshimi te ":"✅ U SHTUA aparati ")+code,total);
+  else alert("⚠️ APARATI NUK U RUAJT!\n\nKujtesa e telefonit mund të jetë plot.\n"+
+             "Bëj menjëherë «🆘 Ruaj skedar sigurie» dhe liro hapësirë.");
+};
+
+// Konfirmim i dukshëm + dridhje — që të mos regjistrosh dy herë ose të mendosh
+// se u ruajt kur nuk u ruajt.
+function regConfirm(msg,total){
+  try{ if(navigator.vibrate) navigator.vibrate([28,50,28]); }catch(e){}
+  const host=document.getElementById("mList");
+  if(!host){ alert(msg); return; }
+  const old=document.getElementById("regOkFlash"); if(old) old.remove();
+  const d=document.createElement("div");
+  d.id="regOkFlash"; d.className="okflash";
+  const last=localStorage.getItem("apar_last_catpush");
+  const warn = last ? "" :
+    "<div style='font-weight:600;font-size:12.5px;color:#fca5a5;margin-top:6px'>"
+    +"⚠️ Ende s'është dërguar asgjë te PC — shtyp «☁️ DËRGO APARATET TE PC»</div>";
+  d.innerHTML=msg+"<div style='font-weight:600;font-size:12.5px;opacity:.85;margin-top:4px'>"
+    +"Gjithsej "+total+" aparate te telefoni</div>"+warn;
+  host.parentNode.insertBefore(d,host);
+  setTimeout(()=>{ const x=document.getElementById("regOkFlash"); if(x) x.remove(); },6000);
+}
 
 /* GPS + foto e aparatit (në tablet) */
 // shënon një hap si të kryer (🟢) dhe theksohet i radhësi — na udhëheq automatik
@@ -3055,9 +3109,28 @@ $("#regExport").onclick=()=>{ensureReg();
   a.href=URL.createObjectURL(b);a.download="aparatet_"+new Date().toISOString().slice(0,10)+".json";a.click();};
 
 // DËRGO aparatet/regjistrimet e telefonit te PC përmes cloud (iPhone → PC)
-document.getElementById("regSendPC")&&(document.getElementById("regSendPC").onclick=sendCatalogToPC);
-async function sendCatalogToPC(){
-  if(isDemo()){alert("Je në DEMO. Kalo në LIVE për të dërguar te PC.");return;}
+document.getElementById("regSendPC")&&(document.getElementById("regSendPC").onclick=()=>sendCatalogToPC(false));
+document.getElementById("regRescue")&&(document.getElementById("regRescue").onclick=exportRescue);
+
+// DËRGIM AUTOMATIK i aparateve — deri tani ishte VETËM manual, prandaj
+// regjistrimet e reja rrinin në telefon pa u vënë re. Provohet në hapje, kur
+// kthehet interneti, dhe çdo 5 minuta — derisa serveri ta konfirmojë.
+async function autoPushCatalog(){
+  try{
+    if(isDemo()||!navigator.onLine) return;
+    const n=((CAT&&CAT.machines)||[]).filter(m=>!m.archived).length;
+    if(!n) return;
+    const sent=+(localStorage.getItem("apar_catpush_count")||0);
+    const last=localStorage.getItem("apar_last_catpush");
+    const stale=!last || (Date.now()-new Date(last))>6*3600*1000;
+    if(n>sent || stale) await sendCatalogToPC(true);   // silent
+  }catch(e){}
+}
+window.addEventListener("online",autoPushCatalog);
+setTimeout(autoPushCatalog,6000);
+setInterval(autoPushCatalog,5*60*1000);
+async function sendCatalogToPC(silent){
+  if(isDemo()){ if(!silent) alert("Je në DEMO. Kalo në LIVE për të dërguar te PC."); return false; }
   ensureReg();
   const data={products:CAT.products||[],machines:(CAT.machines||[]).filter(m=>!m.archived),
     warehouse:CAT.warehouse||[],van:CAT.van||[],placePhotos:CAT.placePhotos||{}};
@@ -3065,13 +3138,88 @@ async function sendCatalogToPC(){
     const r=await fetchRetry(SUPA_URL+"/rest/v1/phone_catalog",{method:"POST",
       headers:{..._sh(),"Prefer":"return=minimal"},body:JSON.stringify({device:"iphone",data:JSON.stringify(data)})});
     if(r.ok||r.status===201){
-      alert("✅ U dërguan "+data.machines.length+" aparate + "+data.products.length+" produkte te PC.\n\nNë PC shtyp «☁️ Tërhiq» për t'i marrë e plotësuar.");
-    }else{
-      const t=await r.text();
-      if(t.indexOf("phone_catalog")>=0) alert("⚠️ Tabela 'phone_catalog' s'ekziston te Supabase ende. Duhet ekzekutuar SQL-i njëherë.");
-      else alert("S'u dërgua: "+t.slice(0,100));
+      // dërgimi u konfirmua nga serveri — shëno kohën dhe hiq alarmin
+      localStorage.setItem("apar_last_catpush",new Date().toISOString());
+      localStorage.setItem("apar_catpush_count",String((data.machines||[]).length));
+      updateCatBadge();
+      if(!silent) alert("✅ U dërguan "+data.machines.length+" aparate + "+data.products.length+
+                        " produkte te PC.\n\nNë PC shtyp «☁️ Tërhiq» për t'i marrë.");
+      return true;
     }
-  }catch(e){alert("S'u dërgua — pa internet? Provo prapë kur ke sinjal.");}
+    const t=await r.text();
+    if(!silent){
+      if(t.indexOf("phone_catalog")>=0) alert("⚠️ Tabela 'phone_catalog' s'ekziston te Supabase.");
+      else alert("⚠️ S'U DËRGUA: "+t.slice(0,120)+"\n\nPuna ruhet te telefoni. "+
+                 "Përdor «📤 Ruaj skedar» për ta nxjerrë me siguri.");
+    }
+    updateCatBadge();
+    return false;
+  }catch(e){
+    if(!silent) alert("⚠️ S'U DËRGUA — s'u arrit serveri.\n\n"+
+      "Puna NUK ka humbur: ruhet te telefoni.\n"+
+      "Nëse përsëritet, përdor «📤 Ruaj skedar» dhe dërgoje me WhatsApp/email.");
+    updateCatBadge();
+    return false;
+  }
+}
+
+// Sa ditë ka që s'është dërguar katalogu — që të mos kalojë pa u vënë re.
+function updateCatBadge(){
+  const b=document.getElementById("catBadge"); if(!b) return;
+  const nMach=((CAT&&CAT.machines)||[]).filter(m=>!m.archived).length;
+  const last=localStorage.getItem("apar_last_catpush");
+  const sentN=+(localStorage.getItem("apar_catpush_count")||0);
+  if(!nMach){ b.textContent=""; b.style.display="none"; return; }
+  b.style.display="block";
+  if(!last){
+    b.textContent="⚠️ "+nMach+" aparate NUK janë dërguar kurrë te PC";
+    b.style.color="#ef4444"; return;
+  }
+  const days=Math.floor((Date.now()-new Date(last))/86400000);
+  const newer=nMach-sentN;
+  if(newer>0){
+    b.textContent="⚠️ "+newer+" aparate të rinj pa dërguar (i fundit: "+
+                  (days?days+" ditë më parë":"sot")+")";
+    b.style.color="#ef4444";
+  }else if(days>=2){
+    b.textContent="⏳ Dërgimi i fundit "+days+" ditë më parë";
+    b.style.color="#eab308";
+  }else{
+    b.textContent="✓ Të gjitha të dërguara te PC";
+    b.style.color="#22c55e";
+  }
+}
+
+// SHPËTIM: nxirr gjithçka si skedar — punon PA INTERNET dhe pa cloud.
+// Kjo është rrjeta e sigurisë kur serveri s'arrihet.
+function exportRescue(){
+  ensureReg();
+  const data={version:1,device:"iphone",fulldata:true,rescue:true,
+    exported:new Date().toISOString(),
+    products:CAT.products||[],machines:CAT.machines||[],
+    warehouse:CAT.warehouse||[],van:CAT.van||[],
+    placePhotos:CAT.placePhotos||{},visits:VIS||[],
+    deposits:(typeof DEPQ!=="undefined"?DEPQ:[]),
+    advances:(typeof ADVE!=="undefined"?ADVE:[])};
+  const txt=JSON.stringify(data);
+  const name="aparatet_SHPETIM_"+new Date().toISOString().slice(0,16).replace(/[:T]/g,"-")+".json";
+  const blob=new Blob([txt],{type:"application/json"});
+  // iOS: Web Share e ruan/dërgon skedarin; ndryshe shkarkim i drejtpërdrejtë
+  if(navigator.share && navigator.canShare){
+    const f=new File([blob],name,{type:"application/json"});
+    if(navigator.canShare({files:[f]})){
+      navigator.share({files:[f],title:"Aparatet — kopje sigurie"})
+        .catch(()=>_dl(blob,name));
+      return;
+    }
+  }
+  _dl(blob,name);
+}
+function _dl(blob,name){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  alert("U ruajt: "+name+"\n\nDërgoje me WhatsApp/email te PC-ja dhe importoje aty.");
 }
 
 /* ---- SYNC ME CLOUD (Supabase) ---- */
@@ -3179,6 +3327,7 @@ function updateSyncBadge(res){
     b.textContent=n?("⏳ "+n+" pa dërguar (ruhen)"):"të gjitha të dërguara ✓";
     b.style.color=n?"var(--warn,#B26A16)":"var(--good,#2C8256)";}
   updateSettle();
+  try{ updateCatBadge(); }catch(e){}
 }
 function denSum(o){let t=0;for(const k in(o||{}))t+=(+k)*(+o[k]);return t/100;}
 function visitWithdrawn(v){ // tërhequr: kuti kusuri e mbrojtur → e gjithë arka; përndryshe counted − kusur
